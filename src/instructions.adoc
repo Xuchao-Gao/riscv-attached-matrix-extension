@@ -11786,6 +11786,8 @@ Elementwise reciprocal of `ms1`, stored into `md`.
 This instruction is defined only for floating-point datatypes. If the datatype of
 `md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
 register is written.
++
+The numerical precision of the result is implementation-defined.
 
 
 NumPy Equivalent::
@@ -11883,6 +11885,8 @@ Elementwise hyperbolic tangent of `ms1`, stored into `md`.
 This instruction is defined only for floating-point datatypes. If the datatype of
 `md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
 register is written.
++
+The numerical precision of the result is implementation-defined.
 
 
 NumPy Equivalent::
@@ -11980,6 +11984,8 @@ Elementwise sine of `ms1`, stored into `md`.
 This instruction is defined only for floating-point datatypes. If the datatype of
 `md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
 register is written.
++
+The numerical precision of the result is implementation-defined.
 
 
 NumPy Equivalent::
@@ -12077,6 +12083,8 @@ Elementwise cosine of `ms1`, stored into `md`.
 This instruction is defined only for floating-point datatypes. If the datatype of
 `md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
 register is written.
++
+The numerical precision of the result is implementation-defined.
 
 
 NumPy Equivalent::
@@ -12174,6 +12182,8 @@ Elementwise square root of `ms1`, stored into `md`.
 This instruction is defined only for floating-point datatypes. If the datatype of
 `md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
 register is written.
++
+The numerical precision of the result is implementation-defined.
 
 
 NumPy Equivalent::
@@ -12271,6 +12281,8 @@ Elementwise reciprocal square root of `ms1`, stored into `md`.
 This instruction is defined only for floating-point datatypes. If the datatype of
 `md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
 register is written.
++
+The numerical precision of the result is implementation-defined.
 
 
 NumPy Equivalent::
