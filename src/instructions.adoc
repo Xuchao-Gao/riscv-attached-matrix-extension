@@ -12928,7 +12928,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src1_dtype = Md[ms1];
-if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::REDUCEMAX1D, dest_dtype, src1_dtype, src1_dtype)) {
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::REDUCEMIN1D, dest_dtype, src1_dtype, src1_dtype)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else if pass:[(]<<udb:doc:func:ame_dtype_is_storage_only,ame_dtype_is_storage_only>>pass:[(]dest_dtype) || <<udb:doc:func:ame_dtype_is_storage_only,ame_dtype_is_storage_only>>pass:[(]src1_dtype)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
@@ -12945,7 +12945,7 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     dest_nregs = 1;
   }
   U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
-  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::REDUCEMAX1D, dest_dtype, src1_dtype, src1_dtype)) {
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::REDUCEMIN1D, dest_dtype, src1_dtype, src1_dtype)) {
     <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   if pass:[(]AME_NUM_M_REGS == 16) {
@@ -12967,7 +12967,7 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
       U32 src_regno = e_src / src1_elements_per_reg;
       U32 src_hi = ((e_src pass:[+] 1) * src1_element_size) - (src_regno * AME_MATRIX_REGISTER_SIZE);
       U32 src_lo = ((e_src pass:[+] 1) * src1_element_size) - (src_regno * AME_MATRIX_REGISTER_SIZE);
-      row_result = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::REDUCEMAX1D, src1_dtype, <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo], dest_dtype, row_result, dest_dtype);
+      row_result = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::REDUCEMIN1D, src1_dtype, <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo], dest_dtype, row_result, dest_dtype);
     }
     for pass:[(]U32 j = 0; j < N; j++) {
       U32 e_dst = i * N pass:[+] j;
