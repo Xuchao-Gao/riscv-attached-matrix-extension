@@ -165,7 +165,7 @@ gemm_unit_dtype:
     sub    t3, a5, t2
     blez   t3, .j_done
 
-    mzero.2d  acc0
+    mzero.2d.acc  acc0
 
     mv     t4, s6                 # t4 = A square ptr
     mv     t5, a7                 # t5 = B square ptr
@@ -377,7 +377,7 @@ gemm_square:
     sub    t3, a5, t2
     blez   t3, .j_done\suffix
 
-    mzero.2d  acc0
+    mzero.2d.acc  acc0
 
     mv     t4, s6                 # t4 = A square ptr
     mv     t5, a7                 # t5 = B square ptr
@@ -604,7 +604,7 @@ gemm_portable:
     sub    t3, a5, t2
     blez   t3, .j_done\suffix
 
-    mzero.2d  acc0
+    mzero.2d.acc  acc0
 
     mv     t4, s6                # t4 = A tile ptr
     mv     t5, a7                # t5 = B tile ptr

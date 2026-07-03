@@ -551,7 +551,7 @@ AME permutation operations swizzle data within a single square.
 | `D[i,2j] = A[i,j] +
  D[i,2j+1] = A[i, N/2+j]`
 | Elementwise column zip (interleave)
-| <<udb:doc:inst:mgather_ew,mgather.ew>>
+| <<udb:doc:inst:mgather_ew_col,mgather.ew.col>>
 | `D[i,j] = A[i, B[i,j]]`
 | Elementwise gather (take)
 | <<udb:doc:inst:mrowunzip_ew,mrowunzip.ew>>
@@ -574,7 +574,7 @@ AME permutation operations swizzle data within a single square.
 | <<udb:doc:inst:mscatmax_row,mscatmax.row>>
 | `D[i, B[i,j]] = max(D[i,B[i,j]], A[i,j])`
 | Elementwise scatter-max
-| <<udb:doc:inst:mshift_ew,mshift.ew>>
+| <<udb:doc:inst:mcolshift_ew_x,mcolshift.ew.x>>
 | `D[i,j] = A[i, j+imm]`
 | Elementwise row shift by constant offset
 |===
@@ -585,7 +585,7 @@ AME permutation operations swizzle data within a single square.
 `<<udb:doc:inst:mmov_a_m,mmov.a.m>>` copies all elements from an `Acc` register to an `M` register.
 In both cases, the source and destination datatypes must match; if they differ, `amestatus.UN` is set and the destination is left unchanged.
 
-`<<udb:doc:inst:mzero_2d,mzero.2d>>` writes zero to every element of an `Acc` register,
+`<<udb:doc:inst:mzero_2d_acc,mzero.2d.acc>>` writes zero to every element of an `Acc` register,
 typically used to initialize an accumulator before a matrix multiply sequence.
 
 [cols="1,2,3",options="header"]
@@ -597,7 +597,7 @@ typically used to initialize an accumulator before a matrix multiply sequence.
 | <<udb:doc:inst:mmov_m_m,mmov.m.m>>
 | `D[i] = A[i]`
 | Elementwise unconditional move between M registers
-| <<udb:doc:inst:mzero_2d,mzero.2d>>
+| <<udb:doc:inst:mzero_2d_acc,mzero.2d.acc>>
 | `C = 0`
 | Clear accumulator tile
 |===
