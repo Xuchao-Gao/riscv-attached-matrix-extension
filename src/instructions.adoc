@@ -173,8 +173,8 @@ a| `mcolunzip.ew md, ms1`
 | <<udb:doc:inst:mcolunzip_ew,Elementwise column unzip (de-interleave)>>
 a| `mcolzip.ew md, ms1`
 | <<udb:doc:inst:mcolzip_ew,Elementwise column zip (interleave)>>
-a| `mgather.ew.col md, ms1, ms2`
-| <<udb:doc:inst:mgather_ew_col,Elementwise gather (take)>>
+a| `mcolgather.ew md, ms1, ms2`
+| <<udb:doc:inst:mcolgather_ew,Elementwise gather (take)>>
 a| `mrowunzip.ew md, ms1`
 | <<udb:doc:inst:mrowunzip_ew,Row unzip (de-interleave rows)>>
 a| `mrowzip.ew md, ms1, ms2`
@@ -195,8 +195,8 @@ a| `mrowbcast.ew.x md, ms1, xs1`
 | <<udb:doc:inst:mrowbcast_ew_x,Broadcast one row to all rows>>
 a| `mcolbcast.ew.x md, ms1, xs1`
 | <<udb:doc:inst:mcolbcast_ew_x,Broadcast one column to all columns>>
-a| `mgather.ew.row md, ms1, ms2`
-| <<udb:doc:inst:mgather_ew_row,Elementwise row gather (take)>>
+a| `mrowgather.ew md, ms1, ms2`
+| <<udb:doc:inst:mrowgather_ew,Elementwise row gather (take)>>
 !===
 
 Register move / data conversion::
@@ -2582,14 +2582,14 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 
 <<<
 
-[#udb:doc:inst:mgather_ew_col]
-=== `mgather.ew.col`
+[#udb:doc:inst:mcolgather_ew]
+=== `mcolgather.ew`
 
 Synopsis::
-Elementwise gather (take)
+Elementwise column gather (take)
 
 Mnemonic::
-`mgather.ew.col md, ms1, ms2`
+`mcolgather.ew md, ms1, ms2`
 
 Encoding::
 +
@@ -12671,14 +12671,14 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 
 <<<
 
-[#udb:doc:inst:mgather_ew_row]
-=== `mgather.ew.row`
+[#udb:doc:inst:mrowgather_ew]
+=== `mrowgather.ew`
 
 Synopsis::
 Elementwise row gather (take)
 
 Mnemonic::
-`mgather.ew.row md, ms1, ms2`
+`mrowgather.ew md, ms1, ms2`
 
 Encoding::
 +

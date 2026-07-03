@@ -551,7 +551,7 @@ AME permutation operations swizzle data within a single square.
 | `D[i,2j] = A[i,j] +
  D[i,2j+1] = A[i, N/2+j]`
 | Elementwise column zip (interleave)
-| <<udb:doc:inst:mgather_ew_col,mgather.ew.col>>
+| <<udb:doc:inst:mcolgather_ew,mcolgather.ew>>
 | `D[i,j] = A[i, B[i,j]]`
 | Elementwise gather (take)
 | <<udb:doc:inst:mrowunzip_ew,mrowunzip.ew>>
