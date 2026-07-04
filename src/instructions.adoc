@@ -9407,6 +9407,10 @@ corresponding column in `md`.
 For each row `i` and column `j`:
 +
   `md[i,j] = min over k of ms1[k,j]`
++
+All rows in each output column receive the same value (the column minimum).
+For the row-reduction form, see `mreducemin.row`.
+For the column max-reduction form, see `mreducemax.col`.
 
 
 NumPy Equivalent::
@@ -9509,6 +9513,10 @@ corresponding row in `md`.
 For each row `i` and column `j`:
 +
   `md[i,j] = min over k of ms1[i,k]`
++
+All columns in each output row receive the same value (the row minimum).
+For the column-reduction form, see `mreducemin.col`.
+For the row max-reduction form, see `mreducemax.row`.
 
 
 NumPy Equivalent::

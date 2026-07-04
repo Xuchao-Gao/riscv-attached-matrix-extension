@@ -91,7 +91,7 @@ for (int i = 0; i < M; i += N) {     // s7
     B_col_base = B;                   // a7
 
     for (int j = 0; j < P; j += N) { // t2
-        acc0 = 0;                     // mzero.2d
+        acc0 = 0;                     // mzero.2d.acc
         A_sq = A_row_base;            // t4
         B_sq = B_col_base;            // t5
 
@@ -262,7 +262,7 @@ for (int i = 0; i < M; i += N) {        // s7
     B_col_base = B;                      // a7
 
     for (int j = 0; j < P; j += N) {    // t2 (reused)
-        acc0 = 0;                        // mzero.2d
+        acc0 = 0;                        // mzero.2d.acc
         A_sq = A_row_base;               // t4
         B_sq = B_col_base;               // t5
 
@@ -485,7 +485,7 @@ for (int i = 0; i < M; i += N) {            // s7
     B_col_base = B;                          // a7
 
     for (int j = 0; j < P; j += N) {        // t2 (reused)
-        acc0 = 0;                            // mzero.2d
+        acc0 = 0;                            // mzero.2d.acc
         A_tile = A_row_base;                 // t4
         B_tile = B_col_base;                 // t5
 
