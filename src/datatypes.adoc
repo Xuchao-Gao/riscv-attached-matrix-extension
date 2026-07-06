@@ -168,13 +168,18 @@ The rounding mode of an operation is determined by the datatype of the destinati
 A datatype whose size (bits 7:0) is greater than zero and less than
 `<<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>` is called a *packed datatype*.
 
-The *Pack Factor* (`pack_factor`) of a datatype is the number of squares stored per M register:
+Whether any particular datatype is packed is entirely a function of the
+implementation-defined base element size `<<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`,
+so the same datatype may be packed on one implementation and non-packed on another.
+An implementation that sets `<<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`
+equal to its smallest supported element size has no packed datatypes at all; one that sets it
+larger treats every smaller supported datatype as packed.
+For this reason the specification does not designate any specific datatype as packed.
 
-* For packed datatypes: `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(dtype)` (>= 2; equals the pack factor)
+The *pack factor* (`pack_factor`) of a datatype is the number of squares stored per M register:
+
+* For packed datatypes: `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(dtype)` (always >= 2)
 * For all other datatypes: `pack_factor = 1`
-
-For example, with `AME_UNIT_DATATYPE_SIZE` = 8 bits and an Int4 (4-bit) datatype,
-`pack_factor` = 2: one M register holds two Int4 squares.
 
 Packed datatypes can be used directly as operands in compute instructions.
 When an instruction has multiple tensor operands, each operand must contain the same total
@@ -184,14 +189,17 @@ Accumulator operands are not subject to this rule — they always hold exactly o
 
 See <<operand-formation>> in the programming model for the complete rules and a worked example.
 
+Because a packed M register holds multiple squares, packed formats increase register
+pressure when combined with wide datatypes — for example, in kernels such as flash
+attention. Explicit pack/unpack instructions (see <<udb:doc:inst:mconv_ew,mconv.ew>>)
+therefore remain necessary to convert between packed and non-packed layouts and to manage
+that pressure.
+
 If a packed datatype/operation combination is not supported by an implementation,
 `amestatus.UN` is set and the instruction returns without writing any output register.
 Software can probe compute support by attempting a compute instruction and
-inspecting `amestatus.UN`.
-
-Standard packed datatypes include Int4 and Uint4 (when `AME_UNIT_DATATYPE_SIZE` > 4),
-and Int8/Uint8 (when `AME_UNIT_DATATYPE_SIZE` > 8).
-Whether any given packed type is supported is implementation-defined.
+inspecting `amestatus.UN`. Whether any given packed datatype is supported is
+implementation-defined.
 
 === Discovery
 
