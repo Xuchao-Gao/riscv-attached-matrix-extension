@@ -6,7 +6,7 @@
 
 
 
-AME defines *98* instructions and an additional *2* pseudoinstructions.
+AME defines *100* instructions and an additional *2* pseudoinstructions.
 
 
 Datatype Management::
@@ -169,10 +169,10 @@ a| `mscatmax.row md, ms1, ms2`
 | <<udb:doc:inst:mscatmax_row,Elementwise scatter-max>>
 a| `mshift.ew md, ms1, imm`
 | <<udb:doc:inst:mshift_ew,Elementwise row shift by constant offset>>
-a| `mshift.p1 md, ms1`
-| _Alias for_ <<udb:doc:inst:mshift_ew,mshift.ew>> _when_ `imm == 1`
 a| `mshift.m1 md, ms1`
 | _Alias for_ <<udb:doc:inst:mshift_ew,mshift.ew>> _when_ `imm == -1`
+a| `mshift.p1 md, ms1`
+| _Alias for_ <<udb:doc:inst:mshift_ew,mshift.ew>> _when_ `imm == 1`
 !===
 
 Register move / data conversion::
@@ -182,6 +182,10 @@ Register move / data conversion::
 
 a| `mconv.ew md, ms1`
 | <<udb:doc:inst:mconv_ew,Convert between packed and non-packed datatypes>>
+a| `mpack.ew.x md, ms1, xs1`
+| <<udb:doc:inst:mpack_ew_x,Pack one square into a slot of a packed M register>>
+a| `munpack.ew.x md, ms1, xs1`
+| <<udb:doc:inst:munpack_ew_x,Unpack one sub-square from a packed M register>>
 !===
 
 Log2 and Exp2::
@@ -7272,6 +7276,95 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 
 <<<
 
+[#udb:doc:inst:mpack_ew_x]
+=== `mpack.ew.x`
+
+Synopsis::
+Pack one square into a slot of a packed M register
+
+Mnemonic::
+`mpack.ew.x md, ms1, xs1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x5,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x1,"type":2}]}
+....
+
+Description::
+Inserts the single non-packed square in `ms1` into the sub-square slot selected by the
+index in integer register `xs1` of the packed M register `md`, converting each element
+from the non-packed datatype (`Md[ms1]`) to the packed datatype (`Md[md]`). The other
+sub-square slots of `md` are preserved (read-modify-write).
++
+`Md[md]` must be a packed datatype and `Md[ms1]` a non-packed datatype; otherwise
+`amestatus.UN` is set and no register is written. The index must be less than
+`pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[md])`; an out-of-range index raises an
+`Illegal Instruction` exception.
++
+This is the single-square form of the pack (compress) direction of
+<<udb:doc:inst:mconv_ew,mconv.ew>>; use it to pack one square at a time without holding
+all `pack_factor` non-packed squares in registers simultaneously.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md[xs1] = pack(ms1)  # one sub-square, others preserved
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+Bits<5> xs1 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> src_dtype = Md[ms1];
+Bits<32> dst_dtype = Md[md];
+U32 index = X[xs1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::CONV1D, dst_dtype, src_dtype, src_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else if pass:[(]<<udb:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]src_dtype) || !<<udb:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]dst_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  U32 dst_element_size_bits = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dst_dtype);
+  U32 pack_factor = AME_UNIT_DATATYPE_SIZE / dst_element_size_bits;
+  if pass:[(]index >= pack_factor) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  U32 src_element_size_bits = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
+  Bits<AME_MAX_SQUARE_SIZE> packed = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md], dst_dtype);
+  Bits<AME_MAX_SQUARE_SIZE> src_data = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1], src_dtype);
+  for pass:[(]U32 e = 0; e < AME_NELEM; e++) {
+    U32 src_lo = e * src_element_size_bits;
+    U32 src_hi = src_lo pass:[+] src_element_size_bits - 1;
+    Bits<AME_MAX_DTYPE_SIZE> element = src_data[src_hi:src_lo];
+    U32 dst_lo = (index * AME_NELEM pass:[+] e) * dst_element_size_bits;
+    U32 dst_hi = dst_lo pass:[+] dst_element_size_bits - 1;
+    packed[dst_hi:dst_lo] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::CONV1D, src_dtype, element, src_dtype, element, dst_dtype);
+  }
+  M[md] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]packed, dst_dtype);
+}
+----
+
+
+<<<
+
 [#udb:doc:inst:mprefixadd_col]
 === `mprefixadd.col`
 
@@ -10117,6 +10210,94 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     result = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SUBLOG21D, src_dtype, src_element_value, src_dtype, scalar_element_value, dest_dtype);
   }
   M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:munpack_ew_x]
+=== `munpack.ew.x`
+
+Synopsis::
+Unpack one sub-square from a packed M register
+
+Mnemonic::
+`munpack.ew.x md, ms1, xs1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x5,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x1,"type":2}]}
+....
+
+Description::
+Extracts a single sub-square, selected by the index in integer register `xs1`, from the
+packed M register `ms1` and writes it to the non-packed M register `md`, converting each
+element from the packed datatype (`Md[ms1]`) to the non-packed datatype (`Md[md]`).
++
+`Md[ms1]` must be a packed datatype and `Md[md]` a non-packed datatype; otherwise
+`amestatus.UN` is set and no register is written. The index must be less than
+`pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[ms1])`; an out-of-range index raises an
+`Illegal Instruction` exception.
++
+This is the single-square form of the unpack (expand) direction of
+<<udb:doc:inst:mconv_ew,mconv.ew>>; use it to unpack one square at a time and limit the
+register pressure of fully expanding a packed register.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md = unpack(ms1)[xs1]  # one sub-square
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+Bits<5> xs1 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> src_dtype = Md[ms1];
+Bits<32> dst_dtype = Md[md];
+U32 index = X[xs1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::CONV1D, dst_dtype, src_dtype, src_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else if pass:[(]!<<udb:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]src_dtype) || <<udb:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]dst_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  U32 src_element_size_bits = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
+  U32 pack_factor = AME_UNIT_DATATYPE_SIZE / src_element_size_bits;
+  if pass:[(]index >= pack_factor) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  U32 dst_element_size_bits = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dst_dtype);
+  Bits<AME_MAX_SQUARE_SIZE> packed = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1], src_dtype);
+  Bits<AME_MAX_SQUARE_SIZE> result = 0;
+  for pass:[(]U32 e = 0; e < AME_NELEM; e++) {
+    U32 src_lo = (index * AME_NELEM pass:[+] e) * src_element_size_bits;
+    U32 src_hi = src_lo pass:[+] src_element_size_bits - 1;
+    Bits<AME_MAX_DTYPE_SIZE> element = packed[src_hi:src_lo];
+    U32 dst_lo = e * dst_element_size_bits;
+    U32 dst_hi = dst_lo pass:[+] dst_element_size_bits - 1;
+    result[dst_hi:dst_lo] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::CONV1D, src_dtype, element, src_dtype, element, dst_dtype);
+  }
+  M[md] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dst_dtype);
 }
 ----
 
