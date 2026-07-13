@@ -11131,12 +11131,16 @@ Encodings have not been allocated yet. This is just a placeholder.
 
 Description::
 Elementwise logical left shift of `ms1` by the per-element shift amount in `ms2`, stored into `md`.
++
+Only the low `lg2(EW)` bits of each shift-amount value are used, where `EW` is the
+element width in bits of `ms1`. Shift amounts are interpreted as unsigned bit patterns.
 
 
 NumPy Equivalent::
 [source,python]
 ----
-md = ms1 << ms2
+shamt = ms2 & (EW - 1)
+md = ms1 << shamt
 ----
 
 Decode Variables::
@@ -11208,7 +11212,8 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
       U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
       Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
       Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
-      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SLL1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value, dest_dtype);
+      Bits<AME_MAX_DTYPE_SIZE> shift_amount = src2_element_value & (src1_element_size - 1);
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SLL1D, src1_dtype, src1_element_value, src2_dtype, shift_amount, dest_dtype);
     }
     M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
@@ -11239,12 +11244,16 @@ Encodings have not been allocated yet. This is just a placeholder.
 
 Description::
 Logical left shift of every element of `ms2` by a scalar amount from integer register `xs1`, stored into `md`.
++
+Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
+element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
 
 
 NumPy Equivalent::
 [source,python]
 ----
-md = ms2 << xs1
+shamt = xs1 & (EW - 1)
+md = ms2 << shamt
 ----
 
 Decode Variables::
@@ -11292,6 +11301,7 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   Bits<AME_MAX_DTYPE_SIZE> scalar = X[xs1];
   Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+  Bits<AME_MAX_DTYPE_SIZE> shift_amount = scalar_element_value & (src_element_size - 1);
   for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
     Bits<AME_MAX_SQUARE_SIZE> result = 0;
     for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
@@ -11303,7 +11313,7 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
       U32 dest_lo_idx = local_e * dest_element_size;
       U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
       Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SLL1D, src_dtype, src_element_value, src_dtype, scalar_element_value, dest_dtype);
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SLL1D, src_dtype, src_element_value, src_dtype, shift_amount, dest_dtype);
     }
     M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
@@ -11432,12 +11442,16 @@ Encodings have not been allocated yet. This is just a placeholder.
 
 Description::
 Elementwise arithmetic (sign-preserving) right shift of `ms1` by the per-element shift amount in `ms2`, stored into `md`.
++
+Only the low `lg2(EW)` bits of each shift-amount value are used, where `EW` is the
+element width in bits of `ms1`. Shift amounts are interpreted as unsigned bit patterns.
 
 
 NumPy Equivalent::
 [source,python]
 ----
-md = ms1 >> ms2  # arithmetic
+shamt = ms2 & (EW - 1)
+md = ms1 >> shamt  # arithmetic
 ----
 
 Decode Variables::
@@ -11509,7 +11523,8 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
       U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
       Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
       Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
-      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SRA1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value, dest_dtype);
+      Bits<AME_MAX_DTYPE_SIZE> shift_amount = src2_element_value & (src1_element_size - 1);
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SRA1D, src1_dtype, src1_element_value, src2_dtype, shift_amount, dest_dtype);
     }
     M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
@@ -11540,12 +11555,16 @@ Encodings have not been allocated yet. This is just a placeholder.
 
 Description::
 Arithmetic (sign-preserving) right shift of every element of `ms2` by a scalar amount from integer register `xs1`, stored into `md`.
++
+Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
+element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
 
 
 NumPy Equivalent::
 [source,python]
 ----
-md = ms2 >> xs1  # arithmetic
+shamt = xs1 & (EW - 1)
+md = ms2 >> shamt  # arithmetic
 ----
 
 Decode Variables::
@@ -11593,6 +11612,7 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   Bits<AME_MAX_DTYPE_SIZE> scalar = X[xs1];
   Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+  Bits<AME_MAX_DTYPE_SIZE> shift_amount = scalar_element_value & (src_element_size - 1);
   for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
     Bits<AME_MAX_SQUARE_SIZE> result = 0;
     for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
@@ -11604,7 +11624,7 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
       U32 dest_lo_idx = local_e * dest_element_size;
       U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
       Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SRA1D, src_dtype, src_element_value, src_dtype, scalar_element_value, dest_dtype);
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SRA1D, src_dtype, src_element_value, src_dtype, shift_amount, dest_dtype);
     }
     M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
@@ -11635,12 +11655,16 @@ Encodings have not been allocated yet. This is just a placeholder.
 
 Description::
 Elementwise logical (unsigned) right shift of `ms1` by the per-element shift amount in `ms2`, stored into `md`.
++
+Only the low `lg2(EW)` bits of each shift-amount value are used, where `EW` is the
+element width in bits of `ms1`. Shift amounts are interpreted as unsigned bit patterns.
 
 
 NumPy Equivalent::
 [source,python]
 ----
-md = ms1 >> ms2  # logical
+shamt = ms2 & (EW - 1)
+md = ms1 >> shamt  # logical
 ----
 
 Decode Variables::
@@ -11712,7 +11736,8 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
       U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
       Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
       Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
-      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SRL1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value, dest_dtype);
+      Bits<AME_MAX_DTYPE_SIZE> shift_amount = src2_element_value & (src1_element_size - 1);
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SRL1D, src1_dtype, src1_element_value, src2_dtype, shift_amount, dest_dtype);
     }
     M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
@@ -11743,12 +11768,16 @@ Encodings have not been allocated yet. This is just a placeholder.
 
 Description::
 Logical (unsigned) right shift of every element of `ms2` by a scalar amount from integer register `xs1`, stored into `md`.
++
+Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
+element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
 
 
 NumPy Equivalent::
 [source,python]
 ----
-md = ms2 >> xs1  # logical
+shamt = xs1 & (EW - 1)
+md = ms2 >> shamt  # logical
 ----
 
 Decode Variables::
@@ -11796,6 +11825,7 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   Bits<AME_MAX_DTYPE_SIZE> scalar = X[xs1];
   Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+  Bits<AME_MAX_DTYPE_SIZE> shift_amount = scalar_element_value & (src_element_size - 1);
   for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
     Bits<AME_MAX_SQUARE_SIZE> result = 0;
     for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
@@ -11807,7 +11837,7 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
       U32 dest_lo_idx = local_e * dest_element_size;
       U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
       Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SRL1D, src_dtype, src_element_value, src_dtype, scalar_element_value, dest_dtype);
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SRL1D, src_dtype, src_element_value, src_dtype, shift_amount, dest_dtype);
     }
     M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
