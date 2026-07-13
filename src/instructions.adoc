@@ -8,6 +8,8 @@
 
 AME defines *124* instructions.
 
+include::instruction-encoding-allocations.adoc[]
+
 
 Datatype Management::
 [cols="1,2",%unbreakable]
@@ -2132,7 +2134,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": {ame-enc-mcolbcast-ew-x-funct7},"type":2}]}
 ....
 
 Description::
@@ -2235,7 +2237,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x18,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-mcolgather-ew-funct7},"type":2}]}
 ....
 
 Description::
@@ -2353,7 +2355,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": {ame-enc-mcolshift-ew-x-funct7},"type":2}]}
 ....
 
 Description::
@@ -2799,7 +2801,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mcos-ew-funct12},"type":2}]}
 ....
 
 Description::
@@ -2990,7 +2992,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mfrintm-ew-funct12},"type":2}]}
 ....
 
 Description::
@@ -3086,7 +3088,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mfrintn-ew-funct12},"type":2}]}
 ....
 
 Description::
@@ -3182,7 +3184,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mfrintp-ew-funct12},"type":2}]}
 ....
 
 Description::
@@ -3278,7 +3280,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mfrintz-ew-funct12},"type":2}]}
 ....
 
 Description::
@@ -5341,7 +5343,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "ms","type":4},{"bits":15,"name": 0x18,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "ms","type":4},{"bits":15,"name": {ame-enc-mmov-m-a-funct15},"type":2}]}
 ....
 
 Description::
@@ -8828,7 +8830,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mrec-ew-funct12},"type":2}]}
 ....
 
 Description::
@@ -9342,7 +9344,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": 0x160,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mreducemin-col-funct12},"type":2}]}
 ....
 
 Description::
@@ -9451,7 +9453,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": 0xe0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mreducemin-row-funct12},"type":2}]}
 ....
 
 Description::
@@ -9560,7 +9562,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": {ame-enc-mrowbcast-ew-x-funct7},"type":2}]}
 ....
 
 Description::
@@ -9663,7 +9665,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x18,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-mrowgather-ew-funct7},"type":2}]}
 ....
 
 Description::
@@ -9781,7 +9783,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": {ame-enc-mrowshift-ew-x-funct7},"type":2}]}
 ....
 
 Description::
@@ -10137,7 +10139,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mrsqrt-ew-funct12},"type":2}]}
 ....
 
 Description::
@@ -11028,7 +11030,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-msin-ew-funct12},"type":2}]}
 ....
 
 Description::
@@ -11126,7 +11128,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-msll-ew-funct7},"type":2}]}
 ....
 
 Description::
@@ -11239,7 +11241,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-msll-ew-x-funct7},"type":2}]}
 ....
 
 Description::
@@ -11339,7 +11341,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-msqrt-ew-funct12},"type":2}]}
 ....
 
 Description::
@@ -11437,7 +11439,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-msra-ew-funct7},"type":2}]}
 ....
 
 Description::
@@ -11550,7 +11552,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-msra-ew-x-funct7},"type":2}]}
 ....
 
 Description::
@@ -11650,7 +11652,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-msrl-ew-funct7},"type":2}]}
 ....
 
 Description::
@@ -11763,7 +11765,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-msrl-ew-x-funct7},"type":2}]}
 ....
 
 Description::
@@ -12514,7 +12516,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mtanh-ew-funct12},"type":2}]}
 ....
 
 Description::
@@ -12910,7 +12912,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":22,"name": 0x40008,"type":2}]}
+{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":22,"name": {ame-enc-mzero-2d-acc-funct22},"type":2}]}
 ....
 
 Description::
@@ -12966,7 +12968,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":20,"name": 0x40009,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":20,"name": {ame-enc-mzero-2d-m-funct20},"type":2}]}
 ....
 
 Description::

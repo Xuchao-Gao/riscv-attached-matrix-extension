@@ -21,19 +21,24 @@ h| Arguments   l| Bits<32> dtype
 
 
 [#udb:doc:func:ame_op_supported]
-=== `ame_op_supported`
-Returns true if src1 op src2 = dest is a supported operation for the given datatypes
+=== `ame_op_supported` (builtin)
+Returns true if `src1 op src2 = dest` is a supported operation for the exact
+datatype tuple supplied by the caller.
+
+[#norm:ame_op_supported_contract]#`ame_op_supported` returns false when any
+required datatype is zero, when `op` is not implemented, when the datatype
+classes do not satisfy the operation requirements, or when the implementation
+does not support that operation/datatype combination.#
+
+[#norm:ame_op_supported_defined_result]#If `ame_op_supported` returns true, a
+subsequent `ame_op` call with the same operation and datatype tuple has the
+defined result described by the instruction and by the operation table below.#
 
 
 |===
 h| Return Type l| Boolean
-h| Arguments   l| AmeOperation op, Bits<8> dest_dtype, Bits<8> src1_dtype, Bits<8> src2_dtype
+h| Arguments   l| AmeOperation op, Bits<32> dest_dtype, Bits<32> src1_dtype, Bits<32> src2_dtype
 |===
-
-[subs="specialchars,macros"]
-----
-return true;
-----
 
 [#udb:doc:func:ame_dtype_is_packed]
 === `ame_dtype_is_packed`
@@ -559,44 +564,86 @@ h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> impl_square, Bits<8> dtype
 
 
 [#udb:doc:func:ame_op]
-=== `ame_op`
+=== `ame_op` (builtin)
 Returns the result of src1 op src2 in dest_type.
 
-The bits above the destination datatype size are undefined, and should not be used.
+`ame_op` is the common semantic boundary for datatype interpretation,
+conversion, rounding, saturation, floating-point exceptional values, and
+custom datatype behavior.  It is a builtin because the specification permits
+implementation-defined and custom datatypes whose arithmetic cannot be
+expressed by interpreting their encoded bits in generic IDL.
+
+[#norm:ame_op_precondition]#`ame_op` is called only for a tuple for which
+`ame_op_supported` returned true.#
+
+[#norm:ame_op_result_width]#The low `sizeof(dest_dtype)` bits contain the result
+in the destination datatype's representation; bits above the destination
+datatype size are undefined and must not be used.#
 
 
 |===
 h| Return Type l| Bits<AME_MAX_DTYPE_SIZE>
-h| Arguments   l| AmeOperation op, Bits<8> src1_dtype, Bits<AME_MAX_DTYPE_SIZE> src1_value, Bits<8> src2_dtype, Bits<AME_MAX_DTYPE_SIZE> src2_value, Bits<8> dest_dtype
+h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE> src1_value, Bits<32> src2_dtype, Bits<AME_MAX_DTYPE_SIZE> src2_value, Bits<32> dest_dtype
 |===
 
-[subs="specialchars,macros"]
-----
-Bits<AME_MAX_DTYPE_SIZE> result;
-if pass:[(]op == AmeOperation::ADD1D) {
-  if pass:[(]((src1_dtype == INT4) || (src1_dtype == INT8) || (src1_dtype == INT16) || (src1_dtype == INT32) || (src1_dtype == INT64) || (src1_dtype == UINT4) || (src1_dtype == UINT8) || (src1_dtype == UINT16) || (src1_dtype == UINT32) || (src1_dtype == UINT64)) && ((src2_dtype == INT4) || (src2_dtype == INT8) || (src2_dtype == INT16) || (src2_dtype == INT32) || (src2_dtype == INT64) || (src2_dtype == UINT4) || (src2_dtype == UINT8) || (src2_dtype == UINT16) || (src2_dtype == UINT32) || (src2_dtype == UINT64))) {
-    result = src1_value pass:[+] src2_value;
-  } else {
-    result = 64'hxxxxxxxxxxxxxxxx;
-  }
-} else if pass:[(]op == AmeOperation::SUB1D) {
-  result = src2_value - src1_value;
-} else if pass:[(]op == AmeOperation::MEAN1D) {
-  result = (src1_value pass:[+] src2_value) >> 1;
-} else if pass:[(]op == AmeOperation::HDIFF1D) {
-  result = (src2_value - src1_value) >> 1;
-} else if pass:[(]op == AmeOperation::ABSDIFF1D) {
-  Bits<AME_MAX_DTYPE_SIZE> diff = src1_value - src2_value;
-  result = (src1_value >= src2_value) ? diff : (0 - diff);
-} else if pass:[(]op == AmeOperation::ABS1D) {
-  result = (src1_value[AME_MAX_DTYPE_SIZE - 1] == 0) ? src1_value : (0 - src1_value);
-} else if pass:[(]op == AmeOperation::MAX1D) {
-  result = (src1_value >= src2_value) ? src1_value : src2_value;
-} else if pass:[(]op == AmeOperation::MIN1D) {
-  result = (src1_value <= src2_value) ? src1_value : src2_value;
-}
-return result;
-----
+.Common operation semantics for the extended element-wise instruction set
+[cols="2,3,3",options="header"]
+|===
+| `AmeOperation` | Mathematical result before destination conversion | Required operand class
+
+| `COLBCAST1D`, `ROWBCAST1D`, `GATHER1D`, `GATHERROW1D`, `SHIFT1D`, `ROWSHIFT1D`
+| `src1`
+| The data source and destination datatypes are identical. Gather index operands are integer datatypes.
+
+| `REDUCEMINCOL1D`, `REDUCEMIN1D`
+| `min(src1, src2)` according to the source datatype's ordering
+| Ordered numeric source and destination datatypes
+
+| `ZERO1D`
+| Zero in the destination datatype
+| Any supported destination datatype
+
+| `SLL1D`
+| `src1 << src2`
+| Integer data and shift-amount datatypes
+
+| `SRA1D`
+| Signed arithmetic right shift of `src1` by `src2`
+| Signed integer data datatype and integer shift-amount datatype
+
+| `SRL1D`
+| Unsigned logical right shift of `src1` by `src2`
+| Integer data and shift-amount datatypes
+
+| `COS1D`, `SIN1D`, `TANH1D`
+| `cos(src1)`, `sin(src1)`, `tanh(src1)`, respectively
+| Floating-point source and destination datatypes
+
+| `REC1D`, `RSQRT1D`, `SQRT1D`
+| `1/src1`, `1/sqrt(src1)`, `sqrt(src1)`, respectively
+| Floating-point source and destination datatypes
+
+| `FRINTM1D`
+| `floor(src1)` represented as an integral-valued floating-point number
+| Floating-point source and destination datatypes
+
+| `FRINTN1D`
+| `src1` rounded to the nearest integral value, ties to even
+| Floating-point source and destination datatypes
+
+| `FRINTP1D`
+| `ceil(src1)` represented as an integral-valued floating-point number
+| Floating-point source and destination datatypes
+
+| `FRINTZ1D`
+| `src1` rounded to an integral value toward zero
+| Floating-point source and destination datatypes
+|===
+
+For `SLL1D`, `SRA1D`, and `SRL1D`, the caller supplies the already-masked
+unsigned shift amount defined by the corresponding instruction.  Floating-point
+results, including NaNs, infinities, signed zeros, overflow, underflow, and
+rounding, follow the destination datatype definition.
 
 [#udb:doc:func:ame_xform_rm_to_impl]
 === `ame_xform_rm_to_impl` (builtin)

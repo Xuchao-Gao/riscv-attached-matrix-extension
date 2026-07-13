@@ -1,0 +1,78 @@
+// Central registry for provisional instruction encodings introduced with the
+// extended element-wise instruction set.  Keep the values here rather than in
+// individual WaveDrom blocks; scripts/check-managed-encodings.rb verifies that
+// every managed encoding is unique.
+
+:ame-enc-mcolbcast-ew-x-funct7: 0x0
+:ame-enc-mcolgather-ew-funct7: 0x18
+:ame-enc-mcolshift-ew-x-funct7: 0x1
+:ame-enc-mcos-ew-funct12: 0x1c0
+:ame-enc-mfrintm-ew-funct12: 0x1e0
+:ame-enc-mfrintn-ew-funct12: 0x200
+:ame-enc-mfrintp-ew-funct12: 0x220
+:ame-enc-mfrintz-ew-funct12: 0x240
+:ame-enc-mmov-m-a-funct15: 0x18
+:ame-enc-mrec-ew-funct12: 0x260
+:ame-enc-mreducemin-col-funct12: 0x280
+:ame-enc-mreducemin-row-funct12: 0x2a0
+:ame-enc-mrowbcast-ew-x-funct7: 0x2
+:ame-enc-mrowgather-ew-funct7: 0x24
+:ame-enc-mrowshift-ew-x-funct7: 0x3
+:ame-enc-mrsqrt-ew-funct12: 0x2c0
+:ame-enc-msin-ew-funct12: 0x2e0
+:ame-enc-msll-ew-funct7: 0x25
+:ame-enc-msll-ew-x-funct7: 0x18
+:ame-enc-msqrt-ew-funct12: 0x300
+:ame-enc-msra-ew-funct7: 0x26
+:ame-enc-msra-ew-x-funct7: 0x19
+:ame-enc-msrl-ew-funct7: 0x27
+:ame-enc-msrl-ew-x-funct7: 0x1a
+:ame-enc-mtanh-ew-funct12: 0x320
+:ame-enc-mzero-2d-acc-funct22: 0x40008
+:ame-enc-mzero-2d-m-funct20: 0x40009
+
+[discrete]
+=== Provisional encoding registry
+
+The encodings in this table are provisional until the extension receives a
+stable encoding allocation.  Nevertheless, each instruction has a unique
+decode value so that assemblers, decoders, and executable models can
+distinguish every operation during development.  The values in this table are
+the single source of truth for the corresponding WaveDrom diagrams.
+
+[cols="2,1,1,1",options="header"]
+|===
+| Instruction | Operand format | `funct3` | Function field
+
+| `mcolbcast.ew.x` | `md,ms1,xs1` | `110` | `{ame-enc-mcolbcast-ew-x-funct7}`
+| `mcolshift.ew.x` | `md,ms1,xs1` | `110` | `{ame-enc-mcolshift-ew-x-funct7}`
+| `mrowbcast.ew.x` | `md,ms1,xs1` | `110` | `{ame-enc-mrowbcast-ew-x-funct7}`
+| `mrowshift.ew.x` | `md,ms1,xs1` | `110` | `{ame-enc-mrowshift-ew-x-funct7}`
+
+| `mcolgather.ew` | `md,ms1,ms2` | `000` | `{ame-enc-mcolgather-ew-funct7}`
+| `mrowgather.ew` | `md,ms1,ms2` | `000` | `{ame-enc-mrowgather-ew-funct7}`
+| `msll.ew` | `md,ms1,ms2` | `000` | `{ame-enc-msll-ew-funct7}`
+| `msra.ew` | `md,ms1,ms2` | `000` | `{ame-enc-msra-ew-funct7}`
+| `msrl.ew` | `md,ms1,ms2` | `000` | `{ame-enc-msrl-ew-funct7}`
+
+| `msll.ew.x` | `md,xs1,ms2` | `010` | `{ame-enc-msll-ew-x-funct7}`
+| `msra.ew.x` | `md,xs1,ms2` | `010` | `{ame-enc-msra-ew-x-funct7}`
+| `msrl.ew.x` | `md,xs1,ms2` | `010` | `{ame-enc-msrl-ew-x-funct7}`
+
+| `mcos.ew` | `md,ms1` | `001` | `{ame-enc-mcos-ew-funct12}`
+| `mfrintm.ew` | `md,ms1` | `001` | `{ame-enc-mfrintm-ew-funct12}`
+| `mfrintn.ew` | `md,ms1` | `001` | `{ame-enc-mfrintn-ew-funct12}`
+| `mfrintp.ew` | `md,ms1` | `001` | `{ame-enc-mfrintp-ew-funct12}`
+| `mfrintz.ew` | `md,ms1` | `001` | `{ame-enc-mfrintz-ew-funct12}`
+| `mrec.ew` | `md,ms1` | `001` | `{ame-enc-mrec-ew-funct12}`
+| `mrsqrt.ew` | `md,ms1` | `001` | `{ame-enc-mrsqrt-ew-funct12}`
+| `msin.ew` | `md,ms1` | `001` | `{ame-enc-msin-ew-funct12}`
+| `msqrt.ew` | `md,ms1` | `001` | `{ame-enc-msqrt-ew-funct12}`
+| `mtanh.ew` | `md,ms1` | `001` | `{ame-enc-mtanh-ew-funct12}`
+| `mreducemin.col` | `md,ms1` | `001` | `{ame-enc-mreducemin-col-funct12}`
+| `mreducemin.row` | `md,ms1` | `001` | `{ame-enc-mreducemin-row-funct12}`
+
+| `mmov.m.a` | `acc,ms` | `100` | `{ame-enc-mmov-m-a-funct15}`
+| `mzero.2d.acc` | `acc` | n/a | `{ame-enc-mzero-2d-acc-funct22}`
+| `mzero.2d.m` | `md` | n/a | `{ame-enc-mzero-2d-m-funct20}`
+|===
