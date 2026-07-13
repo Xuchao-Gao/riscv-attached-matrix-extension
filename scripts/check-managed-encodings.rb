@@ -50,6 +50,39 @@ end
 unused = attributes.keys - used_attributes.uniq
 abort "unused managed encoding attributes: #{unused.sort.join(', ')}" unless unused.empty?
 
+# Keep each managed WaveDrom operand field synchronized with the normative
+# Decode Variables block.  Collision checking alone cannot detect a diagram
+# that assigns an operand to different bits than the pseudocode reads.
+field_errors = []
+File.read(instructions_path).scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, section|
+  next unless section.include?("{ame-enc-")
+
+  diagram = section.lines.find { |line| line.start_with?('{"reg":') }
+  next unless diagram
+
+  position = 0
+  fields = {}
+  diagram.scan(/"bits":(\d+),"name":\s*(\{[^}]+\}|"[^"]+"|0x[0-9a-f]+|\d+)/) do |width_text, token|
+    width = width_text.to_i
+    fields[token[1...-1]] = [position + width - 1, position] if token.start_with?('"')
+    position += width
+  end
+
+  decoded = {}
+  section.scan(/(?:Bits|UInt|SInt)<\d+>\s+(\w+)\s*=\s*\$encoding\[(\d+)(?::(\d+))?\]/) do |field, hi, lo|
+    decoded[field] = [hi.to_i, (lo || hi).to_i]
+  end
+
+  fields.each do |field, range|
+    if !decoded.key?(field)
+      field_errors << "#{name} does not decode operand #{field} from diagram bits #{range.join(':')}"
+    elsif decoded[field] != range
+      field_errors << "#{name} operand #{field}: diagram #{range.join(':')}, decode #{decoded[field].join(':')}"
+    end
+  end
+end
+abort "managed encoding/decode mismatch:\n  #{field_errors.join("\n  ")}" unless field_errors.empty?
+
 collisions = entries.group_by { |entry| entry[:signature] }.values.select do |group|
   group.length > 1 && group.any? { |entry| entry[:managed] }
 end

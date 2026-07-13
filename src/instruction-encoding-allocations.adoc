@@ -11,7 +11,7 @@
 :ame-enc-mfrintn-ew-funct12: 0x200
 :ame-enc-mfrintp-ew-funct12: 0x220
 :ame-enc-mfrintz-ew-funct12: 0x240
-:ame-enc-mmov-m-a-funct15: 0x18
+:ame-enc-mmov-m-a-funct10: 0x19
 :ame-enc-mrec-ew-funct12: 0x260
 :ame-enc-mreducemin-col-funct12: 0x280
 :ame-enc-mreducemin-row-funct12: 0x2a0
@@ -72,7 +72,7 @@ the single source of truth for the corresponding WaveDrom diagrams.
 | `mreducemin.col` | `md,ms1` | `001` | `{ame-enc-mreducemin-col-funct12}`
 | `mreducemin.row` | `md,ms1` | `001` | `{ame-enc-mreducemin-row-funct12}`
 
-| `mmov.m.a` | `acc,ms` | `100` | `{ame-enc-mmov-m-a-funct15}`
+| `mmov.m.a` | `acc,ms` | `100` | `{ame-enc-mmov-m-a-funct10}`
 | `mzero.2d.acc` | `acc` | n/a | `{ame-enc-mzero-2d-acc-funct22}`
 | `mzero.2d.m` | `md` | n/a | `{ame-enc-mzero-2d-m-funct20}`
 |===
