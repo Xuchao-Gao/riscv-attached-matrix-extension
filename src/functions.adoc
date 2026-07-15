@@ -62,6 +62,19 @@ U32 size = dtype_val[7:0];
 return size > 0 && size < AME_UNIT_DATATYPE_SIZE;
 ----
 
+[#udb:doc:func:ame_dtype_is_integer]
+=== `ame_dtype_is_integer` (builtin)
+Returns true if `dtype` is a supported signed or unsigned integer datatype.
+Returns false for zero, unknown, floating-point, and other non-integer
+datatypes. Indexed operations use this predicate independently from their
+data-operation support check so that an index datatype is never mistaken for
+an arithmetic operand datatype.
+
+|===
+h| Return Type l| Boolean
+h| Arguments   l| Bits<32> dtype
+|===
+
 [#udb:doc:func:ame_dtype_val_to_size]
 === `ame_dtype_val_to_size`
 Given an integral datatype value, return the size of the datatype in bits
@@ -678,6 +691,14 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 | `src1`
 | The data source and destination datatypes are identical. Gather index operands are integer datatypes.
 
+| `CONV1D`
+| The numeric value of `src1` converted to the destination datatype; `src2` is ignored
+| A supported source-to-destination conversion tuple
+
+| `ADD1D`
+| `src1 + src2`
+| Supported numeric source and destination datatypes
+
 | `REDUCEMINCOL1D`, `REDUCEMIN1D`
 | `min(src1, src2)` according to the source datatype's ordering
 | Identical ordered numeric source and destination datatypes
@@ -689,6 +710,14 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 | `PREFIXMAXCOL1D`, `PREFIXMAX1D`, `REDUCEMAXCOL1D`, `REDUCEMAX1D`
 | `max(src1, src2)` according to the source datatype's ordering
 | Identical ordered numeric source and destination datatypes
+
+| `SCATADDCOL1D`, `SCATADD1D`
+| `src1 + src2`, where `src2` is the current destination element
+| Numeric contribution source; the second source and result use the destination datatype
+
+| `SCATMAXCOL1D`, `SCATMAX1D`
+| `max(src1, src2)`, where `src2` is the current destination element
+| Ordered numeric contribution source; the second source and result use the destination datatype
 
 | `ZERO1D`
 | Zero in the destination datatype
@@ -757,6 +786,19 @@ between `-0` and `+0` returns `+0`.
 | Exact selection of one operand.  Prefix and reduction instructions apply this
 binary operation in ascending source-element order.
 
+| `SCATMAXCOL1D`, `SCATMAX1D`
+| If either operand is a NaN, return the destination datatype's canonical quiet
+NaN. Otherwise compare numerically after interpreting each operand in its own
+datatype. A tie between `-0` and `+0` returns `+0`.
+| Each selected destination is updated in ascending source-element order.
+
+| `ADD1D`
+| If either operand is a NaN, or if opposite-signed infinities are added, return
+the destination datatype's canonical quiet NaN. Otherwise an infinity plus a
+finite value, or two same-signed infinities, returns that infinity.
+| The sum is correctly rounded once according to the destination datatype's
+rounding mode.
+
 | `PREFIXADDCOL1D`, `PREFIXADD1D`, `REDUCEADDCOL1D`, `REDUCEADD1D`
 | If either operand is a NaN, or if opposite-signed infinities are added, return
 the destination datatype's canonical quiet NaN.  Otherwise an infinity plus a
@@ -764,6 +806,12 @@ finite value, or two same-signed infinities, returns that infinity.
 | Each binary addition is correctly rounded according to the destination
 datatype's rounding mode.  Prefix and reduction instructions apply additions
 in ascending source-element order.
+
+| `SCATADDCOL1D`, `SCATADD1D`
+| The NaN and infinity results are the same as for `ADD1D`.
+| Every contribution is correctly rounded to the destination datatype before
+the next contribution to the same destination is applied; updates occur in
+ascending source-element order.
 
 | `SIN1D`, `COS1D`
 | A NaN or either infinity returns the destination datatype's canonical quiet

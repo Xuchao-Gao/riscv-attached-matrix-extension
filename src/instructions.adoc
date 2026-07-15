@@ -2118,7 +2118,8 @@ Operation::
 Bits<32> dest_dtype = Md[md];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
-if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::GATHER1D, dest_dtype, src1_dtype, src2_dtype)) {
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::GATHER1D, dest_dtype, src1_dtype, src1_dtype) ||
+    !<<udb:doc:func:ame_dtype_is_integer,ame_dtype_is_integer>>pass:[(]src2_dtype)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
@@ -7554,7 +7555,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x5,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x1,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x5,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": {ame-enc-mpack-ew-x-funct7},"type":2}]}
 ....
 
 Description::
@@ -9095,7 +9096,8 @@ Operation::
 Bits<32> dest_dtype = Md[md];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
-if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::GATHERROW1D, dest_dtype, src1_dtype, src2_dtype)) {
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::GATHERROW1D, dest_dtype, src1_dtype, src1_dtype) ||
+    !<<udb:doc:func:ame_dtype_is_integer,ame_dtype_is_integer>>pass:[(]src2_dtype)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
@@ -9662,7 +9664,8 @@ Operation::
 Bits<32> dest_dtype = Md[md];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
-if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SCATADDCOL1D, dest_dtype, src1_dtype, src2_dtype)) {
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SCATADDCOL1D, dest_dtype, src1_dtype, dest_dtype) ||
+    !<<udb:doc:func:ame_dtype_is_integer,ame_dtype_is_integer>>pass:[(]src2_dtype)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
@@ -9780,7 +9783,8 @@ Operation::
 Bits<32> dest_dtype = Md[md];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
-if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SCATADD1D, dest_dtype, src1_dtype, src2_dtype)) {
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SCATADD1D, dest_dtype, src1_dtype, dest_dtype) ||
+    !<<udb:doc:func:ame_dtype_is_integer,ame_dtype_is_integer>>pass:[(]src2_dtype)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
@@ -9898,7 +9902,8 @@ Operation::
 Bits<32> dest_dtype = Md[md];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
-if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SCATMAXCOL1D, dest_dtype, src1_dtype, src2_dtype)) {
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SCATMAXCOL1D, dest_dtype, src1_dtype, dest_dtype) ||
+    !<<udb:doc:func:ame_dtype_is_integer,ame_dtype_is_integer>>pass:[(]src2_dtype)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
@@ -10016,7 +10021,8 @@ Operation::
 Bits<32> dest_dtype = Md[md];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
-if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SCATMAX1D, dest_dtype, src1_dtype, src2_dtype)) {
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SCATMAX1D, dest_dtype, src1_dtype, dest_dtype) ||
+    !<<udb:doc:func:ame_dtype_is_integer,ame_dtype_is_integer>>pass:[(]src2_dtype)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
@@ -11877,7 +11883,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x5,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x1,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x5,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": {ame-enc-munpack-ew-x-funct7},"type":2}]}
 ....
 
 Description::

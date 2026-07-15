@@ -1,7 +1,7 @@
 // Central registry for provisional instruction encodings introduced with the
 // extended element-wise instruction set.  Keep the values here rather than in
 // individual WaveDrom blocks; scripts/check-managed-encodings.rb verifies that
-// every managed encoding is unique.
+// every managed encoding is disjoint from every other decode pattern.
 
 :ame-enc-mcolbcast-ew-x-funct7: 0x0
 :ame-enc-mcolgather-ew-funct7: 0x18
@@ -12,6 +12,7 @@
 :ame-enc-mfrintp-ew-funct12: 0x220
 :ame-enc-mfrintz-ew-funct12: 0x240
 :ame-enc-mmov-m-a-funct10: 0x19
+:ame-enc-mpack-ew-x-funct7: 0x6
 :ame-enc-mrec-ew-funct12: 0x260
 :ame-enc-mreducemin-col-funct12: 0x280
 :ame-enc-mreducemin-row-funct12: 0x2a0
@@ -28,7 +29,8 @@
 :ame-enc-msrl-ew-funct7: 0x27
 :ame-enc-msrl-ew-x-funct7: 0x1a
 :ame-enc-mtanh-ew-funct12: 0x320
-:ame-enc-mzero-2d-acc-funct22: 0x40008
+:ame-enc-munpack-ew-x-funct7: 0x7
+:ame-enc-mzero-2d-acc-funct22: 0x4000c
 :ame-enc-mzero-2d-m-funct20: 0x40009
 
 [discrete]
@@ -58,6 +60,9 @@ the single source of truth for the corresponding WaveDrom diagrams.
 | `msll.ew.x` | `md,xs1,ms2` | `010` | `{ame-enc-msll-ew-x-funct7}`
 | `msra.ew.x` | `md,xs1,ms2` | `010` | `{ame-enc-msra-ew-x-funct7}`
 | `msrl.ew.x` | `md,xs1,ms2` | `010` | `{ame-enc-msrl-ew-x-funct7}`
+
+| `mpack.ew.x` | `md,ms1,xs1` | `101` | `{ame-enc-mpack-ew-x-funct7}`
+| `munpack.ew.x` | `md,ms1,xs1` | `101` | `{ame-enc-munpack-ew-x-funct7}`
 
 | `mcos.ew` | `md,ms1` | `001` | `{ame-enc-mcos-ew-funct12}`
 | `mfrintm.ew` | `md,ms1` | `001` | `{ame-enc-mfrintm-ew-funct12}`

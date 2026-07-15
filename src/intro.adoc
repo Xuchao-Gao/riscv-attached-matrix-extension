@@ -43,3 +43,11 @@ Open TODO items:
 * Formal memory model definition
 * State management for shared AME engines
 * menvcfg options
+* Decide whether prefix and reduction operations support widening source-to-destination
+  datatype tuples. If widening is supported, define the accumulator datatype, initial
+  source conversion, per-step rounding, overflow, and saturation behavior.
+* Rename the internal `AmeOperation::MUX1D` selector to the direction-explicit
+  `AmeOperation::MUXLT1D`, or otherwise standardize the internal conditional-move
+  operation names. The architectural instruction is already named `mcmovlt.ew`.
+* Complete the public `ame_op` operation table for the ordinary element-wise operations,
+  including their supported source/destination datatype relationships.

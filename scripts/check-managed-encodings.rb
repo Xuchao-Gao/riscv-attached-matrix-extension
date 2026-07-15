@@ -41,10 +41,25 @@ File.foreach(instructions_path) do |line|
     end
   end
 
-  # Operand names do not contribute to the fixed decode pattern.  Field widths,
-  # fixed values, and field positions remain part of the signature.
-  signature = resolved.gsub(/"name":\s*"[^"]+"/, '"name":"*"').gsub(/\s+/, "")
-  entries << { name: instruction, signature: signature, managed: managed }
+  # Build a fixed-bit mask/value pair.  Exact WaveDrom equality is insufficient
+  # for detecting overlap between an encoding with a variable operand field and
+  # a more-specific encoding that fixes some of those operand bits.
+  position = 0
+  mask = 0
+  value = 0
+  resolved.scan(/"bits":(\d+),"name":\s*("[^"]+"|0x[0-9a-f]+|\d+)/) do |width_text, token|
+    width = width_text.to_i
+    unless token.start_with?('"')
+      field_value = token.start_with?("0x") ? token.to_i(16) : token.to_i
+      field_mask = ((1 << width) - 1) << position
+      mask |= field_mask
+      value |= field_value << position
+    end
+    position += width
+  end
+  abort "#{instruction} encoding is #{position} bits, expected 32" unless position == 32
+
+  entries << { name: instruction, mask: mask, value: value, managed: managed }
 end
 
 unused = attributes.keys - used_attributes.uniq
@@ -83,13 +98,16 @@ File.read(instructions_path).scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |nam
 end
 abort "managed encoding/decode mismatch:\n  #{field_errors.join("\n  ")}" unless field_errors.empty?
 
-collisions = entries.group_by { |entry| entry[:signature] }.values.select do |group|
-  group.length > 1 && group.any? { |entry| entry[:managed] }
+collisions = entries.combination(2).select do |left, right|
+  next false unless left[:managed] || right[:managed]
+
+  common_mask = left[:mask] & right[:mask]
+  ((left[:value] ^ right[:value]) & common_mask).zero?
 end
 
 unless collisions.empty?
-  collisions.each do |group|
-    warn "managed encoding collision: #{group.map { |entry| entry[:name] }.join(', ')}"
+  collisions.each do |left, right|
+    warn "managed encoding collision: #{left[:name]}, #{right[:name]}"
   end
   exit 1
 end
