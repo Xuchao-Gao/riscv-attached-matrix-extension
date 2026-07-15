@@ -559,7 +559,64 @@ representation of the square.
 
 |===
 h| Return Type l| Bits<AME_MAX_SQUARE_SIZE>
-h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> impl_square, Bits<8> dtype
+h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> impl_square, Bits<32> dtype
+|===
+
+
+[#udb:doc:func:ame_stage_m_element_write]
+=== `ame_stage_m_element_write` (builtin)
+Stages one logical row-major element write to an `M` register group.
+
+The register containing `element_index` and the element's physical bit
+position within that register are derived from `dtype` and the
+implementation-defined register layout.  The low `sizeof(dtype)` bits of
+`value` are written.
+
+The first call for a destination group in an instruction initializes its
+staged image from the pre-instruction architectural value.  Subsequent calls
+for that group update the same staged image, so distinct element writes
+compose rather than overwrite one another.  The staged image becomes visible
+only under the atomic register writeback rules in the Programming Model.
+
+This builtin must be called only after datatype, register-group alignment,
+index, and operation-support checks have succeeded.
+
+|===
+h| Return Type l| void
+h| Arguments   l| U32 md, Bits<32> dtype, U32 element_index, Bits<AME_MAX_DTYPE_SIZE> value
+|===
+
+
+[#udb:doc:func:ame_stage_acc_element_write]
+=== `ame_stage_acc_element_write` (builtin)
+Stages one logical row-major element write to an `Acc` register.  Element
+mapping, composition of repeated writes, and commit behavior are identical to
+`ame_stage_m_element_write`, except that the destination is the accumulator
+named by `acc`.
+
+|===
+h| Return Type l| void
+h| Arguments   l| Bits<2> acc, Bits<32> dtype, U32 element_index, Bits<AME_MAX_DTYPE_SIZE> value
+|===
+
+
+[#udb:doc:func:ame_stage_m_element_rmw]
+=== `ame_stage_m_element_rmw` (builtin)
+Performs a staged read-modify-write of one logical row-major element in an `M`
+register group.  The current operand is read from the staged destination image
+if that element was written earlier by the same instruction, and otherwise
+from the pre-instruction architectural value.  The builtin computes
+`ame_op(op, src_dtype, src_value, dest_dtype, current_value, dest_dtype)` and
+stages the result.
+
+This ordering gives deterministic scatter behavior when multiple source
+elements select the same destination: updates are applied in the instruction's
+specified loop order.  The same support and atomic writeback preconditions as
+`ame_stage_m_element_write` apply.
+
+|===
+h| Return Type l| void
+h| Arguments   l| U32 md, Bits<32> dest_dtype, U32 element_index, AmeOperation op, Bits<32> src_dtype, Bits<AME_MAX_DTYPE_SIZE> src_value
 |===
 
 
@@ -597,7 +654,7 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 
 | `REDUCEMINCOL1D`, `REDUCEMIN1D`
 | `min(src1, src2)` according to the source datatype's ordering
-| Ordered numeric source and destination datatypes
+| Identical ordered numeric source and destination datatypes
 
 | `ZERO1D`
 | Zero in the destination datatype
@@ -641,9 +698,70 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 |===
 
 For `SLL1D`, `SRA1D`, and `SRL1D`, the caller supplies the already-masked
-unsigned shift amount defined by the corresponding instruction.  Floating-point
-results, including NaNs, infinities, signed zeros, overflow, underflow, and
-rounding, follow the destination datatype definition.
+unsigned shift amount defined by the corresponding instruction.  `ZERO1D`
+returns the datatype's semantic zero; instructions must not assume that its
+encoded representation is an all-zero bit pattern.  Floating-point results
+follow the rules below.
+
+[#norm:ame_fp_special_values]
+.Floating-point special values and accuracy
+[cols="2,4,4",options="header"]
+|===
+| Operation | Required special-value result | Finite-result accuracy
+
+| `REDUCEMINCOL1D`, `REDUCEMIN1D`
+| If either operand is a NaN, return the destination datatype's canonical quiet
+NaN.  Otherwise compare using the source datatype's numerical ordering.  A tie
+between `-0` and `+0` returns `-0`.
+| Exact selection of one operand.  Reduction instructions apply this binary
+operation in ascending source-element order.
+
+| `SIN1D`, `COS1D`
+| A NaN or either infinity returns the destination datatype's canonical quiet
+NaN.  `sin(+/-0)` returns the same signed zero; `cos(+/-0)` returns `+1`.
+| Implementation-defined.  An implementation must document its maximum error,
+in ulp, for every supported operation and datatype tuple.
+
+| `TANH1D`
+| A NaN returns the destination datatype's canonical quiet NaN. `tanh(+/-0)`
+returns the same signed zero and `tanh(+/-infinity)` returns `+/-1`.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `REC1D`
+| A NaN returns the destination datatype's canonical quiet NaN. `1/(+/-0)`
+returns the correspondingly signed infinity, and `1/(+/-infinity)` returns the
+correspondingly signed zero.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `RSQRT1D`
+| A NaN or a negative finite value other than `-0` returns the destination
+datatype's canonical quiet NaN. `rsqrt(+0)` returns `+infinity`, `rsqrt(-0)`
+returns `-infinity`, and `rsqrt(+infinity)` returns `+0`.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `SQRT1D`
+| A NaN or a negative finite value other than `-0` returns the destination
+datatype's canonical quiet NaN. `sqrt(+/-0)` preserves the signed zero and
+`sqrt(+infinity)` returns `+infinity`.
+| Correctly rounded according to the destination datatype's rounding mode.
+
+| `FRINTM1D`, `FRINTN1D`, `FRINTP1D`, `FRINTZ1D`
+| A NaN returns the destination datatype's canonical quiet NaN.  An infinity is
+unchanged and a zero preserves its sign.
+| Exact when the integral value is representable.  The operation-specific
+rounding direction overrides the destination datatype's rounding-mode field.
+|===
+
+For these operations, a signaling NaN is treated as a NaN and the result is
+quieted.  If a mathematical result is infinite but the destination datatype
+does not encode infinity, the result saturates to that datatype's signed
+minimum or maximum, as appropriate.  An operation/datatype tuple that cannot
+represent a required NaN result is unsupported.
+
+AME defines no floating-point exception flags.  Once `ame_op_supported` has
+accepted a tuple, the special cases above are normal data results: they neither
+set `amestatus.UN` nor raise an exception.  `amestatus.UN` reports only an
+unsupported operation/datatype tuple.
 
 [#udb:doc:func:ame_xform_rm_to_impl]
 === `ame_xform_rm_to_impl` (builtin)
@@ -653,7 +771,7 @@ representation of the square.
 
 |===
 h| Return Type l| Bits<AME_MAX_SQUARE_SIZE>
-h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> raster_square, Bits<8> dtype
+h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> raster_square, Bits<32> dtype
 |===
 
 
@@ -2083,7 +2201,7 @@ representation of the square.
 
 |===
 h| Return Type l| Bits<AME_MAX_SQUARE_SIZE>
-h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> cm_square, Bits<8> dtype
+h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> cm_square, Bits<32> dtype
 |===
 
 
@@ -2095,7 +2213,7 @@ representation of the square.
 
 |===
 h| Return Type l| Bits<AME_MAX_SQUARE_SIZE>
-h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> impl_square, Bits<8> dtype
+h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> impl_square, Bits<32> dtype
 |===
 
 

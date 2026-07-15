@@ -6,6 +6,7 @@
 
 instructions_path = File.join(__dir__, "..", "src", "instructions.adoc")
 functions_path = File.join(__dir__, "..", "src", "functions.adoc")
+programming_model_path = File.join(__dir__, "..", "src", "programming_model.adoc")
 
 managed_instructions = []
 instruction = nil
@@ -35,4 +36,12 @@ unless missing.empty?
   abort "managed AmeOperation values missing from ame_op contract: #{missing.sort.join(', ')}"
 end
 
-puts "checked #{operations.length} managed AmeOperation values: all have shared semantics"
+programming_model = File.read(programming_model_path)
+missing_from_programming_model = managed_instructions.reject do |name|
+  programming_model.include?(",#{name}>>")
+end
+unless missing_from_programming_model.empty?
+  abort "managed instructions missing from programming model: #{missing_from_programming_model.sort.join(', ')}"
+end
+
+puts "checked #{operations.length} managed AmeOperation values and #{managed_instructions.length} programming-model entries"

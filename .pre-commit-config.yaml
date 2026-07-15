@@ -32,7 +32,14 @@ repos:
         name: check-managed-operations
         entry: ruby scripts/check-managed-operations.rb
         language: system
-        files: ^src/(functions|instruction-encoding-allocations|instructions)\.adoc$
+        files: ^src/(functions|instruction-encoding-allocations|instructions|programming_model)\.adoc$
+        pass_filenames: false
+
+      - id: check-instruction-semantics
+        name: check-instruction-semantics
+        entry: ruby scripts/check-instruction-semantics.rb
+        language: system
+        files: ^src/(functions|instructions|programming_model)\.adoc$
         pass_filenames: false
 
       # NOTE: check-normative-tags moved to GitHub Actions workflow

@@ -122,10 +122,10 @@ Using any other register in the group results in undefined behavior.
 # precondition:
 # a square is in m[2-3]
 
-madd.1d m2, m2, m2  # well-defined, m2 = m2 + m2
+madd.ew m2, m2, m2  # well-defined, m2 = m2 + m2
 
-madd.1d m2, m3, m3  # undefined
-madd.1d m3, m2, m2  # undefined
+madd.ew m2, m3, m3  # undefined
+madd.ew m3, m2, m2  # undefined
 ----
 
 [[operand-formation]]
@@ -503,6 +503,24 @@ Bitwise::
 | <<udb:doc:inst:mxor_ew_x,mxor.ew.x>>
 | `D[i] = c ^ B[i]`
 | Elementwise scalar bitwise XOR
+| <<udb:doc:inst:msll_ew,msll.ew>>
+| `D[i] = A[i] << (B[i] mod EW)`
+| Elementwise logical left shift
+| <<udb:doc:inst:msll_ew_x,msll.ew.x>>
+| `D[i] = B[i] << (c mod EW)`
+| Elementwise scalar logical left shift
+| <<udb:doc:inst:msra_ew,msra.ew>>
+| `D[i] = A[i] >>s (B[i] mod EW)`
+| Elementwise arithmetic right shift
+| <<udb:doc:inst:msra_ew_x,msra.ew.x>>
+| `D[i] = B[i] >>s (c mod EW)`
+| Elementwise scalar arithmetic right shift
+| <<udb:doc:inst:msrl_ew,msrl.ew>>
+| `D[i] = A[i] >>u (B[i] mod EW)`
+| Elementwise logical right shift
+| <<udb:doc:inst:msrl_ew_x,msrl.ew.x>>
+| `D[i] = B[i] >>u (c mod EW)`
+| Elementwise scalar logical right shift
 |===
 
 Comparison::
@@ -575,7 +593,40 @@ Nonlinear::
 | <<udb:doc:inst:msublog2_ew_x,msublog2.ew.x>>
 | `D[i] = c - log~2~(\|B[i]\|)`
 | Elementwise scalar bias minus log2
+| <<udb:doc:inst:mcos_ew,mcos.ew>>
+| `D[i] = cos(A[i])`
+| Elementwise cosine
+| <<udb:doc:inst:msin_ew,msin.ew>>
+| `D[i] = sin(A[i])`
+| Elementwise sine
+| <<udb:doc:inst:mtanh_ew,mtanh.ew>>
+| `D[i] = tanh(A[i])`
+| Elementwise hyperbolic tangent
+| <<udb:doc:inst:mrec_ew,mrec.ew>>
+| `D[i] = 1 / A[i]`
+| Elementwise reciprocal
+| <<udb:doc:inst:mrsqrt_ew,mrsqrt.ew>>
+| `D[i] = 1 / sqrt(A[i])`
+| Elementwise reciprocal square root
+| <<udb:doc:inst:msqrt_ew,msqrt.ew>>
+| `D[i] = sqrt(A[i])`
+| Elementwise square root
+| <<udb:doc:inst:mfrintm_ew,mfrintm.ew>>
+| `D[i] = floor(A[i])`
+| Round floating-point elements toward minus infinity
+| <<udb:doc:inst:mfrintn_ew,mfrintn.ew>>
+| `D[i] = roundTiesToEven(A[i])`
+| Round floating-point elements to nearest, ties to even
+| <<udb:doc:inst:mfrintp_ew,mfrintp.ew>>
+| `D[i] = ceil(A[i])`
+| Round floating-point elements toward plus infinity
+| <<udb:doc:inst:mfrintz_ew,mfrintz.ew>>
+| `D[i] = trunc(A[i])`
+| Round floating-point elements toward zero
 |===
+
+The floating-point special-value and accuracy behavior of these operations is
+defined by the shared `ame_op` contract in <<norm:ame_fp_special_values>>.
 
 ==== Reduction operations
 
@@ -608,7 +659,16 @@ AME reduction operations reduce values across a row of a square.
 | <<udb:doc:inst:mreducemax_row,mreducemax.row>>
 | `D[i,:] = max~k~(A[i,k])`
 | Elementwise row reduce (max)
+| <<udb:doc:inst:mreducemin_col,mreducemin.col>>
+| `D[:,j] = min~k~(A[k,j])`
+| Elementwise column reduce (min)
+| <<udb:doc:inst:mreducemin_row,mreducemin.row>>
+| `D[i,:] = min~k~(A[i,k])`
+| Elementwise row reduce (min)
 |===
+
+Minimum reductions consume source elements in ascending index order.  Their
+NaN and signed-zero behavior is defined in <<norm:ame_fp_special_values>>.
 
 ==== Permutation operations
 
@@ -617,6 +677,9 @@ AME permutation operations swizzle data within a single square.
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
+| <<udb:doc:inst:mcolbcast_ew_x,mcolbcast.ew.x>>
+| `D[i,j] = A[i,c]`
+| Broadcast one selected column to all columns
 | <<udb:doc:inst:mcolunzip_ew,mcolunzip.ew>>
 | `D[i,j] = A[i,2j] +
  D[i, N/2+j] = A[i,2j+1]`
@@ -649,18 +712,30 @@ AME permutation operations swizzle data within a single square.
 | `D[i, B[i,j]] = max(D[i,B[i,j]], A[i,j])`
 | Elementwise scatter-max
 | <<udb:doc:inst:mcolshift_ew_x,mcolshift.ew.x>>
-| `D[i,j] = A[i, j+imm]`
-| Elementwise row shift by constant offset
+| `D[i,j] = A[i, j+c]`, with zero fill
+| Elementwise column shift by scalar offset
+| <<udb:doc:inst:mrowbcast_ew_x,mrowbcast.ew.x>>
+| `D[i,j] = A[c,j]`
+| Broadcast one selected row to all rows
+| <<udb:doc:inst:mrowgather_ew,mrowgather.ew>>
+| `D[i,j] = A[B[i,j],j]`
+| Elementwise row gather
+| <<udb:doc:inst:mrowshift_ew_x,mrowshift.ew.x>>
+| `D[i,j] = A[i+c,j]`, with zero fill
+| Elementwise row shift by scalar offset
 |===
 
 ==== Register move / data conversion
 
 `<<udb:doc:inst:mmov_m_m,mmov.m.m>>` copies all elements from one `M` register to another.
 `<<udb:doc:inst:mmov_a_m,mmov.a.m>>` copies all elements from an `Acc` register to an `M` register.
-In both cases, the source and destination datatypes must match; if they differ, `amestatus.UN` is set and the destination is left unchanged.
+`<<udb:doc:inst:mmov_m_a,mmov.m.a>>` copies all elements from an `M` register to an `Acc` register.
+In all three cases, the source and destination datatypes must match; if they differ, `amestatus.UN` is set and the destination is left unchanged.
 
 `<<udb:doc:inst:mzero_2d_acc,mzero.2d.acc>>` writes zero to every element of an `Acc` register,
 typically used to initialize an accumulator before a matrix multiply sequence.
+`<<udb:doc:inst:mzero_2d_m,mzero.2d.m>>` writes zero in the configured datatype to every logical
+element of an `M` register group, including packed element positions.
 
 [cols="1,2,3",options="header"]
 |===
@@ -671,9 +746,15 @@ typically used to initialize an accumulator before a matrix multiply sequence.
 | <<udb:doc:inst:mmov_m_m,mmov.m.m>>
 | `D[i] = A[i]`
 | Elementwise unconditional move between M registers
+| <<udb:doc:inst:mmov_m_a,mmov.m.a>>
+| `acc[i] = A[i]`
+| Elementwise unconditional move from M register to accumulator
 | <<udb:doc:inst:mzero_2d_acc,mzero.2d.acc>>
-| `C = 0`
-| Clear accumulator tile
+| `C[i] = zero(Ad[acc])`
+| Clear every logical element of an accumulator tile
+| <<udb:doc:inst:mzero_2d_m,mzero.2d.m>>
+| `D[i] = zero(Md[md])`
+| Clear every logical element of an M register group
 |===
 
 `<<udb:doc:inst:mconv_ew,mconv.ew>>` converts element data from one datatype to another.
