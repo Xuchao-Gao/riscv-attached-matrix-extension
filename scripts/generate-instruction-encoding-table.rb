@@ -47,7 +47,17 @@ File.read(instructions_path).scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |nam
   end
 
   abort "#{name} encoding is #{position} bits, expected 32" unless position == 32
-  entries << { name: name, mnemonic: mnemonic, fields: fields, mask: mask, value: match_value }
+  src1 = fields.find { |field| field[:hi] == 19 && field[:lo] == 15 }
+  src2 = fields.find { |field| field[:hi] == 24 && field[:lo] == 20 }
+  format = if src2[:kind] == :operand
+             "R3"
+           elsif src1[:kind] == :operand
+             "R2"
+           else
+             "R1"
+           end
+  entries << { name: name, mnemonic: mnemonic, fields: fields, mask: mask,
+               value: match_value, format: format }
 end
 
 overlaps = entries.combination(2).select do |left, right|
@@ -84,6 +94,9 @@ lines << ""
 lines << "| Check | Count |"
 lines << "|---|---:|"
 lines << "| Instructions | #{entries.length} |"
+entries.group_by { |entry| entry[:format] }.sort.each do |format, members|
+  lines << "| #{format} encodings | #{members.length} |"
+end
 lines << "| Exact duplicate decode patterns | #{exact_duplicates.length} |"
 lines << "| Partial decode-space overlaps | #{partial_overlaps.length} |"
 
@@ -96,33 +109,24 @@ unless overlaps.empty?
 end
 
 lines << ""
-lines << "## Resolved conflicts found by this audit"
+lines << "## Format allocation policy"
 lines << ""
-lines << "The original `funct7=0x00` through `0x07` assignments for the accumulator-format " \
-         "matrix-multiply family partially overlapped the scalar `.ew.x` decode space. " \
-         "The same 32-bit word selected both instructions when `md` was 0, 2, 4, or 6. " \
-         "They now use the verified-free contiguous range `0x1b` through `0x22`."
+lines << "Every encoding retains `funct7[31:25]`, `funct3[14:12]`, and " \
+         "`opcode[6:0]`. R2 converts only `src2[24:20]` to `xfunct5`; R1 also " \
+         "converts `src1[19:15]`, yielding `xfunct10`. All instructions use " \
+         "`funct3=000`; R0 is not defined."
 lines << ""
-lines << "| Accumulator instruction | Old `funct7` | Conflicting scalar instruction | New `funct7` |"
-lines << "|---|---:|---|---:|"
-[
-  ["mmul.2d", 0x00, "madd.ew.x", 0x1b],
-  ["mmulacc.2d", 0x01, "msub.ew.x", 0x1c],
-  ["mmulneg.2d", 0x02, "mmin.ew.x", 0x1d],
-  ["mmulaccneg.2d", 0x03, "mmax.ew.x", 0x1e],
-  ["mmulat.2d", 0x04, "mmean.ew.x", 0x1f],
-  ["mmulatacc.2d", 0x05, "mabsdiff.ew.x", 0x20],
-  ["mmulbt.2d", 0x06, "mhdiff.ew.x", 0x21],
-  ["mmulbtacc.2d", 0x07, "mand.ew.x", 0x22]
-].each do |accumulator, old_funct7, scalar, new_funct7|
-  lines << format("| `%s` | `0x%02x` | `%s` | `0x%02x` |", accumulator, old_funct7, scalar, new_funct7)
-end
+lines << "A `(funct7, funct3, opcode)` bank belongs to only one format. This rule " \
+         "prevents a more-specific R1/R2 pattern from being hidden inside an R2/R3 decode."
+lines << "R3 uses `funct7=0x00..0x50`. R2 uses `funct7=0x51` with all 32 " \
+         "`xfunct5` values before continuing at `funct7=0x52`; R1 uses " \
+         "`funct7=0x53` with `xfunct10=0..1`. Values `0x54..0x7f` remain free."
 
 lines << ""
 lines << "## All instruction encodings"
 lines << ""
-lines << "| # | Instruction | Mnemonic | Operand fields | Function/fixed fields | Mask | Match |"
-lines << "|---:|---|---|---|---|---|---|"
+lines << "| # | Format | Instruction | Mnemonic | Operand fields | Function/fixed fields | Mask | Match |"
+lines << "|---:|---|---|---|---|---|---|---|"
 
 entries.each_with_index do |entry, index|
   operands = entry[:fields].select { |field| field[:kind] == :operand }
@@ -134,8 +138,9 @@ entries.each_with_index do |entry, index|
                        .map { |field| hex_field.call(field) }
                        .join("; ")
   lines << format(
-    "| %d | `%s` | `%s` | %s | %s | `0x%08x` | `0x%08x` |",
+    "| %d | %s | `%s` | `%s` | %s | %s | `0x%08x` | `0x%08x` |",
     index + 1,
+    entry[:format],
     escape.call(entry[:name]),
     escape.call(entry[:mnemonic]),
     operands,

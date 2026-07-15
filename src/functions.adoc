@@ -612,7 +612,7 @@ named by `acc`.
 
 |===
 h| Return Type l| void
-h| Arguments   l| Bits<2> acc, Bits<32> dtype, U32 element_index, Bits<AME_MAX_DTYPE_SIZE> value
+h| Arguments   l| Bits<5> acc, Bits<32> dtype, U32 element_index, Bits<AME_MAX_DTYPE_SIZE> value
 |===
 
 

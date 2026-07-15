@@ -9,149 +9,144 @@ The canonical decoder test is `(instruction_word & mask) == match`. Fixed fields
 | Check | Count |
 |---|---:|
 | Instructions | 124 |
+| R1 encodings | 2 |
+| R2 encodings | 41 |
+| R3 encodings | 81 |
 | Exact duplicate decode patterns | 0 |
 | Partial decode-space overlaps | 0 |
 
-## Resolved conflicts found by this audit
+## Format allocation policy
 
-The original `funct7=0x00` through `0x07` assignments for the accumulator-format matrix-multiply family partially overlapped the scalar `.ew.x` decode space. The same 32-bit word selected both instructions when `md` was 0, 2, 4, or 6. They now use the verified-free contiguous range `0x1b` through `0x22`.
+Every encoding retains `funct7[31:25]`, `funct3[14:12]`, and `opcode[6:0]`. R2 converts only `src2[24:20]` to `xfunct5`; R1 also converts `src1[19:15]`, yielding `xfunct10`. All instructions use `funct3=000`; R0 is not defined.
 
-| Accumulator instruction | Old `funct7` | Conflicting scalar instruction | New `funct7` |
-|---|---:|---|---:|
-| `mmul.2d` | `0x00` | `madd.ew.x` | `0x1b` |
-| `mmulacc.2d` | `0x01` | `msub.ew.x` | `0x1c` |
-| `mmulneg.2d` | `0x02` | `mmin.ew.x` | `0x1d` |
-| `mmulaccneg.2d` | `0x03` | `mmax.ew.x` | `0x1e` |
-| `mmulat.2d` | `0x04` | `mmean.ew.x` | `0x1f` |
-| `mmulatacc.2d` | `0x05` | `mabsdiff.ew.x` | `0x20` |
-| `mmulbt.2d` | `0x06` | `mhdiff.ew.x` | `0x21` |
-| `mmulbtacc.2d` | `0x07` | `mand.ew.x` | `0x22` |
+A `(funct7, funct3, opcode)` bank belongs to only one format. This rule prevents a more-specific R1/R2 pattern from being hidden inside an R2/R3 decode.
+R3 uses `funct7=0x00..0x50`. R2 uses `funct7=0x51` with all 32 `xfunct5` values before continuing at `funct7=0x52`; R1 uses `funct7=0x53` with `xfunct10=0..1`. Values `0x54..0x7f` remain free.
 
 ## All instruction encodings
 
-| # | Instruction | Mnemonic | Operand fields | Function/fixed fields | Mask | Match |
-|---:|---|---|---|---|---|---|
-| 1 | `agettyp` | `agettyp xd, ad` | `ad[16:15]`; `xd[11:7]` | `[31:17]=0x0400`; `[14:12]=0x5`; `[6:0]=0x2b` | `0xfffe707f` | `0x0800502b` |
-| 2 | `asettyp` | `asettyp ad, xs1` | `xs1[19:15]`; `ad[9:8]` | `[31:20]=0x060`; `[14:10]=0x14`; `[7:0]=0x2b` | `0xfff07cff` | `0x0600502b` |
-| 3 | `mabs.ew` | `mabs.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x000`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x0000102b` |
-| 4 | `mabsdiff.ew` | `mabsdiff.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x04`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x0800002b` |
-| 5 | `mabsdiff.ew.x` | `mabsdiff.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x05`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x0a00202b` |
-| 6 | `madd.ew` | `madd.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x00`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x0000002b` |
-| 7 | `madd.ew.x` | `madd.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x00`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x0000202b` |
-| 8 | `mand.ew` | `mand.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x07`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x0e00002b` |
-| 9 | `mand.ew.x` | `mand.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x07`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x0e00202b` |
-| 10 | `mandnot.ew` | `mandnot.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x08`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x1000002b` |
-| 11 | `mandnot.ew.x` | `mandnot.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x08`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x1000202b` |
-| 12 | `mbcast.x` | `mbcast.x md, xs1` | `xs1[19:15]`; `md[11:7]` | `[31:20]=0x000`; `[14:12]=0x4`; `[6:0]=0x2b` | `0xfff0707f` | `0x0000402b` |
-| 13 | `mcmovge.ew` | `mcmovge.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x10`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x2000002b` |
-| 14 | `mcmovlt.ew` | `mcmovlt.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x11`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x2200002b` |
-| 15 | `mcmpge.ew` | `mcmpge.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x0c`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x1800002b` |
-| 16 | `mcmpge.ew.x` | `mcmpge.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x0c`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x1800202b` |
-| 17 | `mcmplt.ew` | `mcmplt.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x0d`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x1a00002b` |
-| 18 | `mcmplt.ew.x` | `mcmplt.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x0d`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x1a00202b` |
-| 19 | `mcolbcast.ew.x` | `mcolbcast.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x00` (`ame-enc-mcolbcast-ew-x-funct7`); `[14:12]=0x6`; `[6:0]=0x2b` | `0xfe00707f` | `0x0000602b` |
-| 20 | `mcolgather.ew` | `mcolgather.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x18` (`ame-enc-mcolgather-ew-funct7`); `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x3000002b` |
-| 21 | `mcolshift.ew.x` | `mcolshift.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x01` (`ame-enc-mcolshift-ew-x-funct7`); `[14:12]=0x6`; `[6:0]=0x2b` | `0xfe00707f` | `0x0200602b` |
-| 22 | `mcolunzip.ew` | `mcolunzip.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x080`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x0800102b` |
-| 23 | `mcolzip.ew` | `mcolzip.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x060`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x0600102b` |
-| 24 | `mconv.ew` | `mconv.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x000`; `[14:12]=0x5`; `[6:0]=0x2b` | `0xfff0707f` | `0x0000502b` |
-| 25 | `mcos.ew` | `mcos.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x1c0` (`ame-enc-mcos-ew-funct12`); `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x1c00102b` |
-| 26 | `mexp2.ew` | `mexp2.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x020`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x0200102b` |
-| 27 | `mfrintm.ew` | `mfrintm.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x1e0` (`ame-enc-mfrintm-ew-funct12`); `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x1e00102b` |
-| 28 | `mfrintn.ew` | `mfrintn.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x200` (`ame-enc-mfrintn-ew-funct12`); `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x2000102b` |
-| 29 | `mfrintp.ew` | `mfrintp.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x220` (`ame-enc-mfrintp-ew-funct12`); `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x2200102b` |
-| 30 | `mfrintz.ew` | `mfrintz.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x240` (`ame-enc-mfrintz-ew-funct12`); `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x2400102b` |
-| 31 | `mgettyp` | `mgettyp xd, ms1` | `ms1[19:15]`; `xd[11:7]` | `[31:20]=0x040`; `[14:12]=0x5`; `[6:0]=0x2b` | `0xfff0707f` | `0x0400502b` |
-| 32 | `mhdiff.ew` | `mhdiff.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x03`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x0600002b` |
-| 33 | `mhdiff.ew.x` | `mhdiff.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x06`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x0c00202b` |
-| 34 | `mldexp.ew` | `mldexp.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x12`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x2400002b` |
-| 35 | `mldexp.ew.x` | `mldexp.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x10`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x2000202b` |
-| 36 | `mldexpacc.ew` | `mldexpacc.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x13`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x2600002b` |
-| 37 | `mldexpacc.ew.x` | `mldexpacc.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x11`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x2200202b` |
-| 38 | `mlog2.ew` | `mlog2.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x040`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x0400102b` |
-| 39 | `mlog2sub.ew` | `mlog2sub.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x16`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x2c00002b` |
-| 40 | `mlog2sub.ew.x` | `mlog2sub.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x0e`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x1c00202b` |
-| 41 | `mls` | `mls md, xs1` | `xs1[19:15]`; `md[11:7]` | `[31:20]=0x040`; `[14:12]=0x3`; `[6:0]=0x2b` | `0xfff0707f` | `0x0400302b` |
-| 42 | `mls.cm` | `mls.cm md, xs1` | `xs1[19:15]`; `md[11:7]` | `[31:20]=0x020`; `[14:12]=0x3`; `[6:0]=0x2b` | `0xfff0707f` | `0x0200302b` |
-| 43 | `mls.rm` | `mls.rm md, xs1` | `xs1[19:15]`; `md[11:7]` | `[31:20]=0x000`; `[14:12]=0x3`; `[6:0]=0x2b` | `0xfff0707f` | `0x0000302b` |
-| 44 | `mmax.ew` | `mmax.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x05`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x0a00002b` |
-| 45 | `mmax.ew.x` | `mmax.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x03`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x0600202b` |
-| 46 | `mmean.ew` | `mmean.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x02`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x0400002b` |
-| 47 | `mmean.ew.x` | `mmean.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x04`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x0800202b` |
-| 48 | `mmin.ew` | `mmin.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x06`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x0c00002b` |
-| 49 | `mmin.ew.x` | `mmin.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x02`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x0400202b` |
-| 50 | `mmov.a.m` | `mmov.a.m md, acc` | `acc[21:20]`; `md[11:7]` | `[31:22]=0x018`; `[19:12]=0x04`; `[6:0]=0x2b` | `0xffcff07f` | `0x0600402b` |
-| 51 | `mmov.m.a` | `mmov.m.a acc, ms` | `acc[21:20]`; `ms[19:15]` | `[31:22]=0x019` (`ame-enc-mmov-m-a-funct10`); `[14:12]=0x4`; `[11:7]=0x00`; `[6:0]=0x2b` | `0xffc07fff` | `0x0640402b` |
-| 52 | `mmov.m.m` | `mmov.m.m md, ms` | `ms[24:20]`; `md[11:7]` | `[31:25]=0x02`; `[19:12]=0x04`; `[6:0]=0x2b` | `0xfe0ff07f` | `0x0400402b` |
-| 53 | `mmul.2d` | `mmul.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[9:8]` | `[31:25]=0x1b` (`ame-enc-mmul-2d-funct7`); `[14:10]=0x08`; `[7:0]=0x2b` | `0xfe007cff` | `0x3600202b` |
-| 54 | `mmul.ew` | `mmul.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x1c`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x3800002b` |
-| 55 | `mmul.ew.x` | `mmul.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x12`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x2400202b` |
-| 56 | `mmulacc.2d` | `mmulacc.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[9:8]` | `[31:25]=0x1c` (`ame-enc-mmulacc-2d-funct7`); `[14:10]=0x08`; `[7:0]=0x2b` | `0xfe007cff` | `0x3800202b` |
-| 57 | `mmulacc.ew` | `mmulacc.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x1d`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x3a00002b` |
-| 58 | `mmulacc.ew.x` | `mmulacc.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x13`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x2600202b` |
-| 59 | `mmulaccneg.2d` | `mmulaccneg.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[9:8]` | `[31:25]=0x1e` (`ame-enc-mmulaccneg-2d-funct7`); `[14:10]=0x08`; `[7:0]=0x2b` | `0xfe007cff` | `0x3c00202b` |
-| 60 | `mmulaccneg.ew` | `mmulaccneg.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x20`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x4000002b` |
-| 61 | `mmulaccneg.ew.x` | `mmulaccneg.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x16`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x2c00202b` |
-| 62 | `mmuladd.ew` | `mmuladd.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x1e`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x3c00002b` |
-| 63 | `mmuladd.ew.x` | `mmuladd.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x14`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x2800202b` |
-| 64 | `mmulat.2d` | `mmulat.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[9:8]` | `[31:25]=0x1f` (`ame-enc-mmulat-2d-funct7`); `[14:10]=0x08`; `[7:0]=0x2b` | `0xfe007cff` | `0x3e00202b` |
-| 65 | `mmulatacc.2d` | `mmulatacc.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[9:8]` | `[31:25]=0x20` (`ame-enc-mmulatacc-2d-funct7`); `[14:10]=0x08`; `[7:0]=0x2b` | `0xfe007cff` | `0x4000202b` |
-| 66 | `mmulbt.2d` | `mmulbt.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[9:8]` | `[31:25]=0x21` (`ame-enc-mmulbt-2d-funct7`); `[14:10]=0x08`; `[7:0]=0x2b` | `0xfe007cff` | `0x4200202b` |
-| 67 | `mmulbtacc.2d` | `mmulbtacc.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[9:8]` | `[31:25]=0x22` (`ame-enc-mmulbtacc-2d-funct7`); `[14:10]=0x08`; `[7:0]=0x2b` | `0xfe007cff` | `0x4400202b` |
-| 68 | `mmulneg.2d` | `mmulneg.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[9:8]` | `[31:25]=0x1d` (`ame-enc-mmulneg-2d-funct7`); `[14:10]=0x08`; `[7:0]=0x2b` | `0xfe007cff` | `0x3a00202b` |
-| 69 | `mmulneg.ew` | `mmulneg.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x21`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x4200002b` |
-| 70 | `mmulneg.ew.x` | `mmulneg.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x17`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x2e00202b` |
-| 71 | `mmulsub.ew` | `mmulsub.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x1f`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x3e00002b` |
-| 72 | `mmulsub.ew.x` | `mmulsub.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x15`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x2a00202b` |
-| 73 | `mor.ew` | `mor.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x09`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x1200002b` |
-| 74 | `mor.ew.x` | `mor.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x09`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x1200202b` |
-| 75 | `mornot.ew` | `mornot.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x0a`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x1400002b` |
-| 76 | `mornot.ew.x` | `mornot.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x0a`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x1400202b` |
-| 77 | `mpack.ew.x` | `mpack.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x06` (`ame-enc-mpack-ew-x-funct7`); `[14:12]=0x5`; `[6:0]=0x2b` | `0xfe00707f` | `0x0c00502b` |
-| 78 | `mprefixadd.col` | `mprefixadd.col md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x180`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x1800102b` |
-| 79 | `mprefixadd.row` | `mprefixadd.row md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x100`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x1000102b` |
-| 80 | `mprefixmax.col` | `mprefixmax.col md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x1a0`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x1a00102b` |
-| 81 | `mprefixmax.row` | `mprefixmax.row md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x120`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x1200102b` |
-| 82 | `mrdexp.ew` | `mrdexp.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x14`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x2800002b` |
-| 83 | `mrdexpacc.ew` | `mrdexpacc.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x15`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x2a00002b` |
-| 84 | `mrec.ew` | `mrec.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x260` (`ame-enc-mrec-ew-funct12`); `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x2600102b` |
-| 85 | `mreduceadd.col` | `mreduceadd.col md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x140`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x1400102b` |
-| 86 | `mreduceadd.row` | `mreduceadd.row md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x0c0`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x0c00102b` |
-| 87 | `mreducemax.col` | `mreducemax.col md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x160`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x1600102b` |
-| 88 | `mreducemax.row` | `mreducemax.row md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x0e0`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x0e00102b` |
-| 89 | `mreducemin.col` | `mreducemin.col md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x280` (`ame-enc-mreducemin-col-funct12`); `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x2800102b` |
-| 90 | `mreducemin.row` | `mreducemin.row md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x2a0` (`ame-enc-mreducemin-row-funct12`); `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x2a00102b` |
-| 91 | `mrowbcast.ew.x` | `mrowbcast.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x02` (`ame-enc-mrowbcast-ew-x-funct7`); `[14:12]=0x6`; `[6:0]=0x2b` | `0xfe00707f` | `0x0400602b` |
-| 92 | `mrowgather.ew` | `mrowgather.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x24` (`ame-enc-mrowgather-ew-funct7`); `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x4800002b` |
-| 93 | `mrowshift.ew.x` | `mrowshift.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x03` (`ame-enc-mrowshift-ew-x-funct7`); `[14:12]=0x6`; `[6:0]=0x2b` | `0xfe00707f` | `0x0600602b` |
-| 94 | `mrowunzip.ew` | `mrowunzip.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x0a0`; `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x0a00102b` |
-| 95 | `mrowzip.ew` | `mrowzip.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x1b`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x3600002b` |
-| 96 | `mrsqrt.ew` | `mrsqrt.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x2c0` (`ame-enc-mrsqrt-ew-funct12`); `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x2c00102b` |
-| 97 | `mscatadd.col` | `mscatadd.col md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x22`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x4400002b` |
-| 98 | `mscatadd.row` | `mscatadd.row md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x19`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x3200002b` |
-| 99 | `mscatmax.col` | `mscatmax.col md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x23`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x4600002b` |
-| 100 | `mscatmax.row` | `mscatmax.row md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x1a`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x3400002b` |
-| 101 | `mselge.ew` | `mselge.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x0e`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x1c00002b` |
-| 102 | `msellt.ew` | `msellt.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x0f`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x1e00002b` |
-| 103 | `msettyp` | `msettyp md, xs1` | `xs1[19:15]`; `md[11:7]` | `[31:20]=0x020`; `[14:12]=0x5`; `[6:0]=0x2b` | `0xfff0707f` | `0x0200502b` |
-| 104 | `msin.ew` | `msin.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x2e0` (`ame-enc-msin-ew-funct12`); `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x2e00102b` |
-| 105 | `msll.ew` | `msll.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x25` (`ame-enc-msll-ew-funct7`); `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x4a00002b` |
-| 106 | `msll.ew.x` | `msll.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x18` (`ame-enc-msll-ew-x-funct7`); `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x3000202b` |
-| 107 | `msqrt.ew` | `msqrt.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x300` (`ame-enc-msqrt-ew-funct12`); `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x3000102b` |
-| 108 | `msra.ew` | `msra.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x26` (`ame-enc-msra-ew-funct7`); `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x4c00002b` |
-| 109 | `msra.ew.x` | `msra.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x19` (`ame-enc-msra-ew-x-funct7`); `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x3200202b` |
-| 110 | `msrl.ew` | `msrl.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x27` (`ame-enc-msrl-ew-funct7`); `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x4e00002b` |
-| 111 | `msrl.ew.x` | `msrl.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x1a` (`ame-enc-msrl-ew-x-funct7`); `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x3400202b` |
-| 112 | `mss` | `mss ms1, xs1` | `xs1[19:15]`; `ms1[11:7]` | `[31:20]=0x0a0`; `[14:12]=0x3`; `[6:0]=0x2b` | `0xfff0707f` | `0x0a00302b` |
-| 113 | `mss.cm` | `mss.cm ms1, xs1` | `xs1[19:15]`; `ms1[11:7]` | `[31:20]=0x080`; `[14:12]=0x3`; `[6:0]=0x2b` | `0xfff0707f` | `0x0800302b` |
-| 114 | `mss.rm` | `mss.rm ms1, xs1` | `xs1[19:15]`; `ms1[11:7]` | `[31:20]=0x060`; `[14:12]=0x3`; `[6:0]=0x2b` | `0xfff0707f` | `0x0600302b` |
-| 115 | `msub.ew` | `msub.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x01`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x0200002b` |
-| 116 | `msub.ew.x` | `msub.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x01`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x0200202b` |
-| 117 | `msublog2.ew` | `msublog2.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x17`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x2e00002b` |
-| 118 | `msublog2.ew.x` | `msublog2.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x0f`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x1e00202b` |
-| 119 | `mtanh.ew` | `mtanh.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:20]=0x320` (`ame-enc-mtanh-ew-funct12`); `[14:12]=0x1`; `[6:0]=0x2b` | `0xfff0707f` | `0x3200102b` |
-| 120 | `munpack.ew.x` | `munpack.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x07` (`ame-enc-munpack-ew-x-funct7`); `[14:12]=0x5`; `[6:0]=0x2b` | `0xfe00707f` | `0x0e00502b` |
-| 121 | `mxor.ew` | `mxor.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x0b`; `[14:12]=0x0`; `[6:0]=0x2b` | `0xfe00707f` | `0x1600002b` |
-| 122 | `mxor.ew.x` | `mxor.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x0b`; `[14:12]=0x2`; `[6:0]=0x2b` | `0xfe00707f` | `0x1600202b` |
-| 123 | `mzero.2d.acc` | `mzero.2d.acc acc` | `acc[9:8]` | `[31:10]=0x04000c` (`ame-enc-mzero-2d-acc-funct22`); `[7:0]=0x2b` | `0xfffffcff` | `0x1000302b` |
-| 124 | `mzero.2d.m` | `mzero.2d.m md` | `md[11:7]` | `[31:12]=0x40009` (`ame-enc-mzero-2d-m-funct20`); `[6:0]=0x2b` | `0xfffff07f` | `0x4000902b` |
+| # | Format | Instruction | Mnemonic | Operand fields | Function/fixed fields | Mask | Match |
+|---:|---|---|---|---|---|---|---|
+| 1 | R2 | `agettyp` | `agettyp xd, ad` | `ad[19:15]`; `xd[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x00`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa200002b` |
+| 2 | R2 | `asettyp` | `asettyp ad, xs1` | `xs1[19:15]`; `ad[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x01`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa210002b` |
+| 3 | R2 | `mabs.ew` | `mabs.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x04`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa240002b` |
+| 4 | R3 | `mabsdiff.ew` | `mabsdiff.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x00`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x0000002b` |
+| 5 | R3 | `mabsdiff.ew.x` | `mabsdiff.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x01`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x0200002b` |
+| 6 | R3 | `madd.ew` | `madd.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x02`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x0400002b` |
+| 7 | R3 | `madd.ew.x` | `madd.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x03`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x0600002b` |
+| 8 | R3 | `mand.ew` | `mand.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x1a`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x3400002b` |
+| 9 | R3 | `mand.ew.x` | `mand.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x1b`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x3600002b` |
+| 10 | R3 | `mandnot.ew` | `mandnot.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x1c`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x3800002b` |
+| 11 | R3 | `mandnot.ew.x` | `mandnot.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x1d`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x3a00002b` |
+| 12 | R2 | `mbcast.x` | `mbcast.x md, xs1` | `xs1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x09`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa290002b` |
+| 13 | R3 | `mcmovge.ew` | `mcmovge.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x2a`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x5400002b` |
+| 14 | R3 | `mcmovlt.ew` | `mcmovlt.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x2b`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x5600002b` |
+| 15 | R3 | `mcmpge.ew` | `mcmpge.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x2c`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x5800002b` |
+| 16 | R3 | `mcmpge.ew.x` | `mcmpge.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x2d`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x5a00002b` |
+| 17 | R3 | `mcmplt.ew` | `mcmplt.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x2e`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x5c00002b` |
+| 18 | R3 | `mcmplt.ew.x` | `mcmplt.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x2f`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x5e00002b` |
+| 19 | R3 | `mcolbcast.ew.x` | `mcolbcast.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x32`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x6400002b` |
+| 20 | R3 | `mcolgather.ew` | `mcolgather.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x33`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x6600002b` |
+| 21 | R3 | `mcolshift.ew.x` | `mcolshift.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x34`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x6800002b` |
+| 22 | R2 | `mcolunzip.ew` | `mcolunzip.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x0a`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa2a0002b` |
+| 23 | R2 | `mcolzip.ew` | `mcolzip.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x0b`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa2b0002b` |
+| 24 | R2 | `mconv.ew` | `mconv.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x0d`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa2d0002b` |
+| 25 | R2 | `mcos.ew` | `mcos.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x0e`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa2e0002b` |
+| 26 | R2 | `mexp2.ew` | `mexp2.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x0f`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa2f0002b` |
+| 27 | R2 | `mfrintm.ew` | `mfrintm.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x05`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa250002b` |
+| 28 | R2 | `mfrintn.ew` | `mfrintn.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x06`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa260002b` |
+| 29 | R2 | `mfrintp.ew` | `mfrintp.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x07`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa270002b` |
+| 30 | R2 | `mfrintz.ew` | `mfrintz.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x08`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa280002b` |
+| 31 | R2 | `mgettyp` | `mgettyp xd, ms1` | `ms1[19:15]`; `xd[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x02`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa220002b` |
+| 32 | R3 | `mhdiff.ew` | `mhdiff.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x04`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x0800002b` |
+| 33 | R3 | `mhdiff.ew.x` | `mhdiff.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x05`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x0a00002b` |
+| 34 | R3 | `mldexp.ew` | `mldexp.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x3f`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x7e00002b` |
+| 35 | R3 | `mldexp.ew.x` | `mldexp.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x40`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x8000002b` |
+| 36 | R3 | `mldexpacc.ew` | `mldexpacc.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x41`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x8200002b` |
+| 37 | R3 | `mldexpacc.ew.x` | `mldexpacc.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x42`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x8400002b` |
+| 38 | R2 | `mlog2.ew` | `mlog2.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x10`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa300002b` |
+| 39 | R3 | `mlog2sub.ew` | `mlog2sub.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x43`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x8600002b` |
+| 40 | R3 | `mlog2sub.ew.x` | `mlog2sub.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x44`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x8800002b` |
+| 41 | R2 | `mls` | `mls md, xs1` | `xs1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x16`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa360002b` |
+| 42 | R2 | `mls.cm` | `mls.cm md, xs1` | `xs1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x17`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa370002b` |
+| 43 | R2 | `mls.rm` | `mls.rm md, xs1` | `xs1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x18`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa380002b` |
+| 44 | R3 | `mmax.ew` | `mmax.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x06`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x0c00002b` |
+| 45 | R3 | `mmax.ew.x` | `mmax.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x07`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x0e00002b` |
+| 46 | R3 | `mmean.ew` | `mmean.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x08`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x1000002b` |
+| 47 | R3 | `mmean.ew.x` | `mmean.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x09`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x1200002b` |
+| 48 | R3 | `mmin.ew` | `mmin.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x0a`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x1400002b` |
+| 49 | R3 | `mmin.ew.x` | `mmin.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x0b`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x1600002b` |
+| 50 | R2 | `mmov.a.m` | `mmov.a.m md, acc` | `acc[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x1c`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa3c0002b` |
+| 51 | R2 | `mmov.m.a` | `mmov.m.a acc, ms` | `ms[19:15]`; `acc[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x1d`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa3d0002b` |
+| 52 | R2 | `mmov.m.m` | `mmov.m.m md, ms` | `ms[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x1e`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa3e0002b` |
+| 53 | R3 | `mmul.2d` | `mmul.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[11:7]` | `[31:25]=0x49`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x9200002b` |
+| 54 | R3 | `mmul.ew` | `mmul.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x0c`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x1800002b` |
+| 55 | R3 | `mmul.ew.x` | `mmul.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x0d`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x1a00002b` |
+| 56 | R3 | `mmulacc.2d` | `mmulacc.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[11:7]` | `[31:25]=0x4a`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x9400002b` |
+| 57 | R3 | `mmulacc.ew` | `mmulacc.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x0e`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x1c00002b` |
+| 58 | R3 | `mmulacc.ew.x` | `mmulacc.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x0f`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x1e00002b` |
+| 59 | R3 | `mmulaccneg.2d` | `mmulaccneg.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[11:7]` | `[31:25]=0x4b`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x9600002b` |
+| 60 | R3 | `mmulaccneg.ew` | `mmulaccneg.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x10`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x2000002b` |
+| 61 | R3 | `mmulaccneg.ew.x` | `mmulaccneg.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x11`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x2200002b` |
+| 62 | R3 | `mmuladd.ew` | `mmuladd.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x12`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x2400002b` |
+| 63 | R3 | `mmuladd.ew.x` | `mmuladd.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x13`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x2600002b` |
+| 64 | R3 | `mmulat.2d` | `mmulat.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[11:7]` | `[31:25]=0x4c`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x9800002b` |
+| 65 | R3 | `mmulatacc.2d` | `mmulatacc.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[11:7]` | `[31:25]=0x4d`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x9a00002b` |
+| 66 | R3 | `mmulbt.2d` | `mmulbt.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[11:7]` | `[31:25]=0x4e`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x9c00002b` |
+| 67 | R3 | `mmulbtacc.2d` | `mmulbtacc.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[11:7]` | `[31:25]=0x4f`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x9e00002b` |
+| 68 | R3 | `mmulneg.2d` | `mmulneg.2d acc, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `acc[11:7]` | `[31:25]=0x50`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0xa000002b` |
+| 69 | R3 | `mmulneg.ew` | `mmulneg.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x14`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x2800002b` |
+| 70 | R3 | `mmulneg.ew.x` | `mmulneg.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x15`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x2a00002b` |
+| 71 | R3 | `mmulsub.ew` | `mmulsub.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x16`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x2c00002b` |
+| 72 | R3 | `mmulsub.ew.x` | `mmulsub.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x17`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x2e00002b` |
+| 73 | R3 | `mor.ew` | `mor.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x1e`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x3c00002b` |
+| 74 | R3 | `mor.ew.x` | `mor.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x1f`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x3e00002b` |
+| 75 | R3 | `mornot.ew` | `mornot.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x20`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x4000002b` |
+| 76 | R3 | `mornot.ew.x` | `mornot.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x21`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x4200002b` |
+| 77 | R3 | `mpack.ew.x` | `mpack.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x3d`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x7a00002b` |
+| 78 | R2 | `mprefixadd.col` | `mprefixadd.col md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x1f`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa3f0002b` |
+| 79 | R2 | `mprefixadd.row` | `mprefixadd.row md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x52` (`ame-enc-r2-bank1-funct7`); `[24:20]=0x00`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa400002b` |
+| 80 | R2 | `mprefixmax.col` | `mprefixmax.col md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x52` (`ame-enc-r2-bank1-funct7`); `[24:20]=0x01`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa410002b` |
+| 81 | R2 | `mprefixmax.row` | `mprefixmax.row md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x52` (`ame-enc-r2-bank1-funct7`); `[24:20]=0x02`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa420002b` |
+| 82 | R3 | `mrdexp.ew` | `mrdexp.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x45`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x8a00002b` |
+| 83 | R3 | `mrdexpacc.ew` | `mrdexpacc.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x46`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x8c00002b` |
+| 84 | R2 | `mrec.ew` | `mrec.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x11`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa310002b` |
+| 85 | R2 | `mreduceadd.col` | `mreduceadd.col md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x52` (`ame-enc-r2-bank1-funct7`); `[24:20]=0x03`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa430002b` |
+| 86 | R2 | `mreduceadd.row` | `mreduceadd.row md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x52` (`ame-enc-r2-bank1-funct7`); `[24:20]=0x04`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa440002b` |
+| 87 | R2 | `mreducemax.col` | `mreducemax.col md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x52` (`ame-enc-r2-bank1-funct7`); `[24:20]=0x05`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa450002b` |
+| 88 | R2 | `mreducemax.row` | `mreducemax.row md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x52` (`ame-enc-r2-bank1-funct7`); `[24:20]=0x06`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa460002b` |
+| 89 | R2 | `mreducemin.col` | `mreducemin.col md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x52` (`ame-enc-r2-bank1-funct7`); `[24:20]=0x07`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa470002b` |
+| 90 | R2 | `mreducemin.row` | `mreducemin.row md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x52` (`ame-enc-r2-bank1-funct7`); `[24:20]=0x08`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa480002b` |
+| 91 | R3 | `mrowbcast.ew.x` | `mrowbcast.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x35`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x6a00002b` |
+| 92 | R3 | `mrowgather.ew` | `mrowgather.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x36`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x6c00002b` |
+| 93 | R3 | `mrowshift.ew.x` | `mrowshift.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x37`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x6e00002b` |
+| 94 | R2 | `mrowunzip.ew` | `mrowunzip.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x0c`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa2c0002b` |
+| 95 | R3 | `mrowzip.ew` | `mrowzip.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x38`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x7000002b` |
+| 96 | R2 | `mrsqrt.ew` | `mrsqrt.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x12`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa320002b` |
+| 97 | R3 | `mscatadd.col` | `mscatadd.col md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x39`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x7200002b` |
+| 98 | R3 | `mscatadd.row` | `mscatadd.row md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x3a`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x7400002b` |
+| 99 | R3 | `mscatmax.col` | `mscatmax.col md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x3b`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x7600002b` |
+| 100 | R3 | `mscatmax.row` | `mscatmax.row md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x3c`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x7800002b` |
+| 101 | R3 | `mselge.ew` | `mselge.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x30`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x6000002b` |
+| 102 | R3 | `msellt.ew` | `msellt.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x31`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x6200002b` |
+| 103 | R2 | `msettyp` | `msettyp md, xs1` | `xs1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x03`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa230002b` |
+| 104 | R2 | `msin.ew` | `msin.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x13`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa330002b` |
+| 105 | R3 | `msll.ew` | `msll.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x22`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x4400002b` |
+| 106 | R3 | `msll.ew.x` | `msll.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x23`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x4600002b` |
+| 107 | R2 | `msqrt.ew` | `msqrt.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x14`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa340002b` |
+| 108 | R3 | `msra.ew` | `msra.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x24`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x4800002b` |
+| 109 | R3 | `msra.ew.x` | `msra.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x25`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x4a00002b` |
+| 110 | R3 | `msrl.ew` | `msrl.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x26`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x4c00002b` |
+| 111 | R3 | `msrl.ew.x` | `msrl.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x27`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x4e00002b` |
+| 112 | R2 | `mss` | `mss ms1, xs1` | `xs1[19:15]`; `ms1[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x19`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa390002b` |
+| 113 | R2 | `mss.cm` | `mss.cm ms1, xs1` | `xs1[19:15]`; `ms1[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x1a`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa3a0002b` |
+| 114 | R2 | `mss.rm` | `mss.rm ms1, xs1` | `xs1[19:15]`; `ms1[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x1b`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa3b0002b` |
+| 115 | R3 | `msub.ew` | `msub.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x18`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x3000002b` |
+| 116 | R3 | `msub.ew.x` | `msub.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x19`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x3200002b` |
+| 117 | R3 | `msublog2.ew` | `msublog2.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x47`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x8e00002b` |
+| 118 | R3 | `msublog2.ew.x` | `msublog2.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x48`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x9000002b` |
+| 119 | R2 | `mtanh.ew` | `mtanh.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x15`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa350002b` |
+| 120 | R3 | `munpack.ew.x` | `munpack.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x3e`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x7c00002b` |
+| 121 | R3 | `mxor.ew` | `mxor.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x28`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x5000002b` |
+| 122 | R3 | `mxor.ew.x` | `mxor.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x29`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x5200002b` |
+| 123 | R1 | `mzero.2d.acc` | `mzero.2d.acc acc` | `acc[11:7]` | `[31:25]=0x53` (`ame-enc-r1-bank-funct7`); `[24:20]=0x00`; `[19:15]=0x00`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfffff07f` | `0xa600002b` |
+| 124 | R1 | `mzero.2d.m` | `mzero.2d.m md` | `md[11:7]` | `[31:25]=0x53` (`ame-enc-r1-bank-funct7`); `[24:20]=0x00`; `[19:15]=0x01`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfffff07f` | `0xa600802b` |
