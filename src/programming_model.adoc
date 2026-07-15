@@ -233,8 +233,11 @@ all custom or all standard).
 Profiles will likely mandate a minimal set of supported datatypes.
 --
 
-Datatypes are set using the <<udb:doc:inst:msettyp,msettyp>> instruction and
-read using the <<udb:doc:inst:mgettyp,mgettyp>> instruction.
+`M` register datatypes are set using the <<udb:doc:inst:msettyp,msettyp>> instruction and
+read using the <<udb:doc:inst:mgettyp,mgettyp>> instruction. `Acc` register datatypes are
+set using <<udb:doc:inst:asettyp,asettyp>> and read using
+<<udb:doc:inst:agettyp,agettyp>>. Setting an `Acc` datatype with `asettyp` also clears the
+corresponding accumulator tile.
 
 === Data movement
 
@@ -246,7 +249,7 @@ rather, `Acc` registers can only be moved in to or out of the `M` registers.
 
 `M` register data can be loaded and stored from/to memory.
 
-A scalar from the X or F register file can be sent to an `M` register.
+A scalar from the X register file can be sent to an `M` register.
 
 AME does not define data movement operations between AME register files and the vector (V)
 register file.
@@ -712,7 +715,7 @@ AME permutation operations swizzle data within a single square.
 | `D[i, B[i,j]] = max(D[i,B[i,j]], A[i,j])`
 | Elementwise scatter-max
 | <<udb:doc:inst:mcolshift_ew_x,mcolshift.ew.x>>
-| `D[i,j] = A[i, j+c]`, with zero fill
+| `D[i,j] = A[i, j+c]`, with `zero(Md[md])` fill
 | Elementwise column shift by scalar offset
 | <<udb:doc:inst:mrowbcast_ew_x,mrowbcast.ew.x>>
 | `D[i,j] = A[c,j]`
@@ -721,7 +724,7 @@ AME permutation operations swizzle data within a single square.
 | `D[i,j] = A[B[i,j],j]`
 | Elementwise row gather
 | <<udb:doc:inst:mrowshift_ew_x,mrowshift.ew.x>>
-| `D[i,j] = A[i+c,j]`, with zero fill
+| `D[i,j] = A[i+c,j]`, with `zero(Md[md])` fill
 | Elementwise row shift by scalar offset
 |===
 
@@ -755,11 +758,20 @@ element of an `M` register group, including packed element positions.
 | <<udb:doc:inst:mzero_2d_m,mzero.2d.m>>
 | `D[i] = zero(Md[md])`
 | Clear every logical element of an M register group
+| <<udb:doc:inst:mpack_ew_x,mpack.ew.x>>
+| `D[k] = convert(A)`; preserve all `D[n]` for `n != k`
+| Convert and insert one non-packed square into packed slot `k = X[xs1]`
+| <<udb:doc:inst:munpack_ew_x,munpack.ew.x>>
+| `D = convert(A[k])`
+| Extract and convert packed slot `k = X[xs1]` into one non-packed square
 |===
 
 `<<udb:doc:inst:mconv_ew,mconv.ew>>` converts element data from one datatype to another.
 An expand converts a single packed `M` register (packed dtype) into `pack_factor` consecutive
 non-packed `M` registers; a compress does the reverse.
+The indexed <<udb:doc:inst:mpack_ew_x,mpack.ew.x>> and
+<<udb:doc:inst:munpack_ew_x,munpack.ew.x>> forms convert one selected square at a time,
+reducing register pressure when a full expand or compress is not required.
 
 ==== Scalars
 
@@ -774,15 +786,12 @@ With `Ztts`, elementwise add by a common constant is a single instruction.
 
 ===== Scalar broadcast
 
-AME provides two instructions to fill every element of an M register with a single scalar value,
+AME provides an instruction to fill every element of an M register with a single scalar value,
 analogous to `np.full_like`. The element size is determined by the register's programmed datatype.
 Both non-packed and packed dtypes are supported; for packed dtypes all
 `pack_factor * AME_NELEM` element positions are filled.
 
 `<<udb:doc:inst:mbcast_x,mbcast.x>>` sources the scalar from an integer (`X`) register.
-`<<udb:doc:inst:mbcast_f,mbcast.f>>` sources the scalar from a floating-point (`F`) register
-and requires the F extension; software is responsible for placing the correctly-formatted
-bit pattern for the destination datatype into the F register beforehand.
 
 [cols="1,2,3",options="header"]
 |===

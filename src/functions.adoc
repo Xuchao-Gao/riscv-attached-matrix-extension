@@ -23,7 +23,9 @@ h| Arguments   l| Bits<32> dtype
 [#udb:doc:func:ame_op_supported]
 === `ame_op_supported` (builtin)
 Returns true if `src1 op src2 = dest` is a supported operation for the exact
-datatype tuple supplied by the caller.
+datatype tuple supplied by the caller.  For a destination-as-source operation
+implemented by `ame_op3`, the third value operand is the pre-instruction value
+of the destination and is interpreted using `dest_dtype`.
 
 [#norm:ame_op_supported_contract]#`ame_op_supported` returns false when any
 required datatype is zero, when `op` is not implemented, when the datatype
@@ -31,8 +33,9 @@ classes do not satisfy the operation requirements, or when the implementation
 does not support that operation/datatype combination.#
 
 [#norm:ame_op_supported_defined_result]#If `ame_op_supported` returns true, a
-subsequent `ame_op` call with the same operation and datatype tuple has the
-defined result described by the instruction and by the operation table below.#
+subsequent `ame_op` or `ame_op3` call, as appropriate, with the same operation
+and datatype tuple has the defined result described by the instruction and by
+the operation tables below.#
 
 
 |===
@@ -620,6 +623,29 @@ h| Arguments   l| U32 md, Bits<32> dest_dtype, U32 element_index, AmeOperation o
 |===
 
 
+[#udb:doc:func:ame_stage_m_element_op3]
+=== `ame_stage_m_element_op3` (builtin)
+Stages a destination-as-source operation on one logical row-major element in
+an `M` register group.  The current destination operand is always read from
+the pre-instruction architectural snapshot, never from the staged destination
+image.  The builtin computes
+`ame_op3(op, src1_dtype, src1_value, src2_dtype, src2_value, current_value,
+dest_dtype)` and stages the result.
+
+Reading the pre-instruction snapshot preserves the register-overlap semantics
+when `md` overlaps either source group and makes each element independent of
+earlier staged writes by the same instruction.  Commit and exception behavior
+follow the same atomic writeback rules as `ame_stage_m_element_write`.
+
+This builtin must be called only after datatype, register-group alignment,
+index, and operation-support checks have succeeded.
+
+|===
+h| Return Type l| void
+h| Arguments   l| U32 md, Bits<32> dest_dtype, U32 element_index, AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE> src1_value, Bits<32> src2_dtype, Bits<AME_MAX_DTYPE_SIZE> src2_value
+|===
+
+
 [#udb:doc:func:ame_op]
 === `ame_op` (builtin)
 Returns the result of src1 op src2 in dest_type.
@@ -654,6 +680,14 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 
 | `REDUCEMINCOL1D`, `REDUCEMIN1D`
 | `min(src1, src2)` according to the source datatype's ordering
+| Identical ordered numeric source and destination datatypes
+
+| `PREFIXADDCOL1D`, `PREFIXADD1D`, `REDUCEADDCOL1D`, `REDUCEADD1D`
+| `src1 + src2`
+| Identical numeric source and destination datatypes
+
+| `PREFIXMAXCOL1D`, `PREFIXMAX1D`, `REDUCEMAXCOL1D`, `REDUCEMAX1D`
+| `max(src1, src2)` according to the source datatype's ordering
 | Identical ordered numeric source and destination datatypes
 
 | `ZERO1D`
@@ -716,6 +750,21 @@ between `-0` and `+0` returns `-0`.
 | Exact selection of one operand.  Reduction instructions apply this binary
 operation in ascending source-element order.
 
+| `PREFIXMAXCOL1D`, `PREFIXMAX1D`, `REDUCEMAXCOL1D`, `REDUCEMAX1D`
+| If either operand is a NaN, return the destination datatype's canonical quiet
+NaN.  Otherwise compare using the source datatype's numerical ordering.  A tie
+between `-0` and `+0` returns `+0`.
+| Exact selection of one operand.  Prefix and reduction instructions apply this
+binary operation in ascending source-element order.
+
+| `PREFIXADDCOL1D`, `PREFIXADD1D`, `REDUCEADDCOL1D`, `REDUCEADD1D`
+| If either operand is a NaN, or if opposite-signed infinities are added, return
+the destination datatype's canonical quiet NaN.  Otherwise an infinity plus a
+finite value, or two same-signed infinities, returns that infinity.
+| Each binary addition is correctly rounded according to the destination
+datatype's rounding mode.  Prefix and reduction instructions apply additions
+in ascending source-element order.
+
 | `SIN1D`, `COS1D`
 | A NaN or either infinity returns the destination datatype's canonical quiet
 NaN.  `sin(+/-0)` returns the same signed zero; `cos(+/-0)` returns `+1`.
@@ -762,6 +811,75 @@ AME defines no floating-point exception flags.  Once `ame_op_supported` has
 accepted a tuple, the special cases above are normal data results: they neither
 set `amestatus.UN` nor raise an exception.  `amestatus.UN` reports only an
 unsupported operation/datatype tuple.
+
+
+[#udb:doc:func:ame_op3]
+=== `ame_op3` (builtin)
+Returns the result of a destination-as-source operation with two explicit
+source values and the pre-instruction destination value.  `current_value` is
+interpreted using `dest_dtype`.
+
+`ame_op3` is the three-value counterpart of `ame_op` and is the common semantic
+boundary for datatype interpretation, conversion, rounding, saturation,
+floating-point exceptional values, and custom datatype behavior.  It is called
+only for a tuple for which `ame_op_supported` returned true.  The low
+`sizeof(dest_dtype)` bits contain the result; higher bits are undefined.
+
+|===
+h| Return Type l| Bits<AME_MAX_DTYPE_SIZE>
+h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE> src1_value, Bits<32> src2_dtype, Bits<AME_MAX_DTYPE_SIZE> src2_value, Bits<AME_MAX_DTYPE_SIZE> current_value, Bits<32> dest_dtype
+|===
+
+.Destination-as-source operation semantics
+[cols="2,3,3",options="header"]
+|===
+| `AmeOperation` | Mathematical result before destination conversion | Required operand class
+
+| `MUXGE1D`
+| `src2` when the sign bit of `src1` is clear; otherwise `current`
+| A predicate datatype with a defined sign bit; identical `src2` and destination datatypes
+
+| `MUX1D`
+| `src2` when the sign bit of `src1` is set; otherwise `current`
+| A predicate datatype with a defined sign bit; identical `src2` and destination datatypes
+
+| `LDEXPACC1D`
+| `current + src1 * 2^src2`
+| Numeric data and destination datatypes; integer exponent datatype
+
+| `RDEXPACC1D`
+| `current + src1 * 2^(-src2)`
+| Numeric data and destination datatypes; integer exponent datatype
+
+| `MULACC1D`
+| `current + src1 * src2`
+| Supported numeric source and destination datatypes
+
+| `MULNACC1D`
+| `current - src1 * src2`
+| Supported numeric source and destination datatypes
+
+| `MULADD1D`
+| `src1 + src2 * current`
+| Supported numeric source and destination datatypes
+
+| `MULSUB1D`
+| `src1 - src2 * current`
+| Supported numeric source and destination datatypes
+|===
+
+For `MUXGE1D` and `MUX1D`, an unselected `current` value is preserved bit
+exactly in its low `sizeof(dest_dtype)` bits.  For every arithmetic operation
+above, the complete mathematical expression is evaluated without an
+intermediate destination conversion and is converted to `dest_dtype` once.
+Thus `MULADD1D` and `MULSUB1D` have fused multiply-add/subtract semantics.
+
+For floating-point arithmetic, any NaN input produces the destination
+datatype's canonical quiet NaN.  Invalid infinite forms, including zero times
+infinity and addition of opposite-signed infinities, also produce that NaN.
+Other infinities follow the mathematical expression.  A finite result is
+rounded once according to the destination datatype's rounding mode.  These
+results follow the same no-floating-point-exception-flags rule as `ame_op`.
 
 [#udb:doc:func:ame_xform_rm_to_impl]
 === `ame_xform_rm_to_impl` (builtin)

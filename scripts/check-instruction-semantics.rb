@@ -19,6 +19,16 @@ headings.each_with_index do |(instruction, start_line), index|
   section = lines[start_line...end_line]
   bounds = {}
 
+  operation_label = section.index { |line| line.strip == "Operation::" }
+  operation = nil
+  if operation_label
+    operation_start = (operation_label...section.length).find { |offset| section[offset].strip == "----" }
+    if operation_start
+      operation_end = ((operation_start + 1)...section.length).find { |offset| section[offset].strip == "----" }
+      operation = section[(operation_start + 1)...operation_end] if operation_end
+    end
+  end
+
   section.each_with_index do |line, offset|
     match = line.match(/U32\s+(\w+_(?:hi|lo)(?:_idx)?)\s*=\s*(.*);/)
     next unless match
@@ -53,12 +63,34 @@ headings.each_with_index do |(instruction, start_line), index|
     errors << "#{instruction}: whole-square layout transform assigned to an element slice at line #{start_line + offset + 1}"
   end
 
-  if section.any? { |line| line.include?("ame_stage_") }
+  if operation
     section_text = section.join
-    section_text.scan(/^\s*U32\s+(\w+)\s*=.*;$/).flatten.each do |variable|
-      next unless section_text.scan(/\b#{Regexp.escape(variable)}\b/).length == 1
+    operation_text = operation.join
+    idl_type = /(?:Bool|XReg|U(?:32|64)|S(?:32|64)|Integer|Bits<[^>]+>)/
+    declarations = section_text.scan(/\b#{idl_type}\s+(\w+)\s*(?==|;)/).flatten
 
-      errors << "#{instruction}: staged-write pseudocode defines unused variable #{variable}"
+    # Derived datatype, value, and element-address variables are local
+    # implementation details, rather than architectural operands or constants.
+    # Requiring a declaration for every use catches mechanically truncated
+    # read-modify-write sequences while avoiding false positives for decoded
+    # operands such as md, ms1, and xs1.
+    derived_suffix = /(?:regno|hi|lo|hi_idx|lo_idx|dtype|element_size|nregs|elements_per_reg|value|current|element_value)/
+    derived_variables = operation_text.scan(/\b([A-Za-z_]\w*_#{derived_suffix})\b/).flatten.uniq
+    (derived_variables - declarations).each do |variable|
+      errors << "#{instruction}: Operation block uses undefined variable #{variable}"
+    end
+
+    # Check every IDL local type, not just U32.  This catches dead value
+    # snapshots such as Bits<...> dest_current as well as dead index arithmetic.
+    operation_text.scan(/\b#{idl_type}\s+(\w+)\s*(?==|;)/).flatten.uniq.each do |variable|
+      next unless operation_text.scan(/\b#{Regexp.escape(variable)}\b/).length == 1
+
+      errors << "#{instruction}: Operation block defines unused variable #{variable}"
+    end
+
+    if instruction.match?(/^m(?:prefix|reduce)(?:add|max)\.(?:col|row)$/) &&
+       operation_text.match?(/Bits<AME_MAX_DTYPE_SIZE>\s+(?:running|col_result|row_result)\s*=\s*0;/)
+      errors << "#{instruction}: prefix/reduction fold must seed from the first source element, not raw zero"
     end
   end
 end
@@ -79,4 +111,4 @@ end
 
 abort "instruction semantic-shape errors:\n  #{errors.join("\n  ")}" unless errors.empty?
 
-puts "checked #{headings.length} instructions: element bounds and writeback shapes are consistent"
+puts "checked #{headings.length} instructions: element bounds, local identifiers, and writeback shapes are consistent"

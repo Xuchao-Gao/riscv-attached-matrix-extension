@@ -373,9 +373,3 @@ memory_model_acquire::
 [#udb:doc:func:memory_model_release]
 memory_model_release::
   See the RISC-V ISA formal model for details on `memory_model_release`.
-
-=== Instructions
-
-[#udb:doc:inst:mbcast_f]
-mbcast_f::
-  See the AME instruction listing for details on `mbcast_f`.

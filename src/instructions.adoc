@@ -1452,11 +1452,9 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src2_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype);
     U32 src2_hi_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src2_lo_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - src2_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MUXGE1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MUXGE1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value);
   }
 }
 ----
@@ -1560,11 +1558,9 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src2_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype);
     U32 src2_hi_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src2_lo_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - src2_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MUX1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MUX1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value);
   }
 }
 ----
@@ -2212,7 +2208,8 @@ stored into `md`.
 +
 For each row `i` and column `j`:
 +
-  `md[i,j] = ms1[i, j + c]`  if `0 <= j + c < sqrt(AME_NELEM)`, otherwise `md[i,j] = 0`.
+  `md[i,j] = ms1[i, j + c]`  if `0 <= j + c < sqrt(AME_NELEM)`, otherwise
+  `md[i,j] = zero(Md[md])`.
 +
 Elements shifted beyond the row boundary are filled with zero (no wrap-around).
 For the row-shift form, see `mrowshift.ew.x`.
@@ -2242,7 +2239,8 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src1_dtype = Md[ms1];
-if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SHIFT1D, dest_dtype, src1_dtype, src1_dtype)) {
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SHIFT1D, dest_dtype, src1_dtype, src1_dtype) ||
+    !<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ZERO1D, dest_dtype, dest_dtype, dest_dtype)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
@@ -2270,6 +2268,7 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
   Bits<32> shift = $signed+++(+++X[xs1]);
+  Bits<AME_MAX_DTYPE_SIZE> zero_value = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::ZERO1D, dest_dtype, 0, dest_dtype, 0, dest_dtype);
   for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
     Bits<AME_MAX_SQUARE_SIZE> result = 0;
     for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
@@ -2279,6 +2278,7 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
       Bits<32> src_j = j pass:[+] shift;
       U32 dst_lo = local_e * dest_element_size;
       U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
+      result[dst_hi:dst_lo] = zero_value;
       if pass:[(]$signed+++(+++src_j) >= 0 && $signed+++(+++src_j) < N) {
         Bits<32> e_src = i * N pass:[+] src_j;
         Bits<32> src_regno = $signed+++(+++e_src) / src1_elements_per_reg;
@@ -3701,11 +3701,9 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src2_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype);
     U32 src2_hi_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src2_lo_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - src2_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::LDEXPACC1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::LDEXPACC1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value);
   }
 }
 ----
@@ -3806,10 +3804,8 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src_regno], src_dtype);
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::LDEXPACC1D, src_dtype, src_element_value, exp_dtype, scalar_exp_element, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::LDEXPACC1D, src_dtype, src_element_value, exp_dtype, scalar_exp_element);
   }
 }
 ----
@@ -5640,11 +5636,9 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src2_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype);
     U32 src2_hi_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src2_lo_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - src2_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MULACC1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MULACC1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value);
   }
 }
 ----
@@ -5738,11 +5732,9 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src_regno], src_dtype);
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MULACC1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MULACC1D, src_dtype, scalar_element_value, src_dtype, src_element_value);
   }
 }
 ----
@@ -5950,11 +5942,9 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src2_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype);
     U32 src2_hi_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src2_lo_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - src2_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MULNACC1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MULNACC1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value);
   }
 }
 ----
@@ -6048,11 +6038,9 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src_regno], src_dtype);
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MULNACC1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MULNACC1D, src_dtype, scalar_element_value, src_dtype, src_element_value);
   }
 }
 ----
@@ -6155,11 +6143,9 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src2_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype);
     U32 src2_hi_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src2_lo_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - src2_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MULADD1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MULADD1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value);
   }
 }
 ----
@@ -6253,11 +6239,9 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src_regno], src_dtype);
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MULADD1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MULADD1D, src_dtype, scalar_element_value, src_dtype, src_element_value);
   }
 }
 ----
@@ -7065,11 +7049,9 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src2_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype);
     U32 src2_hi_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src2_lo_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - src2_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MULSUB1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MULSUB1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value);
   }
 }
 ----
@@ -7164,11 +7146,9 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src_regno], src_dtype);
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MULSUB1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MULSUB1D, src_dtype, scalar_element_value, src_dtype, src_element_value);
   }
 }
 ----
@@ -7724,8 +7704,13 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
   for pass:[(]U32 j = 0; j < N; j++) {
-    Bits<AME_MAX_DTYPE_SIZE> running = 0;
-    for pass:[(]U32 i = 0; i < N; i++) {
+    U32 first_e = j;
+    U32 first_src_regno = first_e / src1_elements_per_reg;
+    U32 first_src_hi = ((first_e pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
+    U32 first_src_lo = ((first_e pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - src1_element_size;
+    Bits<AME_MAX_DTYPE_SIZE> running = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] first_src_regno], src1_dtype)[first_src_hi:first_src_lo];
+    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, first_e, running);
+    for pass:[(]U32 i = 1; i < N; i++) {
       U32 e = i * N pass:[+] j;
       U32 src_regno = e / src1_elements_per_reg;
       U32 src_hi = ((e pass:[+] 1) * src1_element_size) - (src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
@@ -7817,8 +7802,13 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
   for pass:[(]U32 i = 0; i < N; i++) {
-    Bits<AME_MAX_DTYPE_SIZE> running = 0;
-    for pass:[(]U32 j = 0; j < N; j++) {
+    U32 first_e = i * N;
+    U32 first_src_regno = first_e / src1_elements_per_reg;
+    U32 first_src_hi = ((first_e pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
+    U32 first_src_lo = ((first_e pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - src1_element_size;
+    Bits<AME_MAX_DTYPE_SIZE> running = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] first_src_regno], src1_dtype)[first_src_hi:first_src_lo];
+    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, first_e, running);
+    for pass:[(]U32 j = 1; j < N; j++) {
       U32 e = i * N pass:[+] j;
       U32 src_regno = e / src1_elements_per_reg;
       U32 src_hi = ((e pass:[+] 1) * src1_element_size) - (src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
@@ -7910,8 +7900,13 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
   for pass:[(]U32 j = 0; j < N; j++) {
-    Bits<AME_MAX_DTYPE_SIZE> running = 0;
-    for pass:[(]U32 i = 0; i < N; i++) {
+    U32 first_e = j;
+    U32 first_src_regno = first_e / src1_elements_per_reg;
+    U32 first_src_hi = ((first_e pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
+    U32 first_src_lo = ((first_e pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - src1_element_size;
+    Bits<AME_MAX_DTYPE_SIZE> running = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] first_src_regno], src1_dtype)[first_src_hi:first_src_lo];
+    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, first_e, running);
+    for pass:[(]U32 i = 1; i < N; i++) {
       U32 e = i * N pass:[+] j;
       U32 src_regno = e / src1_elements_per_reg;
       U32 src_hi = ((e pass:[+] 1) * src1_element_size) - (src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
@@ -8003,8 +7998,13 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
   for pass:[(]U32 i = 0; i < N; i++) {
-    Bits<AME_MAX_DTYPE_SIZE> running = 0;
-    for pass:[(]U32 j = 0; j < N; j++) {
+    U32 first_e = i * N;
+    U32 first_src_regno = first_e / src1_elements_per_reg;
+    U32 first_src_hi = ((first_e pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
+    U32 first_src_lo = ((first_e pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - src1_element_size;
+    Bits<AME_MAX_DTYPE_SIZE> running = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] first_src_regno], src1_dtype)[first_src_hi:first_src_lo];
+    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, first_e, running);
+    for pass:[(]U32 j = 1; j < N; j++) {
       U32 e = i * N pass:[+] j;
       U32 src_regno = e / src1_elements_per_reg;
       U32 src_hi = ((e pass:[+] 1) * src1_element_size) - (src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
@@ -8216,11 +8216,9 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     Bits<AME_MAX_SQUARE_SIZE> src2_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype);
     U32 src2_hi_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src2_lo_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - src2_element_size;
-    Bits<AME_MAX_SQUARE_SIZE> dest_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md pass:[+] dest_regno], dest_dtype);
     Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> dest_current = dest_value[dest_hi_idx:dest_lo_idx];
-    <<udb:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::RDEXPACC1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value, dest_dtype));
+    <<udb:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::RDEXPACC1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value);
   }
 }
 ----
@@ -8401,8 +8399,12 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
   for pass:[(]U32 j = 0; j < N; j++) {
-    Bits<AME_MAX_DTYPE_SIZE> col_result = 0;
-    for pass:[(]U32 k = 0; k < N; k++) {
+    U32 first_e_src = j;
+    U32 first_src_regno = first_e_src / src1_elements_per_reg;
+    U32 first_src_hi = ((first_e_src pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
+    U32 first_src_lo = ((first_e_src pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - src1_element_size;
+    Bits<AME_MAX_DTYPE_SIZE> col_result = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] first_src_regno], src1_dtype)[first_src_hi:first_src_lo];
+    for pass:[(]U32 k = 1; k < N; k++) {
       U32 e_src = k * N pass:[+] j;
       U32 src_regno = e_src / src1_elements_per_reg;
       U32 src_hi = ((e_src pass:[+] 1) * src1_element_size) - (src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
@@ -8498,8 +8500,12 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
   for pass:[(]U32 i = 0; i < N; i++) {
-    Bits<AME_MAX_DTYPE_SIZE> row_result = 0;
-    for pass:[(]U32 k = 0; k < N; k++) {
+    U32 first_e_src = i * N;
+    U32 first_src_regno = first_e_src / src1_elements_per_reg;
+    U32 first_src_hi = ((first_e_src pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
+    U32 first_src_lo = ((first_e_src pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - src1_element_size;
+    Bits<AME_MAX_DTYPE_SIZE> row_result = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] first_src_regno], src1_dtype)[first_src_hi:first_src_lo];
+    for pass:[(]U32 k = 1; k < N; k++) {
       U32 e_src = i * N pass:[+] k;
       U32 src_regno = e_src / src1_elements_per_reg;
       U32 src_hi = ((e_src pass:[+] 1) * src1_element_size) - (src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
@@ -8595,8 +8601,12 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
   for pass:[(]U32 j = 0; j < N; j++) {
-    Bits<AME_MAX_DTYPE_SIZE> col_result = 0;
-    for pass:[(]U32 k = 0; k < N; k++) {
+    U32 first_e_src = j;
+    U32 first_src_regno = first_e_src / src1_elements_per_reg;
+    U32 first_src_hi = ((first_e_src pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
+    U32 first_src_lo = ((first_e_src pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - src1_element_size;
+    Bits<AME_MAX_DTYPE_SIZE> col_result = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] first_src_regno], src1_dtype)[first_src_hi:first_src_lo];
+    for pass:[(]U32 k = 1; k < N; k++) {
       U32 e_src = k * N pass:[+] j;
       U32 src_regno = e_src / src1_elements_per_reg;
       U32 src_hi = ((e_src pass:[+] 1) * src1_element_size) - (src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
@@ -8692,8 +8702,12 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
   for pass:[(]U32 i = 0; i < N; i++) {
-    Bits<AME_MAX_DTYPE_SIZE> row_result = 0;
-    for pass:[(]U32 k = 0; k < N; k++) {
+    U32 first_e_src = i * N;
+    U32 first_src_regno = first_e_src / src1_elements_per_reg;
+    U32 first_src_hi = ((first_e_src pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
+    U32 first_src_lo = ((first_e_src pass:[+] 1) * src1_element_size) - (first_src_regno * AME_MATRIX_REGISTER_SIZE) - src1_element_size;
+    Bits<AME_MAX_DTYPE_SIZE> row_result = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] first_src_regno], src1_dtype)[first_src_hi:first_src_lo];
+    for pass:[(]U32 k = 1; k < N; k++) {
       U32 e_src = i * N pass:[+] k;
       U32 src_regno = e_src / src1_elements_per_reg;
       U32 src_hi = ((e_src pass:[+] 1) * src1_element_size) - (src_regno * AME_MATRIX_REGISTER_SIZE) - 1;
@@ -9171,7 +9185,8 @@ register `xs1`, stored into `md`.
 +
 For each row `i` and column `j`:
 +
-  `md[i,j] = ms1[i+c, j]`  if `0 <= i+c < sqrt(AME_NELEM)`, otherwise `md[i,j] = 0`.
+  `md[i,j] = ms1[i+c, j]`  if `0 <= i+c < sqrt(AME_NELEM)`, otherwise
+  `md[i,j] = zero(Md[md])`.
 
 
 NumPy Equivalent::
@@ -9198,7 +9213,8 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src1_dtype = Md[ms1];
-if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ROWSHIFT1D, dest_dtype, src1_dtype, src1_dtype)) {
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ROWSHIFT1D, dest_dtype, src1_dtype, src1_dtype) ||
+    !<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ZERO1D, dest_dtype, dest_dtype, dest_dtype)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
@@ -9226,6 +9242,7 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
   Bits<32> shift = $signed+++(+++X[xs1]);
+  Bits<AME_MAX_DTYPE_SIZE> zero_value = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::ZERO1D, dest_dtype, 0, dest_dtype, 0, dest_dtype);
   for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
     Bits<AME_MAX_SQUARE_SIZE> result = 0;
     for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
@@ -9235,13 +9252,14 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
       Bits<32> src_i = i pass:[+] shift;
       U32 dst_lo = local_e * dest_element_size;
       U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
+      result[dst_hi:dst_lo] = zero_value;
       if pass:[(]$signed+++(+++src_i) >= 0 && $signed+++(+++src_i) < N) {
         Bits<32> e_src = src_i * N pass:[+] j;
         Bits<32> src_regno = $signed+++(+++e_src) / src1_elements_per_reg;
         U32 src_lo = e_src * src1_element_size - ($signed+++(+++src_regno) * AME_MATRIX_REGISTER_SIZE);
         U32 src_hi = src_lo pass:[+] src1_element_size - 1;
         Bits<AME_MAX_DTYPE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo];
-        result[dst_hi:dst_lo] = src_value;
+        result[dst_hi:dst_lo] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::ROWSHIFT1D, src1_dtype, src_value, src1_dtype, src_value, dest_dtype);
       }
     }
     M[md pass:[+] dst_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
