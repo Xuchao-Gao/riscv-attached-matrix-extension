@@ -5162,7 +5162,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x0,"type":2}]}
+{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-mmul-2d-funct7},"type":2}]}
 ....
 
 Description::
@@ -5452,7 +5452,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x1,"type":2}]}
+{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-mmulacc-2d-funct7},"type":2}]}
 ....
 
 Description::
@@ -5759,7 +5759,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x3,"type":2}]}
+{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-mmulaccneg-2d-funct7},"type":2}]}
 ....
 
 Description::
@@ -6266,7 +6266,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x4,"type":2}]}
+{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-mmulat-2d-funct7},"type":2}]}
 ....
 
 Description::
@@ -6366,7 +6366,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x5,"type":2}]}
+{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-mmulatacc-2d-funct7},"type":2}]}
 ....
 
 Description::
@@ -6471,7 +6471,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x6,"type":2}]}
+{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-mmulbt-2d-funct7},"type":2}]}
 ....
 
 Description::
@@ -6571,7 +6571,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x7,"type":2}]}
+{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-mmulbtacc-2d-funct7},"type":2}]}
 ....
 
 Description::
@@ -6676,7 +6676,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x2,"type":2}]}
+{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":5,"name": 0x8,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-mmulneg-2d-funct7},"type":2}]}
 ....
 
 Description::

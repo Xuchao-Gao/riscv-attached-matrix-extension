@@ -21,11 +21,25 @@ repos:
         # Disallow other asciidoc extensions except .adoc
         files: .*\.(asciidoc|asc)$
 
-      - id: check-managed-encodings
-        name: check-managed-encodings
-        entry: ruby scripts/check-managed-encodings.rb
+      - id: check-instruction-encodings
+        name: check-instruction-encodings
+        entry: ruby scripts/check-instruction-encodings.rb
         language: system
         files: ^src/(instruction-encoding-allocations|instructions)\.adoc$
+        pass_filenames: false
+
+      - id: check-instruction-encoding-table
+        name: check-instruction-encoding-table
+        entry: ruby scripts/generate-instruction-encoding-table.rb --check
+        language: system
+        files: ^(INSTRUCTION_ENCODINGS\.md|scripts/generate-instruction-encoding-table\.rb|src/(instruction-encoding-allocations|instructions)\.adoc)$
+        pass_filenames: false
+
+      - id: check-legacy-names
+        name: check-legacy-names
+        entry: ruby scripts/check-legacy-names.rb
+        language: system
+        files: ^(Makefile|.*\.(adoc|md)|scripts/.*)$
         pass_filenames: false
 
       - id: check-managed-operations

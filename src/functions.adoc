@@ -699,6 +699,14 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 | `src1 + src2`
 | Supported numeric source and destination datatypes
 
+| `MM1D`, `MMACC1D`, `MMAT1D`, `MMATACC1D`, `MMBT1D`, `MMBTACC1D`
+| `src1 * src2`
+| Supported numeric matrix source and accumulator destination datatypes
+
+| `MMNEG1D`, `MMACCNEG1D`
+| `-(src1 * src2)`
+| Supported numeric matrix source and accumulator destination datatypes
+
 | `REDUCEMINCOL1D`, `REDUCEMIN1D`
 | `min(src1, src2)` according to the source datatype's ordering
 | Identical ordered numeric source and destination datatypes

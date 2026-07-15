@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Check that encodings driven by the central provisional registry do not
-# collide with any other encoding in instructions.adoc.
+# Check every instruction encoding for malformed fields, diagram/decode
+# mismatches, exact duplicates, and partial decode-space overlaps.
 
 attributes_path = File.join(__dir__, "..", "src", "instruction-encoding-allocations.adoc")
 instructions_path = File.join(__dir__, "..", "src", "instructions.adoc")
@@ -24,7 +24,6 @@ File.foreach(instructions_path) do |line|
   instruction = heading[1] if heading
   next unless instruction && line.start_with?("{\"reg\":")
 
-  managed = line.include?("{ame-enc-")
   resolved = line.gsub(/\{([a-z0-9-]+)\}/) do
     name = Regexp.last_match(1)
     abort "unknown encoding attribute {#{name}} in #{instruction}" unless attributes.key?(name)
@@ -33,12 +32,10 @@ File.foreach(instructions_path) do |line|
     attributes[name]
   end
 
-  if managed
-    resolved.scan(/"bits":(\d+),"name":\s*(0x[0-9a-f]+|\d+)/).each do |width_text, value_text|
-      width = width_text.to_i
-      value = value_text.start_with?("0x") ? value_text.to_i(16) : value_text.to_i
-      abort "#{instruction} encoding value #{value_text} does not fit in #{width} bits" if value >= (1 << width)
-    end
+  resolved.scan(/"bits":(\d+),"name":\s*(0x[0-9a-f]+|\d+)/).each do |width_text, value_text|
+    width = width_text.to_i
+    field_value = value_text.start_with?("0x") ? value_text.to_i(16) : value_text.to_i
+    abort "#{instruction} encoding value #{value_text} does not fit in #{width} bits" if field_value >= (1 << width)
   end
 
   # Build a fixed-bit mask/value pair.  Exact WaveDrom equality is insufficient
@@ -59,19 +56,17 @@ File.foreach(instructions_path) do |line|
   end
   abort "#{instruction} encoding is #{position} bits, expected 32" unless position == 32
 
-  entries << { name: instruction, mask: mask, value: value, managed: managed }
+  entries << { name: instruction, mask: mask, value: value }
 end
 
 unused = attributes.keys - used_attributes.uniq
 abort "unused managed encoding attributes: #{unused.sort.join(', ')}" unless unused.empty?
 
-# Keep each managed WaveDrom operand field synchronized with the normative
+# Keep every WaveDrom operand field synchronized with the normative
 # Decode Variables block.  Collision checking alone cannot detect a diagram
 # that assigns an operand to different bits than the pseudocode reads.
 field_errors = []
 File.read(instructions_path).scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, section|
-  next unless section.include?("{ame-enc-")
-
   diagram = section.lines.find { |line| line.start_with?('{"reg":') }
   next unless diagram
 
@@ -99,18 +94,16 @@ end
 abort "managed encoding/decode mismatch:\n  #{field_errors.join("\n  ")}" unless field_errors.empty?
 
 collisions = entries.combination(2).select do |left, right|
-  next false unless left[:managed] || right[:managed]
-
   common_mask = left[:mask] & right[:mask]
   ((left[:value] ^ right[:value]) & common_mask).zero?
 end
 
 unless collisions.empty?
   collisions.each do |left, right|
-    warn "managed encoding collision: #{left[:name]}, #{right[:name]}"
+    kind = left[:mask] == right[:mask] && left[:value] == right[:value] ? "exact duplicate" : "decode overlap"
+    warn "instruction encoding #{kind}: #{left[:name]}, #{right[:name]}"
   end
   exit 1
 end
 
-managed_count = entries.count { |entry| entry[:managed] }
-puts "checked #{managed_count} managed instruction encodings: no collisions"
+puts "checked #{entries.length} instruction encodings: fields match decode variables; no duplicates or overlaps"

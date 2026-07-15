@@ -1,6 +1,6 @@
 // Central registry for provisional instruction encodings introduced with the
 // extended element-wise instruction set.  Keep the values here rather than in
-// individual WaveDrom blocks; scripts/check-managed-encodings.rb verifies that
+// individual WaveDrom blocks; scripts/check-instruction-encodings.rb verifies that
 // every managed encoding is disjoint from every other decode pattern.
 
 :ame-enc-mcolbcast-ew-x-funct7: 0x0
@@ -12,6 +12,14 @@
 :ame-enc-mfrintp-ew-funct12: 0x220
 :ame-enc-mfrintz-ew-funct12: 0x240
 :ame-enc-mmov-m-a-funct10: 0x19
+:ame-enc-mmul-2d-funct7: 0x1b
+:ame-enc-mmulacc-2d-funct7: 0x1c
+:ame-enc-mmulaccneg-2d-funct7: 0x1e
+:ame-enc-mmulat-2d-funct7: 0x1f
+:ame-enc-mmulatacc-2d-funct7: 0x20
+:ame-enc-mmulbt-2d-funct7: 0x21
+:ame-enc-mmulbtacc-2d-funct7: 0x22
+:ame-enc-mmulneg-2d-funct7: 0x1d
 :ame-enc-mpack-ew-x-funct7: 0x6
 :ame-enc-mrec-ew-funct12: 0x260
 :ame-enc-mreducemin-col-funct12: 0x280
@@ -63,6 +71,15 @@ the single source of truth for the corresponding WaveDrom diagrams.
 
 | `mpack.ew.x` | `md,ms1,xs1` | `101` | `{ame-enc-mpack-ew-x-funct7}`
 | `munpack.ew.x` | `md,ms1,xs1` | `101` | `{ame-enc-munpack-ew-x-funct7}`
+
+| `mmul.2d` | `acc,ms1,ms2` | n/a | `{ame-enc-mmul-2d-funct7}`
+| `mmulacc.2d` | `acc,ms1,ms2` | n/a | `{ame-enc-mmulacc-2d-funct7}`
+| `mmulneg.2d` | `acc,ms1,ms2` | n/a | `{ame-enc-mmulneg-2d-funct7}`
+| `mmulaccneg.2d` | `acc,ms1,ms2` | n/a | `{ame-enc-mmulaccneg-2d-funct7}`
+| `mmulat.2d` | `acc,ms1,ms2` | n/a | `{ame-enc-mmulat-2d-funct7}`
+| `mmulatacc.2d` | `acc,ms1,ms2` | n/a | `{ame-enc-mmulatacc-2d-funct7}`
+| `mmulbt.2d` | `acc,ms1,ms2` | n/a | `{ame-enc-mmulbt-2d-funct7}`
+| `mmulbtacc.2d` | `acc,ms1,ms2` | n/a | `{ame-enc-mmulbtacc-2d-funct7}`
 
 | `mcos.ew` | `md,ms1` | `001` | `{ame-enc-mcos-ew-funct12}`
 | `mfrintm.ew` | `md,ms1` | `001` | `{ame-enc-mfrintm-ew-funct12}`
