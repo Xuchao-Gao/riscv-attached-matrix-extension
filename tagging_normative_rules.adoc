@@ -45,7 +45,7 @@ There should be at least two normative rules (op & enc) per instruction, even if
 Each CSR typically has at least the following rules, with text from the spec defining the size, access type, privilege mode, and operation.
 
 * sz (size in bits)
-* acc (read/write access type; relates to rw, ro, ro-h, rw-r, rw-rh from UDB)
+* acc (read/write access type; relates to rw, ro, ro-h, rw-r, and rw-rh metadata values)
 * mode (associated privilege mode)
 * op (operation, optional for CSRs such as mscratch that do not affect system behavior)
 

@@ -40,7 +40,7 @@ The *pack_factor* of a datatype is the number of squares contained in a single M
 * **Unit or Wide** (`sizeof(dtype) >= AME_UNIT_DATATYPE_SIZE`): `pack_factor = 1`
 
 When the programmed datatype is a *packed datatype*
-(size < `<<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`),
+(size < `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`),
 a single M register holds `pack_factor` logical squares.
 
 The number of elements processed by an AME matrix multiply instruction depends on the datatype.
@@ -69,16 +69,16 @@ and pad only edge tiles.
 --
 
 The row/column dimension, N, is implementation-defined and is equal to the
-square root of <<udb:doc:param:AME_NELEM,AME_NELEM>>.
-<<udb:doc:param:AME_NELEM,AME_NELEM>> can be any power of 4.
+square root of <<ame:doc:param:AME_NELEM,AME_NELEM>>.
+<<ame:doc:param:AME_NELEM,AME_NELEM>> can be any power of 4.
 
 [NOTE]
 --
 It is possible to create portable AME binaries regardless of the chosen value of
-<<udb:doc:param:AME_NELEM,AME_NELEM>>.
+<<ame:doc:param:AME_NELEM,AME_NELEM>>.
 
 Highly-tuned binaries may produce a better result by targeting a specific value of
-<<udb:doc:param:AME_NELEM,AME_NELEM>>, similar to how auto-vectorizing compilers can generate
+<<ame:doc:param:AME_NELEM,AME_NELEM>>, similar to how auto-vectorizing compilers can generate
 more efficient code for RISC-V Vector when VLEN is known.
 --
 
@@ -93,11 +93,11 @@ Mixed-datatype operations are optional; see <<datatypes>> for the implementation
 
 A single square (vector or matrix) may fit in one `M` register or may span multiple consecutive
 `M` registers, depending on the datatype size.
-If the datatype is no wider than <<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>,
+If the datatype is no wider than <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>,
 one register is sufficient;
 wider datatypes require additional registers.
 The required register count is the datatype size rounded up in units of
-<<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>
+<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>
 (that is, `ceil(sizeof(datatype)/AME_UNIT_DATATYPE_SIZE)`).
 
 When a square requires multiple consecutive `M` registers, consecutive registers are combined into a group.
@@ -233,10 +233,10 @@ all custom or all standard).
 Profiles will likely mandate a minimal set of supported datatypes.
 --
 
-`M` register datatypes are set using the <<udb:doc:inst:msettyp,msettyp>> instruction and
-read using the <<udb:doc:inst:mgettyp,mgettyp>> instruction. `Acc` register datatypes are
-set using <<udb:doc:inst:asettyp,asettyp>> and read using
-<<udb:doc:inst:agettyp,agettyp>>. Setting an `Acc` datatype with `asettyp` also clears the
+`M` register datatypes are set using the <<ame:doc:inst:msettyp,msettyp>> instruction and
+read using the <<ame:doc:inst:mgettyp,mgettyp>> instruction. `Acc` register datatypes are
+set using <<ame:doc:inst:asettyp,asettyp>> and read using
+<<ame:doc:inst:agettyp,agettyp>>. Setting an `Acc` datatype with `asettyp` also clears the
 corresponding accumulator tile.
 
 === Data movement
@@ -339,7 +339,7 @@ for i from 0 to N-1:
 Matrix multiplication is not commutative (`A*B != B*A` in general),
 so operand order must be preserved by software using AME primitives.
 
-AME defines [Udb::Instruction#mmul.2d, Udb::Instruction#mmulacc.2d, Udb::Instruction#mmulaccneg.2d, Udb::Instruction#mmulat.2d, Udb::Instruction#mmulatacc.2d, Udb::Instruction#mmulbt.2d, Udb::Instruction#mmulbtacc.2d, Udb::Instruction#mmulneg.2d] instructions that perform a matrix multiply.
+AME defines the matrix-multiply instruction variants listed below.
 The destination of matrix multiply operations is always an accumulator register.
 The operations differ in
 whether or not they accumulate into the destination register (versus overwrite it),
@@ -349,28 +349,28 @@ and whether or not they negate a result.
 [cols="1,2,3",options="header"]
 |===
 | Instruction   | Operation  | Description
-| <<udb:doc:inst:mmul_2d,mmul.2d>>
+| <<ame:doc:inst:mmul_2d,mmul.2d>>
 | `C = A × B`
 | Matrix multiply
-| <<udb:doc:inst:mmulacc_2d,mmulacc.2d>>
+| <<ame:doc:inst:mmulacc_2d,mmulacc.2d>>
 | `C = C + A × B`
 | Matrix multiply accumulate
-| <<udb:doc:inst:mmulaccneg_2d,mmulaccneg.2d>>
+| <<ame:doc:inst:mmulaccneg_2d,mmulaccneg.2d>>
 | `C = C - A × B`
 | Negated matrix multiply accumulate
-| <<udb:doc:inst:mmulat_2d,mmulat.2d>>
+| <<ame:doc:inst:mmulat_2d,mmulat.2d>>
 | `C = A^T^ × B`
 | Matrix multiply with transposed A
-| <<udb:doc:inst:mmulatacc_2d,mmulatacc.2d>>
+| <<ame:doc:inst:mmulatacc_2d,mmulatacc.2d>>
 | `C = C + A^T^ × B`
 | Matrix multiply with transposed A, accumulate
-| <<udb:doc:inst:mmulbt_2d,mmulbt.2d>>
+| <<ame:doc:inst:mmulbt_2d,mmulbt.2d>>
 | `C = A × B^T^`
 | Matrix multiply with transposed B
-| <<udb:doc:inst:mmulbtacc_2d,mmulbtacc.2d>>
+| <<ame:doc:inst:mmulbtacc_2d,mmulbtacc.2d>>
 | `C = C + A × B^T^`
 | Matrix multiply with transposed B, accumulate
-| <<udb:doc:inst:mmulneg_2d,mmulneg.2d>>
+| <<ame:doc:inst:mmulneg_2d,mmulneg.2d>>
 | `C = -(A × B)`
 | Negated matrix multiply
 |===
@@ -389,85 +389,85 @@ Arithmetic::
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation |  Description
-| <<udb:doc:inst:mabs_ew,mabs.ew>>
+| <<ame:doc:inst:mabs_ew,mabs.ew>>
 | `D[i] = \|A[i]\|`
 | Elementwise absolute value
-| <<udb:doc:inst:mabsdiff_ew,mabsdiff.ew>>
+| <<ame:doc:inst:mabsdiff_ew,mabsdiff.ew>>
 | `D[i] = \|A[i] - B[i]\|`
 | Elementwise absolute difference
-| <<udb:doc:inst:mabsdiff_ew_x,mabsdiff.ew.x>>
+| <<ame:doc:inst:mabsdiff_ew_x,mabsdiff.ew.x>>
 | `D[i] = \|c - B[i]\|`
 | Elementwise scalar absolute difference
-| <<udb:doc:inst:madd_ew,madd.ew>>
+| <<ame:doc:inst:madd_ew,madd.ew>>
 | `D[i] = A[i] + B[i]`
 | Elementwise addition
-| <<udb:doc:inst:madd_ew_x,madd.ew.x>>
+| <<ame:doc:inst:madd_ew_x,madd.ew.x>>
 | `D[i] = c + B[i]`
 | Elementwise scalar addition
-| <<udb:doc:inst:mhdiff_ew,mhdiff.ew>>
+| <<ame:doc:inst:mhdiff_ew,mhdiff.ew>>
 | `D[i] = (B[i] - A[i]) / 2`
 | Elementwise half-difference
-| <<udb:doc:inst:mhdiff_ew_x,mhdiff.ew.x>>
+| <<ame:doc:inst:mhdiff_ew_x,mhdiff.ew.x>>
 | `D[i] = (c - B[i]) / 2`
 | Elementwise scalar half-difference
-| <<udb:doc:inst:mmax_ew,mmax.ew>>
+| <<ame:doc:inst:mmax_ew,mmax.ew>>
 | `D[i] = max(A[i], B[i])`
 | Elementwise maximum
-| <<udb:doc:inst:mmax_ew_x,mmax.ew.x>>
+| <<ame:doc:inst:mmax_ew_x,mmax.ew.x>>
 | `D[i] = max(c, B[i])`
 | Elementwise scalar maximum
-| <<udb:doc:inst:mmean_ew,mmean.ew>>
+| <<ame:doc:inst:mmean_ew,mmean.ew>>
 | `D[i] = (A[i] + B[i]) / 2`
 | Elementwise arithmetic mean (half-add)
-| <<udb:doc:inst:mmean_ew_x,mmean.ew.x>>
+| <<ame:doc:inst:mmean_ew_x,mmean.ew.x>>
 | `D[i] = (c + B[i]) / 2`
 | Elementwise scalar mean
-| <<udb:doc:inst:mmin_ew,mmin.ew>>
+| <<ame:doc:inst:mmin_ew,mmin.ew>>
 | `D[i] = min(A[i], B[i])`
 | Elementwise minimum
-| <<udb:doc:inst:mmin_ew_x,mmin.ew.x>>
+| <<ame:doc:inst:mmin_ew_x,mmin.ew.x>>
 | `D[i] = min(c, B[i])`
 | Elementwise scalar minimum
-| <<udb:doc:inst:mmul_ew,mmul.ew>>
+| <<ame:doc:inst:mmul_ew,mmul.ew>>
 | `D[i] = A[i] × B[i]`
 | Elementwise multiplication
-| <<udb:doc:inst:mmul_ew_x,mmul.ew.x>>
+| <<ame:doc:inst:mmul_ew_x,mmul.ew.x>>
 | `D[i] = c × B[i]`
 | Elementwise scalar multiplication
-| <<udb:doc:inst:mmulacc_ew,mmulacc.ew>>
+| <<ame:doc:inst:mmulacc_ew,mmulacc.ew>>
 | `D[i] = D[i] + A[i] × B[i]`
 | Elementwise multiply-accumulate
-| <<udb:doc:inst:mmulacc_ew_x,mmulacc.ew.x>>
+| <<ame:doc:inst:mmulacc_ew_x,mmulacc.ew.x>>
 | `D[i] = D[i] + c × B[i]`
 | Elementwise scalar multiply-accumulate
-| <<udb:doc:inst:mmulaccneg_ew,mmulaccneg.ew>>
+| <<ame:doc:inst:mmulaccneg_ew,mmulaccneg.ew>>
 | `D[i] = D[i] - A[i] × B[i]`
 | Elementwise negative multiply-accumulate
-| <<udb:doc:inst:mmulaccneg_ew_x,mmulaccneg.ew.x>>
+| <<ame:doc:inst:mmulaccneg_ew_x,mmulaccneg.ew.x>>
 | `D[i] = D[i] - c × B[i]`
 | Elementwise scalar negative multiply-accumulate
-| <<udb:doc:inst:mmuladd_ew,mmuladd.ew>>
+| <<ame:doc:inst:mmuladd_ew,mmuladd.ew>>
 | `D[i] = A[i] + B[i] × D[i]`
 | Elementwise fused multiply-add
-| <<udb:doc:inst:mmuladd_ew_x,mmuladd.ew.x>>
+| <<ame:doc:inst:mmuladd_ew_x,mmuladd.ew.x>>
 | `D[i] = c + B[i] × D[i]`
 | Elementwise scalar fused multiply-add
-| <<udb:doc:inst:mmulneg_ew,mmulneg.ew>>
+| <<ame:doc:inst:mmulneg_ew,mmulneg.ew>>
 | `D[i] = -(A[i] × B[i])`
 | Elementwise negate-multiply
-| <<udb:doc:inst:mmulneg_ew_x,mmulneg.ew.x>>
+| <<ame:doc:inst:mmulneg_ew_x,mmulneg.ew.x>>
 | `D[i] = -(c × B[i])`
 | Elementwise scalar negate-multiply
-| <<udb:doc:inst:mmulsub_ew,mmulsub.ew>>
+| <<ame:doc:inst:mmulsub_ew,mmulsub.ew>>
 | `D[i] = A[i] - B[i] × D[i]`
 | Elementwise fused multiply-subtract
-| <<udb:doc:inst:mmulsub_ew_x,mmulsub.ew.x>>
+| <<ame:doc:inst:mmulsub_ew_x,mmulsub.ew.x>>
 | `D[i] = c - B[i] × D[i]`
 | Elementwise scalar fused multiply-subtract
-| <<udb:doc:inst:msub_ew,msub.ew>>
+| <<ame:doc:inst:msub_ew,msub.ew>>
 | `D[i] = B[i] - A[i]`
 | Elementwise subtraction
-| <<udb:doc:inst:msub_ew_x,msub.ew.x>>
+| <<ame:doc:inst:msub_ew_x,msub.ew.x>>
 | `D[i] = c - B[i]`
 | Elementwise scalar subtraction
 |===
@@ -476,52 +476,52 @@ Bitwise::
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
-| <<udb:doc:inst:mand_ew,mand.ew>>
+| <<ame:doc:inst:mand_ew,mand.ew>>
 | `D[i] = A[i] & B[i]`
 | Elementwise bitwise AND
-| <<udb:doc:inst:mand_ew_x,mand.ew.x>>
+| <<ame:doc:inst:mand_ew_x,mand.ew.x>>
 | `D[i] = c & B[i]`
 | Elementwise scalar bitwise AND
-| <<udb:doc:inst:mandnot_ew,mandnot.ew>>
+| <<ame:doc:inst:mandnot_ew,mandnot.ew>>
 | `D[i] = A[i] & ~B[i]`
 | Elementwise bitwise AND-NOT
-| <<udb:doc:inst:mandnot_ew_x,mandnot.ew.x>>
+| <<ame:doc:inst:mandnot_ew_x,mandnot.ew.x>>
 | `D[i] = c & ~B[i]`
 | Elementwise scalar bitwise AND-NOT
-| <<udb:doc:inst:mor_ew,mor.ew>>
+| <<ame:doc:inst:mor_ew,mor.ew>>
 | `D[i] = A[i] \| B[i]`
 | Elementwise bitwise OR
-| <<udb:doc:inst:mor_ew_x,mor.ew.x>>
+| <<ame:doc:inst:mor_ew_x,mor.ew.x>>
 | `D[i] = c \| B[i]`
 | Elementwise scalar bitwise OR
-| <<udb:doc:inst:mornot_ew,mornot.ew>>
+| <<ame:doc:inst:mornot_ew,mornot.ew>>
 | `D[i] = A[i] \| ~B[i]`
 | Elementwise bitwise OR-NOT
-| <<udb:doc:inst:mornot_ew_x,mornot.ew.x>>
+| <<ame:doc:inst:mornot_ew_x,mornot.ew.x>>
 | `D[i] = c \| ~B[i]`
 | Elementwise scalar bitwise OR-NOT
-| <<udb:doc:inst:mxor_ew,mxor.ew>>
+| <<ame:doc:inst:mxor_ew,mxor.ew>>
 | `D[i] = A[i] ^ B[i]`
 | Elementwise bitwise XOR
-| <<udb:doc:inst:mxor_ew_x,mxor.ew.x>>
+| <<ame:doc:inst:mxor_ew_x,mxor.ew.x>>
 | `D[i] = c ^ B[i]`
 | Elementwise scalar bitwise XOR
-| <<udb:doc:inst:msll_ew,msll.ew>>
+| <<ame:doc:inst:msll_ew,msll.ew>>
 | `D[i] = A[i] << (B[i] mod EW)`
 | Elementwise logical left shift
-| <<udb:doc:inst:msll_ew_x,msll.ew.x>>
+| <<ame:doc:inst:msll_ew_x,msll.ew.x>>
 | `D[i] = B[i] << (c mod EW)`
 | Elementwise scalar logical left shift
-| <<udb:doc:inst:msra_ew,msra.ew>>
+| <<ame:doc:inst:msra_ew,msra.ew>>
 | `D[i] = A[i] >>s (B[i] mod EW)`
 | Elementwise arithmetic right shift
-| <<udb:doc:inst:msra_ew_x,msra.ew.x>>
+| <<ame:doc:inst:msra_ew_x,msra.ew.x>>
 | `D[i] = B[i] >>s (c mod EW)`
 | Elementwise scalar arithmetic right shift
-| <<udb:doc:inst:msrl_ew,msrl.ew>>
+| <<ame:doc:inst:msrl_ew,msrl.ew>>
 | `D[i] = A[i] >>u (B[i] mod EW)`
 | Elementwise logical right shift
-| <<udb:doc:inst:msrl_ew_x,msrl.ew.x>>
+| <<ame:doc:inst:msrl_ew_x,msrl.ew.x>>
 | `D[i] = B[i] >>u (c mod EW)`
 | Elementwise scalar logical right shift
 |===
@@ -530,28 +530,28 @@ Comparison::
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
-| <<udb:doc:inst:mcmovge_ew,mcmovge.ew>>
+| <<ame:doc:inst:mcmovge_ew,mcmovge.ew>>
 | `D[i] = (A[i] >= 0) ? B[i] : D[i]`
 | Elementwise two-way conditional move (non-negative)
-| <<udb:doc:inst:mcmovlt_ew,mcmovlt.ew>>
+| <<ame:doc:inst:mcmovlt_ew,mcmovlt.ew>>
 | `D[i] = (A[i] < 0) ? B[i] : D[i]`
 | Elementwise two-way conditional move (negative)
-| <<udb:doc:inst:mcmpge_ew,mcmpge.ew>>
+| <<ame:doc:inst:mcmpge_ew,mcmpge.ew>>
 | `D[i] = (A[i] >= B[i]) ? -1 : 0`
 | Elementwise greater-or-equal compare
-| <<udb:doc:inst:mcmpge_ew_x,mcmpge.ew.x>>
+| <<ame:doc:inst:mcmpge_ew_x,mcmpge.ew.x>>
 | `D[i] = (c >= B[i]) ? -1 : 0`
 | Elementwise scalar compare greater-or-equal
-| <<udb:doc:inst:mcmplt_ew,mcmplt.ew>>
+| <<ame:doc:inst:mcmplt_ew,mcmplt.ew>>
 | `D[i] = (A[i] < B[i]) ? -1 : 0`
 | Elementwise less-than compare
-| <<udb:doc:inst:mcmplt_ew_x,mcmplt.ew.x>>
+| <<ame:doc:inst:mcmplt_ew_x,mcmplt.ew.x>>
 | `D[i] = (c < B[i]) ? -1 : 0`
 | Elementwise scalar compare less-than
-| <<udb:doc:inst:mselge_ew,mselge.ew>>
+| <<ame:doc:inst:mselge_ew,mselge.ew>>
 | `D[i] = (A[i] >= 0) ? B[i] : 0`
 | Elementwise predicated select (non-negative)
-| <<udb:doc:inst:msellt_ew,msellt.ew>>
+| <<ame:doc:inst:msellt_ew,msellt.ew>>
 | `D[i] = (A[i] < 0) ? B[i] : 0`
 | Elementwise predicated select (negative)
 |===
@@ -560,70 +560,70 @@ Nonlinear::
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
-| <<udb:doc:inst:mexp2_ew,mexp2.ew>>
+| <<ame:doc:inst:mexp2_ew,mexp2.ew>>
 | `D[i] = 2^A[i]^`
 | Elementwise base-2 exponentiation
-| <<udb:doc:inst:mldexp_ew,mldexp.ew>>
+| <<ame:doc:inst:mldexp_ew,mldexp.ew>>
 | `D[i] = A[i] × 2^B[i]^`
 | Elementwise left-shift scale (ldexp)
-| <<udb:doc:inst:mldexp_ew_x,mldexp.ew.x>>
+| <<ame:doc:inst:mldexp_ew_x,mldexp.ew.x>>
 | `D[i] = B[i] × 2^c^`
 | Elementwise scalar left-shift scale (ldexp)
-| <<udb:doc:inst:mldexpacc_ew,mldexpacc.ew>>
+| <<ame:doc:inst:mldexpacc_ew,mldexpacc.ew>>
 | `D[i] = D[i] + A[i] × 2^B[i]^`
 | Elementwise left-shift scale accumulate
-| <<udb:doc:inst:mldexpacc_ew_x,mldexpacc.ew.x>>
+| <<ame:doc:inst:mldexpacc_ew_x,mldexpacc.ew.x>>
 | `D[i] = D[i] + B[i] × 2^c^`
 | Elementwise scalar left-shift scale accumulate
-| <<udb:doc:inst:mlog2_ew,mlog2.ew>>
+| <<ame:doc:inst:mlog2_ew,mlog2.ew>>
 | `D[i] = log~2~(A[i])`
 | Elementwise base-2 logarithm
-| <<udb:doc:inst:mlog2sub_ew,mlog2sub.ew>>
+| <<ame:doc:inst:mlog2sub_ew,mlog2sub.ew>>
 | `D[i] = log~2~(\|A[i]\|) - B[i]`
 | Elementwise log2 minus bias
-| <<udb:doc:inst:mlog2sub_ew_x,mlog2sub.ew.x>>
+| <<ame:doc:inst:mlog2sub_ew_x,mlog2sub.ew.x>>
 | `D[i] = log~2~(\|B[i]\|) - c`
 | Elementwise log2 minus scalar bias
-| <<udb:doc:inst:mrdexp_ew,mrdexp.ew>>
+| <<ame:doc:inst:mrdexp_ew,mrdexp.ew>>
 | `D[i] = A[i] × 2^-B[i]^`
 | Elementwise right-shift scale
-| <<udb:doc:inst:mrdexpacc_ew,mrdexpacc.ew>>
+| <<ame:doc:inst:mrdexpacc_ew,mrdexpacc.ew>>
 | `D[i] = D[i] + A[i] × 2^-B[i]^`
 | Elementwise right-shift scale accumulate
-| <<udb:doc:inst:msublog2_ew,msublog2.ew>>
+| <<ame:doc:inst:msublog2_ew,msublog2.ew>>
 | `D[i] = B[i] - log~2~(\|A[i]\|)`
 | Elementwise bias minus log2
-| <<udb:doc:inst:msublog2_ew_x,msublog2.ew.x>>
+| <<ame:doc:inst:msublog2_ew_x,msublog2.ew.x>>
 | `D[i] = c - log~2~(\|B[i]\|)`
 | Elementwise scalar bias minus log2
-| <<udb:doc:inst:mcos_ew,mcos.ew>>
+| <<ame:doc:inst:mcos_ew,mcos.ew>>
 | `D[i] = cos(A[i])`
 | Elementwise cosine
-| <<udb:doc:inst:msin_ew,msin.ew>>
+| <<ame:doc:inst:msin_ew,msin.ew>>
 | `D[i] = sin(A[i])`
 | Elementwise sine
-| <<udb:doc:inst:mtanh_ew,mtanh.ew>>
+| <<ame:doc:inst:mtanh_ew,mtanh.ew>>
 | `D[i] = tanh(A[i])`
 | Elementwise hyperbolic tangent
-| <<udb:doc:inst:mrec_ew,mrec.ew>>
+| <<ame:doc:inst:mrec_ew,mrec.ew>>
 | `D[i] = 1 / A[i]`
 | Elementwise reciprocal
-| <<udb:doc:inst:mrsqrt_ew,mrsqrt.ew>>
+| <<ame:doc:inst:mrsqrt_ew,mrsqrt.ew>>
 | `D[i] = 1 / sqrt(A[i])`
 | Elementwise reciprocal square root
-| <<udb:doc:inst:msqrt_ew,msqrt.ew>>
+| <<ame:doc:inst:msqrt_ew,msqrt.ew>>
 | `D[i] = sqrt(A[i])`
 | Elementwise square root
-| <<udb:doc:inst:mfrintm_ew,mfrintm.ew>>
+| <<ame:doc:inst:mfrintm_ew,mfrintm.ew>>
 | `D[i] = floor(A[i])`
 | Round floating-point elements toward minus infinity
-| <<udb:doc:inst:mfrintn_ew,mfrintn.ew>>
+| <<ame:doc:inst:mfrintn_ew,mfrintn.ew>>
 | `D[i] = roundTiesToEven(A[i])`
 | Round floating-point elements to nearest, ties to even
-| <<udb:doc:inst:mfrintp_ew,mfrintp.ew>>
+| <<ame:doc:inst:mfrintp_ew,mfrintp.ew>>
 | `D[i] = ceil(A[i])`
 | Round floating-point elements toward plus infinity
-| <<udb:doc:inst:mfrintz_ew,mfrintz.ew>>
+| <<ame:doc:inst:mfrintz_ew,mfrintz.ew>>
 | `D[i] = trunc(A[i])`
 | Round floating-point elements toward zero
 |===
@@ -638,34 +638,34 @@ AME reduction operations reduce values across a row of a square.
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
-| <<udb:doc:inst:mprefixadd_col,mprefixadd.col>>
+| <<ame:doc:inst:mprefixadd_col,mprefixadd.col>>
 | `D[i,j] = Σ~k≤i~ A[k,j]`
 | Elementwise column prefix-sum (inclusive scan)
-| <<udb:doc:inst:mprefixadd_row,mprefixadd.row>>
+| <<ame:doc:inst:mprefixadd_row,mprefixadd.row>>
 | `D[i,j] = Σ~k≤j~ A[i,k]`
 | Elementwise row prefix-sum (inclusive scan)
-| <<udb:doc:inst:mprefixmax_col,mprefixmax.col>>
+| <<ame:doc:inst:mprefixmax_col,mprefixmax.col>>
 | `D[i,j] = max~k≤i~(A[k,j])`
 | Elementwise column prefix-max (running maximum scan)
-| <<udb:doc:inst:mprefixmax_row,mprefixmax.row>>
+| <<ame:doc:inst:mprefixmax_row,mprefixmax.row>>
 | `D[i,j] = max~k≤j~(A[i,k])`
 | Elementwise row prefix-max (running maximum scan)
-| <<udb:doc:inst:mreduceadd_col,mreduceadd.col>>
+| <<ame:doc:inst:mreduceadd_col,mreduceadd.col>>
 | `D[:,j] = Σ~k~ A[k,j]`
 | Elementwise column reduce (add)
-| <<udb:doc:inst:mreduceadd_row,mreduceadd.row>>
+| <<ame:doc:inst:mreduceadd_row,mreduceadd.row>>
 | `D[i,:] = Σ~k~ A[i,k]`
 | Elementwise row reduce (add)
-| <<udb:doc:inst:mreducemax_col,mreducemax.col>>
+| <<ame:doc:inst:mreducemax_col,mreducemax.col>>
 | `D[:,j] = max~k~(A[k,j])`
 | Elementwise column reduce (max)
-| <<udb:doc:inst:mreducemax_row,mreducemax.row>>
+| <<ame:doc:inst:mreducemax_row,mreducemax.row>>
 | `D[i,:] = max~k~(A[i,k])`
 | Elementwise row reduce (max)
-| <<udb:doc:inst:mreducemin_col,mreducemin.col>>
+| <<ame:doc:inst:mreducemin_col,mreducemin.col>>
 | `D[:,j] = min~k~(A[k,j])`
 | Elementwise column reduce (min)
-| <<udb:doc:inst:mreducemin_row,mreducemin.row>>
+| <<ame:doc:inst:mreducemin_row,mreducemin.row>>
 | `D[i,:] = min~k~(A[i,k])`
 | Elementwise row reduce (min)
 |===
@@ -680,97 +680,97 @@ AME permutation operations swizzle data within a single square.
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
-| <<udb:doc:inst:mcolbcast_ew_x,mcolbcast.ew.x>>
+| <<ame:doc:inst:mcolbcast_ew_x,mcolbcast.ew.x>>
 | `D[i,j] = A[i,c]`
 | Broadcast one selected column to all columns
-| <<udb:doc:inst:mcolunzip_ew,mcolunzip.ew>>
+| <<ame:doc:inst:mcolunzip_ew,mcolunzip.ew>>
 | `D[i,j] = A[i,2j] +
  D[i, N/2+j] = A[i,2j+1]`
 | Elementwise column unzip (de-interleave)
-| <<udb:doc:inst:mcolzip_ew,mcolzip.ew>>
+| <<ame:doc:inst:mcolzip_ew,mcolzip.ew>>
 | `D[i,2j] = A[i,j] +
  D[i,2j+1] = A[i, N/2+j]`
 | Elementwise column zip (interleave)
-| <<udb:doc:inst:mcolgather_ew,mcolgather.ew>>
+| <<ame:doc:inst:mcolgather_ew,mcolgather.ew>>
 | `D[i,j] = A[i, B[i,j]]`
 | Elementwise gather (take)
-| <<udb:doc:inst:mrowunzip_ew,mrowunzip.ew>>
+| <<ame:doc:inst:mrowunzip_ew,mrowunzip.ew>>
 | `D^0^[i,:] = A[2i,:] +
  D^1^[i,:] = A[2i+1,:]`
 | Row unzip (de-interleave rows)
-| <<udb:doc:inst:mrowzip_ew,mrowzip.ew>>
+| <<ame:doc:inst:mrowzip_ew,mrowzip.ew>>
 | `D[2i,:] = A[i,:] +
  D[2i+1,:] = B[i,:]`
 | Row zip (interleave rows from two inputs)
-| <<udb:doc:inst:mscatadd_col,mscatadd.col>>
+| <<ame:doc:inst:mscatadd_col,mscatadd.col>>
 | `D[B[i,j], j] += A[i,j]`
 | Elementwise column scatter-add
-| <<udb:doc:inst:mscatadd_row,mscatadd.row>>
+| <<ame:doc:inst:mscatadd_row,mscatadd.row>>
 | `D[i, B[i,j]] += A[i,j]`
 | Elementwise scatter-add
-| <<udb:doc:inst:mscatmax_col,mscatmax.col>>
+| <<ame:doc:inst:mscatmax_col,mscatmax.col>>
 | `D[B[i,j], j] = max(D[B[i,j],j], A[i,j])`
 | Elementwise column scatter-max
-| <<udb:doc:inst:mscatmax_row,mscatmax.row>>
+| <<ame:doc:inst:mscatmax_row,mscatmax.row>>
 | `D[i, B[i,j]] = max(D[i,B[i,j]], A[i,j])`
 | Elementwise scatter-max
-| <<udb:doc:inst:mcolshift_ew_x,mcolshift.ew.x>>
+| <<ame:doc:inst:mcolshift_ew_x,mcolshift.ew.x>>
 | `D[i,j] = A[i, j+c]`, with `zero(Md[md])` fill
 | Elementwise column shift by scalar offset
-| <<udb:doc:inst:mrowbcast_ew_x,mrowbcast.ew.x>>
+| <<ame:doc:inst:mrowbcast_ew_x,mrowbcast.ew.x>>
 | `D[i,j] = A[c,j]`
 | Broadcast one selected row to all rows
-| <<udb:doc:inst:mrowgather_ew,mrowgather.ew>>
+| <<ame:doc:inst:mrowgather_ew,mrowgather.ew>>
 | `D[i,j] = A[B[i,j],j]`
 | Elementwise row gather
-| <<udb:doc:inst:mrowshift_ew_x,mrowshift.ew.x>>
+| <<ame:doc:inst:mrowshift_ew_x,mrowshift.ew.x>>
 | `D[i,j] = A[i+c,j]`, with `zero(Md[md])` fill
 | Elementwise row shift by scalar offset
 |===
 
 ==== Register move / data conversion
 
-`<<udb:doc:inst:mmov_m_m,mmov.m.m>>` copies all elements from one `M` register to another.
-`<<udb:doc:inst:mmov_a_m,mmov.a.m>>` copies all elements from an `Acc` register to an `M` register.
-`<<udb:doc:inst:mmov_m_a,mmov.m.a>>` copies all elements from an `M` register to an `Acc` register.
+`<<ame:doc:inst:mmov_m_m,mmov.m.m>>` copies all elements from one `M` register to another.
+`<<ame:doc:inst:mmov_a_m,mmov.a.m>>` copies all elements from an `Acc` register to an `M` register.
+`<<ame:doc:inst:mmov_m_a,mmov.m.a>>` copies all elements from an `M` register to an `Acc` register.
 In all three cases, the source and destination datatypes must match; if they differ, `amestatus.UN` is set and the destination is left unchanged.
 
-`<<udb:doc:inst:mzero_2d_acc,mzero.2d.acc>>` writes zero to every element of an `Acc` register,
+`<<ame:doc:inst:mzero_2d_acc,mzero.2d.acc>>` writes zero to every element of an `Acc` register,
 typically used to initialize an accumulator before a matrix multiply sequence.
-`<<udb:doc:inst:mzero_2d_m,mzero.2d.m>>` writes zero in the configured datatype to every logical
+`<<ame:doc:inst:mzero_2d_m,mzero.2d.m>>` writes zero in the configured datatype to every logical
 element of an `M` register group, including packed element positions.
 
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
-| <<udb:doc:inst:mmov_a_m,mmov.a.m>>
+| <<ame:doc:inst:mmov_a_m,mmov.a.m>>
 | `D[i] = acc[i]`
 | Elementwise unconditional move from accumulator to M register
-| <<udb:doc:inst:mmov_m_m,mmov.m.m>>
+| <<ame:doc:inst:mmov_m_m,mmov.m.m>>
 | `D[i] = A[i]`
 | Elementwise unconditional move between M registers
-| <<udb:doc:inst:mmov_m_a,mmov.m.a>>
+| <<ame:doc:inst:mmov_m_a,mmov.m.a>>
 | `acc[i] = A[i]`
 | Elementwise unconditional move from M register to accumulator
-| <<udb:doc:inst:mzero_2d_acc,mzero.2d.acc>>
+| <<ame:doc:inst:mzero_2d_acc,mzero.2d.acc>>
 | `C[i] = zero(Ad[acc])`
 | Clear every logical element of an accumulator tile
-| <<udb:doc:inst:mzero_2d_m,mzero.2d.m>>
+| <<ame:doc:inst:mzero_2d_m,mzero.2d.m>>
 | `D[i] = zero(Md[md])`
 | Clear every logical element of an M register group
-| <<udb:doc:inst:mpack_ew_x,mpack.ew.x>>
+| <<ame:doc:inst:mpack_ew_x,mpack.ew.x>>
 | `D[k] = convert(A)`; preserve all `D[n]` for `n != k`
 | Convert and insert one non-packed square into packed slot `k = X[xs1]`
-| <<udb:doc:inst:munpack_ew_x,munpack.ew.x>>
+| <<ame:doc:inst:munpack_ew_x,munpack.ew.x>>
 | `D = convert(A[k])`
 | Extract and convert packed slot `k = X[xs1]` into one non-packed square
 |===
 
-`<<udb:doc:inst:mconv_ew,mconv.ew>>` converts element data from one datatype to another.
+`<<ame:doc:inst:mconv_ew,mconv.ew>>` converts element data from one datatype to another.
 An expand converts a single packed `M` register (packed dtype) into `pack_factor` consecutive
 non-packed `M` registers; a compress does the reverse.
-The indexed <<udb:doc:inst:mpack_ew_x,mpack.ew.x>> and
-<<udb:doc:inst:munpack_ew_x,munpack.ew.x>> forms convert one selected square at a time,
+The indexed <<ame:doc:inst:mpack_ew_x,mpack.ew.x>> and
+<<ame:doc:inst:munpack_ew_x,munpack.ew.x>> forms convert one selected square at a time,
 reducing register pressure when a full expand or compress is not required.
 
 ==== Scalars
@@ -791,12 +791,12 @@ analogous to `np.full_like`. The element size is determined by the register's pr
 Both non-packed and packed dtypes are supported; for packed dtypes all
 `pack_factor * AME_NELEM` element positions are filled.
 
-`<<udb:doc:inst:mbcast_x,mbcast.x>>` sources the scalar from an integer (`X`) register.
+`<<ame:doc:inst:mbcast_x,mbcast.x>>` sources the scalar from an integer (`X`) register.
 
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
-| <<udb:doc:inst:mbcast_x,mbcast.x>>
+| <<ame:doc:inst:mbcast_x,mbcast.x>>
 | `D[i] = xs1`
 | Broadcast integer scalar to all elements of a square
 |===
@@ -809,7 +809,7 @@ or is pre-determined (for example, a constant exponent operand is always an XLEN
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
-| <<udb:doc:inst:mbcast_x,mbcast.x>>
+| <<ame:doc:inst:mbcast_x,mbcast.x>>
 | `D[i] = xs1`
 | Broadcast integer scalar to all elements of a square
 |===

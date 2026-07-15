@@ -53,8 +53,8 @@ and the loop body is written directly.
 
 Assumptions::
 +
-* `<<udb:doc:param:AME_NELEM,AME_NELEM>> = 16384`
-* `<<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> = 8`
+* `<<ame:doc:param:AME_NELEM,AME_NELEM>> = 16384`
+* `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> = 8`
 * `dtype_bits = AME_UNIT_DATATYPE_SIZE` (group_size = 1; one M register per square)
 * Squares are already formatted in the implementation-defined layout
 
@@ -214,8 +214,8 @@ It represents a kernel written for a specific implementation.
 
 Assumptions::
 +
-* `<<udb:doc:param:AME_NELEM,AME_NELEM>> = 16384`
-* `<<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> = 8`
+* `<<ame:doc:param:AME_NELEM,AME_NELEM>> = 16384`
+* `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> = 8`
 * Squares are already formatted in the implementation-defined layout
 
 Details::
@@ -439,8 +439,8 @@ GEMM_LOOPS 8, m8   # group_size = 8: A→m0–m7,  B→m8–m15
 
 Summary::
 This example is a generic GEMM kernel that is portable across AME implementations regardless of
-<<udb:doc:param:AME_NELEM,AME_NELEM>>, <<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>,
-<<udb:doc:param:AME_NUM_M_REGS,AME_NUM_M_REGS>>, or <<udb:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>>.
+<<ame:doc:param:AME_NELEM,AME_NELEM>>, <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>,
+<<ame:doc:param:AME_NUM_M_REGS,AME_NUM_M_REGS>>, or <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>>.
 It shows the versatility of AME but is *not* how tuned AME would likely work; tuned code would
 likely expect square formatting to occur first, so would look more like <<square_gemm>>.
 
@@ -451,8 +451,8 @@ Assumptions::
 Details::
 See <<gemm_examples>> for the shared algorithm, group-size model, and tiling diagram.
 +
-Because <<udb:doc:param:AME_NELEM,AME_NELEM>> and
-<<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> are implementation-defined
+Because <<ame:doc:param:AME_NELEM,AME_NELEM>> and
+<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> are implementation-defined
 parameters, `N` and `U` are read from CSRs at runtime:
 `csrr t0, amenlen` gives `N = sqrt(AME_NELEM)` and `csrr t1, ameudsz` gives `U`.
 +

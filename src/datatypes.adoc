@@ -166,12 +166,12 @@ The rounding mode of an operation is determined by the datatype of the destinati
 === Packed datatypes
 
 A datatype whose size (bits 7:0) is greater than zero and less than
-`<<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>` is called a *packed datatype*.
+`<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>` is called a *packed datatype*.
 
 Whether any particular datatype is packed is entirely a function of the
-implementation-defined base element size `<<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`,
+implementation-defined base element size `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`,
 so the same datatype may be packed on one implementation and non-packed on another.
-An implementation that sets `<<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`
+An implementation that sets `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`
 equal to its smallest supported element size has no packed datatypes at all; one that sets it
 larger treats every smaller supported datatype as packed.
 For this reason the specification does not designate any specific datatype as packed.
@@ -191,7 +191,7 @@ See <<operand-formation>> in the programming model for the complete rules and a 
 
 Because a packed M register holds multiple squares, packed formats increase register
 pressure when combined with wide datatypes — for example, in kernels such as flash
-attention. Explicit pack/unpack instructions (see <<udb:doc:inst:mconv_ew,mconv.ew>>)
+attention. Explicit pack/unpack instructions (see <<ame:doc:inst:mconv_ew,mconv.ew>>)
 therefore remain necessary to convert between packed and non-packed layouts and to manage
 that pressure.
 
@@ -209,11 +209,11 @@ Implementations are expected to support a small fraction of the possible space.
 Because of this, AME includes a discovery mechanism for software to determine which
 datatypes, conversions, and operations are supported.
 
-The <<udb:doc:csr:amestatus,amestatus>> CSR contains a <<udb:doc:csr_field:amestatus:UN,amestatus.UN>>
+The <<ame:doc:csr:amestatus,amestatus>> CSR contains a <<ame:doc:csr_field:amestatus:UN,amestatus.UN>>
 field that is set whenever an implemented AME instruction is executed with unsupported datatypes.
 This serves as a reliable way to test any combination of operation/datatype.
 
-The overall datatypes supported can also be tested by checking <<udb:doc:csr_field:amestatus:UN,amestatus.UN>>.
+The overall datatypes supported can also be tested by checking <<ame:doc:csr_field:amestatus:UN,amestatus.UN>>.
 after an `msettyp` instruction.
 
 .Testing for datatype support in an `M` register
@@ -240,7 +240,7 @@ after an `msettyp` instruction.
   bnez t1, int32_acc_supported
 ====
 
-A specific operation can also be tested by trying it and checking <<udb:doc:csr_field:amestatus:UN,amestatus.UN>>.
+A specific operation can also be tested by trying it and checking <<ame:doc:csr_field:amestatus:UN,amestatus.UN>>.
 
 .Testing for int8 -> int32 widening accumulation
 [source,bash]

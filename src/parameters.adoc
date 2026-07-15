@@ -9,18 +9,18 @@ AME defines the following implementation parameters:
 |===
 | Name | Description
 
-h| <<udb:doc:param:AME_NELEM,AME_NELEM>> | Number of elements in an AME square
-h| <<udb:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> | Number of implemented AME accumulator registers
-h| <<udb:doc:param:AME_NUM_M_REGS,AME_NUM_M_REGS>> | Number of AME M and Md registers
-h| <<udb:doc:param:AME_UNIMPL_ACC_BEHAVIOR,AME_UNIMPL_ACC_BEHAVIOR>> | Behavior of instructions that reference unimplemented accumulator registers
-h| <<udb:doc:param:AME_UNIMPL_M_BEHAVIOR,AME_UNIMPL_M_BEHAVIOR>> | Behavior of instructions that reference unimplemented AME M registers
-h| <<udb:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> | The datatype size, in bits, at which exactly one square fits in an M register
+h| <<ame:doc:param:AME_NELEM,AME_NELEM>> | Number of elements in an AME square
+h| <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> | Number of implemented AME accumulator registers
+h| <<ame:doc:param:AME_NUM_M_REGS,AME_NUM_M_REGS>> | Number of AME M and Md registers
+h| <<ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR,AME_UNIMPL_ACC_BEHAVIOR>> | Behavior of instructions that reference unimplemented accumulator registers
+h| <<ame:doc:param:AME_UNIMPL_M_BEHAVIOR,AME_UNIMPL_M_BEHAVIOR>> | Behavior of instructions that reference unimplemented AME M registers
+h| <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> | The datatype size, in bits, at which exactly one square fits in an M register
 |===
 
 
 <<<
 
-[#udb:doc:param:AME_NELEM]
+[#ame:doc:param:AME_NELEM]
 === AME_NELEM
 
 Number of elements in an AME square
@@ -47,7 +47,7 @@ power of four
 
 <<<
 
-[#udb:doc:param:AME_NUM_ACC_REGS]
+[#ame:doc:param:AME_NUM_ACC_REGS]
 === AME_NUM_ACC_REGS
 
 Number of implemented AME accumulator registers
@@ -76,7 +76,7 @@ one of: [1, 2, 4]
 
 <<<
 
-[#udb:doc:param:AME_NUM_M_REGS]
+[#ame:doc:param:AME_NUM_M_REGS]
 === AME_NUM_M_REGS
 
 Number of AME M and Md registers
@@ -108,7 +108,7 @@ one of: [16, 32]
 
 <<<
 
-[#udb:doc:param:AME_UNIMPL_ACC_BEHAVIOR]
+[#ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR]
 === AME_UNIMPL_ACC_BEHAVIOR
 
 Behavior of instructions that reference unimplemented accumulator registers
@@ -134,7 +134,7 @@ one of: [exception, undefined]
 
 <<<
 
-[#udb:doc:param:AME_UNIMPL_M_BEHAVIOR]
+[#ame:doc:param:AME_UNIMPL_M_BEHAVIOR]
 === AME_UNIMPL_M_BEHAVIOR
 
 Behavior of instructions that reference unimplemented AME M registers
@@ -160,7 +160,7 @@ one of: [exception, undefined]
 
 <<<
 
-[#udb:doc:param:AME_UNIT_DATATYPE_SIZE]
+[#ame:doc:param:AME_UNIT_DATATYPE_SIZE]
 === AME_UNIT_DATATYPE_SIZE
 
 The datatype size, in bits, at which exactly one square fits in an M register

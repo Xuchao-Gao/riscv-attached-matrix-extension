@@ -1,6 +1,6 @@
 # Makefile for AME (Ztt) Specification PDF
 #
-# Self-contained build — no UDB, no submodules, no Docker required.
+# Self-contained build — no external specification database, submodules, or Docker required.
 #
 # Quick start (clean environment):
 #   ./setup.sh       # install all dependencies (one-time)
