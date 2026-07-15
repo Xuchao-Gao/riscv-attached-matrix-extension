@@ -6,7 +6,9 @@
 
 
 
-AME defines *100* instructions and an additional *2* pseudoinstructions.
+AME defines *124* instructions.
+
+include::instruction-encoding-allocations.adoc[]
 
 
 Datatype Management::
@@ -39,6 +41,14 @@ a| `madd.ew md, ms1, ms2`
 | <<udb:doc:inst:madd_ew,Elementwise addition>>
 a| `madd.ew.x md, xs1, ms2`
 | <<udb:doc:inst:madd_ew_x,Elementwise scalar addition>>
+a| `mfrintm.ew md, ms1`
+| <<udb:doc:inst:mfrintm_ew,Round float to integral (toward -inf)>>
+a| `mfrintn.ew md, ms1`
+| <<udb:doc:inst:mfrintn_ew,Round float to integral (nearest, ties to even)>>
+a| `mfrintp.ew md, ms1`
+| <<udb:doc:inst:mfrintp_ew,Round float to integral (toward +inf)>>
+a| `mfrintz.ew md, ms1`
+| <<udb:doc:inst:mfrintz_ew,Round float to integral (toward zero)>>
 a| `mhdiff.ew md, ms1, ms2`
 | <<udb:doc:inst:mhdiff_ew,Elementwise half-difference>>
 a| `mhdiff.ew.x md, xs1, ms2`
@@ -106,6 +116,18 @@ a| `mornot.ew md, ms1, ms2`
 | <<udb:doc:inst:mornot_ew,Elementwise bitwise OR-NOT>>
 a| `mornot.ew.x md, xs1, ms2`
 | <<udb:doc:inst:mornot_ew_x,Elementwise scalar bitwise OR-NOT>>
+a| `msll.ew md, ms1, ms2`
+| <<udb:doc:inst:msll_ew,Elementwise logical left shift>>
+a| `msll.ew.x md, xs1, ms2`
+| <<udb:doc:inst:msll_ew_x,Elementwise scalar logical left shift>>
+a| `msra.ew md, ms1, ms2`
+| <<udb:doc:inst:msra_ew,Elementwise arithmetic right shift>>
+a| `msra.ew.x md, xs1, ms2`
+| <<udb:doc:inst:msra_ew_x,Elementwise scalar arithmetic right shift>>
+a| `msrl.ew md, ms1, ms2`
+| <<udb:doc:inst:msrl_ew,Elementwise logical right shift>>
+a| `msrl.ew.x md, xs1, ms2`
+| <<udb:doc:inst:msrl_ew_x,Elementwise scalar logical right shift>>
 a| `mxor.ew md, ms1, ms2`
 | <<udb:doc:inst:mxor_ew,Elementwise bitwise XOR>>
 a| `mxor.ew.x md, xs1, ms2`
@@ -149,12 +171,22 @@ Permutation::
 !===
 | Mnemonic | Name
 
+a| `mcolbcast.ew.x md, ms1, xs1`
+| <<udb:doc:inst:mcolbcast_ew_x,Broadcast one column to all columns>>
+a| `mcolgather.ew md, ms1, ms2`
+| <<udb:doc:inst:mcolgather_ew,Elementwise gather (take)>>
+a| `mcolshift.ew.x md, ms1, xs1`
+| <<udb:doc:inst:mcolshift_ew_x,Elementwise column shift by scalar offset>>
 a| `mcolunzip.ew md, ms1`
 | <<udb:doc:inst:mcolunzip_ew,Elementwise column unzip (de-interleave)>>
 a| `mcolzip.ew md, ms1`
 | <<udb:doc:inst:mcolzip_ew,Elementwise column zip (interleave)>>
-a| `mgather.ew md, ms1, ms2`
-| <<udb:doc:inst:mgather_ew,Elementwise gather (take)>>
+a| `mrowbcast.ew.x md, ms1, xs1`
+| <<udb:doc:inst:mrowbcast_ew_x,Broadcast one row to all rows>>
+a| `mrowgather.ew md, ms1, ms2`
+| <<udb:doc:inst:mrowgather_ew,Elementwise row gather (take)>>
+a| `mrowshift.ew.x md, ms1, xs1`
+| <<udb:doc:inst:mrowshift_ew_x,Elementwise row shift by scalar offset>>
 a| `mrowunzip.ew md, ms1`
 | <<udb:doc:inst:mrowunzip_ew,Row unzip (de-interleave rows)>>
 a| `mrowzip.ew md, ms1, ms2`
@@ -167,12 +199,6 @@ a| `mscatmax.col md, ms1, ms2`
 | <<udb:doc:inst:mscatmax_col,Elementwise column scatter-max>>
 a| `mscatmax.row md, ms1, ms2`
 | <<udb:doc:inst:mscatmax_row,Elementwise scatter-max>>
-a| `mshift.ew md, ms1, imm`
-| <<udb:doc:inst:mshift_ew,Elementwise row shift by constant offset>>
-a| `mshift.m1 md, ms1`
-| _Alias for_ <<udb:doc:inst:mshift_ew,mshift.ew>> _when_ `imm == -1`
-a| `mshift.p1 md, ms1`
-| _Alias for_ <<udb:doc:inst:mshift_ew,mshift.ew>> _when_ `imm == 1`
 !===
 
 Register move / data conversion::
@@ -188,11 +214,13 @@ a| `munpack.ew.x md, ms1, xs1`
 | <<udb:doc:inst:munpack_ew_x,Unpack one sub-square from a packed M register>>
 !===
 
-Log2 and Exp2::
+Elementwise Math Functions::
 [cols="1,2",%unbreakable]
 !===
 | Mnemonic | Name
 
+a| `mcos.ew md, ms1`
+| <<udb:doc:inst:mcos_ew,Elementwise cosine>>
 a| `mexp2.ew md, ms1`
 | <<udb:doc:inst:mexp2_ew,Elementwise base-2 exponentiation>>
 a| `mldexp.ew md, ms1, ms2`
@@ -213,10 +241,20 @@ a| `mrdexp.ew md, ms1, ms2`
 | <<udb:doc:inst:mrdexp_ew,Elementwise right-shift scale>>
 a| `mrdexpacc.ew md, ms1, ms2`
 | <<udb:doc:inst:mrdexpacc_ew,Elementwise right-shift scale accumulate>>
+a| `mrec.ew md, ms1`
+| <<udb:doc:inst:mrec_ew,Elementwise reciprocal>>
+a| `mrsqrt.ew md, ms1`
+| <<udb:doc:inst:mrsqrt_ew,Elementwise reciprocal square root>>
+a| `msin.ew md, ms1`
+| <<udb:doc:inst:msin_ew,Elementwise sine>>
+a| `msqrt.ew md, ms1`
+| <<udb:doc:inst:msqrt_ew,Elementwise square root>>
 a| `msublog2.ew md, ms1, ms2`
 | <<udb:doc:inst:msublog2_ew,Elementwise bias minus log2>>
 a| `msublog2.ew.x md, xs1, ms2`
 | <<udb:doc:inst:msublog2_ew_x,Elementwise scalar bias minus log2>>
+a| `mtanh.ew md, ms1`
+| <<udb:doc:inst:mtanh_ew,Elementwise hyperbolic tangent>>
 !===
 
 Memory::
@@ -245,10 +283,14 @@ State Management::
 
 a| `mmov.a.m md, acc`
 | <<udb:doc:inst:mmov_a_m,Elementwise unconditional move from accumulator to M register>>
+a| `mmov.m.a acc, ms`
+| <<udb:doc:inst:mmov_m_a,Elementwise move from M register to accumulator>>
 a| `mmov.m.m md, ms`
 | <<udb:doc:inst:mmov_m_m,Elementwise unconditional move between M registers>>
-a| `mzero.2d acc`
-| <<udb:doc:inst:mzero_2d,Clear accumulator tile>>
+a| `mzero.2d.acc acc`
+| <<udb:doc:inst:mzero_2d_acc,Clear accumulator tile>>
+a| `mzero.2d.m md`
+| <<udb:doc:inst:mzero_2d_m,Clear tensor register>>
 !===
 
 Matrix Multiply::
@@ -295,9 +337,11 @@ a| `mreducemax.col md, ms1`
 | <<udb:doc:inst:mreducemax_col,Elementwise column reduce (max)>>
 a| `mreducemax.row md, ms1`
 | <<udb:doc:inst:mreducemax_row,Elementwise row reduce (max)>>
+a| `mreducemin.col md, ms1`
+| <<udb:doc:inst:mreducemin_col,Elementwise column reduce (min)>>
+a| `mreducemin.row md, ms1`
+| <<udb:doc:inst:mreducemin_row,Elementwise row reduce (min)>>
 !===
-
-
 
 
 <<<
@@ -2074,6 +2118,339 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 
 <<<
 
+[#udb:doc:inst:mcolbcast_ew_x]
+=== `mcolbcast.ew.x`
+
+Synopsis::
+Broadcast one column to all columns
+
+Mnemonic::
+`mcolbcast.ew.x md, ms1, xs1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": {ame-enc-mcolbcast-ew-x-funct7},"type":2}]}
+....
+
+Description::
+Broadcasts column `c` (from integer register `xs1`) of `ms1` to every column of `md`.
++
+For each row `i` and column `j`:
++
+  `md[i,j] = ms1[i, c]`
++
+If `c` is outside `[0, sqrt(AME_NELEM))`, an `Illegal Instruction` exception is raised.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md[:,:] = ms1[:,c][:,np.newaxis]
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+Bits<5> xs1 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::COLBCAST1D, dest_dtype, src1_dtype, src1_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::COLBCAST1D, dest_dtype, src1_dtype, src1_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
+  Bits<32> c = $signed+++(+++X[xs1]);
+  if pass:[(]$signed+++(+++c) < 0 || $signed+++(+++c) >= N) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e_out = dst_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 i = e_out / N;
+      U32 dst_lo = local_e * dest_element_size;
+      U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
+      U32 e_src = i * N pass:[+] c;
+      U32 src_regno = e_src / src1_elements_per_reg;
+      U32 src_lo = e_src * src1_element_size - (src_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src_hi = src_lo pass:[+] src1_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo];
+      result[dst_hi:dst_lo] = src_value;
+    }
+    M[md pass:[+] dst_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:mcolgather_ew]
+=== `mcolgather.ew`
+
+Synopsis::
+Elementwise column gather (take)
+
+Mnemonic::
+`mcolgather.ew md, ms1, ms2`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-mcolgather-ew-funct7},"type":2}]}
+....
+
+Description::
+Elementwise gather: for each element in each row, uses the corresponding index from `ms2`
+to select a column from the same row of `ms1`, and stores the result into `md`.
++
+For each row `i` and column `j`:
++
+  `md[i,j] = ms1[i, ms2[i,j]]`
++
+`ms2` provides integer column indices in the range `[0, sqrt(AME_NELEM))`.
+An out-of-range index raises an `Illegal Instruction` exception.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md[i] = ms1[i][ms2[i]]
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+Bits<5> ms2 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+Bits<32> src2_dtype = Md[ms2];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::GATHER1D, dest_dtype, src1_dtype, src2_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 src2_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src2_dtype);
+  U32 src2_nregs = src2_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src2_nregs == 0) {
+    src2_nregs = 1;
+  }
+  U32 src2_elements_per_reg = AME_NELEM / src2_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::GATHER1D, dest_dtype, src1_dtype, src2_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || ms2 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](ms2 % src2_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
+  for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dst_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 i = e / N;
+      U32 idx_regno = e / src2_elements_per_reg;
+      U32 idx_lo = e * src2_element_size - (idx_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 idx_hi = idx_lo pass:[+] src2_element_size - 1;
+      U32 col_idx = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] idx_regno], src2_dtype)[idx_hi:idx_lo];
+      if pass:[(]col_idx >= N) {
+        <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+      }
+      U32 e_src = i * N pass:[+] col_idx;
+      U32 src_regno = e_src / src1_elements_per_reg;
+      U32 src_lo = e_src * src1_element_size - (src_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src_hi = src_lo pass:[+] src1_element_size - 1;
+      U32 dst_lo = local_e * dest_element_size;
+      U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo];
+      result[dst_hi:dst_lo] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::GATHER1D, src1_dtype, src_value, src1_dtype, src_value, dest_dtype);
+    }
+    M[md pass:[+] dst_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:mcolshift_ew_x]
+=== `mcolshift.ew.x`
+
+Synopsis::
+Elementwise column shift by scalar offset
+
+Mnemonic::
+`mcolshift.ew.x md, ms1, xs1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": {ame-enc-mcolshift-ew-x-funct7},"type":2}]}
+....
+
+Description::
+Elementwise column shift of `ms1` by a signed scalar offset `c` from integer register `xs1`,
+stored into `md`.
++
+For each row `i` and column `j`:
++
+  `md[i,j] = ms1[i, j + c]`  if `0 <= j + c < sqrt(AME_NELEM)`, otherwise `md[i,j] = 0`.
++
+Elements shifted beyond the row boundary are filled with zero (no wrap-around).
+For the row-shift form, see `mrowshift.ew.x`.
+
+
+NumPy Equivalent::
+[source,python]
+----
+conceptual: md[i] = np.roll(ms1[i], -c) with zero-fill
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+Bits<5> xs1 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SHIFT1D, dest_dtype, src1_dtype, src1_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SHIFT1D, dest_dtype, src1_dtype, src1_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
+  Bits<32> shift = $signed+++(+++X[xs1]);
+  for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e_out = dst_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 i = e_out / N;
+      U32 j = e_out % N;
+      Bits<32> src_j = j pass:[+] shift;
+      U32 dst_lo = local_e * dest_element_size;
+      U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
+      if pass:[(]$signed+++(+++src_j) >= 0 && $signed+++(+++src_j) < N) {
+        Bits<32> e_src = i * N pass:[+] src_j;
+        Bits<32> src_regno = $signed+++(+++e_src) / src1_elements_per_reg;
+        U32 src_lo = e_src * src1_element_size - ($signed+++(+++src_regno) * AME_MATRIX_REGISTER_SIZE);
+        U32 src_hi = src_lo pass:[+] src1_element_size - 1;
+        Bits<AME_MAX_DTYPE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo];
+        result[dst_hi:dst_lo] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SHIFT1D, src1_dtype, src_value, src1_dtype, src_value, dest_dtype);
+      }
+    }
+    M[md pass:[+] dst_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
 [#udb:doc:inst:mcolunzip_ew]
 === `mcolunzip.ew`
 
@@ -2413,6 +2790,104 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 
 <<<
 
+[#udb:doc:inst:mcos_ew]
+=== `mcos.ew`
+
+Synopsis::
+Elementwise cosine
+
+Mnemonic::
+`mcos.ew md, ms1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mcos-ew-funct12},"type":2}]}
+....
+
+Description::
+Elementwise cosine of `ms1`, stored into `md`.
++
+This instruction is defined only for floating-point datatypes. If the datatype of
+`md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
+register is written.
++
+The numerical precision of the result is implementation-defined.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md = np.cos(ms1)
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::COS1D, dest_dtype, src1_dtype, 0)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::COS1D, dest_dtype, src1_dtype, 0)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::COS1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
 [#udb:doc:inst:mexp2_ew]
 === `mexp2.ew`
 
@@ -2506,14 +2981,14 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 
 <<<
 
-[#udb:doc:inst:mgather_ew]
-=== `mgather.ew`
+[#udb:doc:inst:mfrintm_ew]
+=== `mfrintm.ew`
 
 Synopsis::
-Elementwise gather (take)
+Round float to integral (toward -inf)
 
 Mnemonic::
-`mgather.ew md, ms1, ms2`
+`mfrintm.ew md, ms1`
 
 Encoding::
 +
@@ -2522,25 +2997,21 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x18,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mfrintm-ew-funct12},"type":2}]}
 ....
 
 Description::
-Elementwise gather: for each element in each row, uses the corresponding index from `ms2`
-to select a column from the same row of `ms1`, and stores the result into `md`.
+Rounds each floating-point element of `ms1` to an integral value toward minus infinity (floor), stored into `md`.
 +
-For each row `i` and column `j`:
-+
-  `md[i,j] = ms1[i, ms2[i,j]]`
-+
-`ms2` provides integer column indices in the range `[0, sqrt(AME_NELEM))`.
-An out-of-range index raises an `Illegal Instruction` exception.
+This instruction is defined only for floating-point datatypes. If the datatype of
+`md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
+register is written.
 
 
 NumPy Equivalent::
 [source,python]
 ----
-md[i] = ms1[i][ms2[i]]
+md = np.floor(ms1)
 ----
 
 Decode Variables::
@@ -2548,7 +3019,6 @@ Decode Variables::
 ----
 Bits<5> md = $encoding[11:7];
 Bits<5> ms1 = $encoding[19:15];
-Bits<5> ms2 = $encoding[24:20];
 ----
 
 
@@ -2557,8 +3027,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src1_dtype = Md[ms1];
-Bits<32> src2_dtype = Md[ms2];
-if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::GATHER1D, dest_dtype, src1_dtype, src2_dtype)) {
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::FRINTM1D, dest_dtype, src1_dtype, 0)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
@@ -2567,56 +3036,328 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     src1_nregs = 1;
   }
   U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
-  U32 src2_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src2_dtype);
-  U32 src2_nregs = src2_element_size / AME_UNIT_DATATYPE_SIZE;
-  if pass:[(]src2_nregs == 0) {
-    src2_nregs = 1;
-  }
-  U32 src2_elements_per_reg = AME_NELEM / src2_nregs;
   U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
   U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
   if pass:[(]dest_nregs == 0) {
     dest_nregs = 1;
   }
   U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
-  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::GATHER1D, dest_dtype, src1_dtype, src2_dtype)) {
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::FRINTM1D, dest_dtype, src1_dtype, 0)) {
     <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   if pass:[(]AME_NUM_M_REGS == 16) {
-    if pass:[(]ms1 >= 16 || ms2 >= 16 || md >= 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
       <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
     }
   }
   if pass:[(](ms1 % src1_nregs) != 0) {
     <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
   }
-  if pass:[(](ms2 % src2_nregs) != 0) {
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::FRINTM1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:mfrintn_ew]
+=== `mfrintn.ew`
+
+Synopsis::
+Round float to integral (nearest, ties to even)
+
+Mnemonic::
+`mfrintn.ew md, ms1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mfrintn-ew-funct12},"type":2}]}
+....
+
+Description::
+Rounds each floating-point element of `ms1` to the nearest integral value, with ties rounded to even, stored into `md`.
++
+This instruction is defined only for floating-point datatypes. If the datatype of
+`md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
+register is written.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md = np.rint(ms1)
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::FRINTN1D, dest_dtype, src1_dtype, 0)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::FRINTN1D, dest_dtype, src1_dtype, 0)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
     <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   if pass:[(](md % dest_nregs) != 0) {
     <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
   }
-  U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
-  for pass:[(]U32 i = 0; i < N; i++) {
-    for pass:[(]U32 j = 0; j < N; j++) {
-      U32 e = i * N pass:[+] j;
-      U32 idx_regno = e / src2_elements_per_reg;
-      U32 idx_hi = ((e pass:[+] 1) * src2_element_size) - (idx_regno * AME_MATRIX_REGISTER_SIZE);
-      U32 idx_lo = ((e pass:[+] 1) * src2_element_size) - (idx_regno * AME_MATRIX_REGISTER_SIZE);
-      U32 col_idx = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] idx_regno], src2_dtype)[idx_hi:idx_lo];
-      if pass:[(]col_idx >= N) {
-        <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
-      }
-      U32 e_src = i * N pass:[+] col_idx;
-      U32 src_regno = e_src / src1_elements_per_reg;
-      U32 src_hi = ((e_src pass:[+] 1) * src1_element_size) - (src_regno * AME_MATRIX_REGISTER_SIZE);
-      U32 src_lo = ((e_src pass:[+] 1) * src1_element_size) - (src_regno * AME_MATRIX_REGISTER_SIZE);
-      U32 dst_regno = e / dest_elements_per_reg;
-      U32 dst_hi = ((e pass:[+] 1) * dest_element_size) - (dst_regno * AME_MATRIX_REGISTER_SIZE);
-      U32 dst_lo = ((e pass:[+] 1) * dest_element_size) - (dst_regno * AME_MATRIX_REGISTER_SIZE);
-      Bits<AME_MAX_DTYPE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo];
-      M[md pass:[+] dst_regno][dst_hi:dst_lo] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]<<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::GATHER1D, src1_dtype, src_value, src1_dtype, src_value, dest_dtype), dest_dtype);
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::FRINTN1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
     }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:mfrintp_ew]
+=== `mfrintp.ew`
+
+Synopsis::
+Round float to integral (toward +inf)
+
+Mnemonic::
+`mfrintp.ew md, ms1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mfrintp-ew-funct12},"type":2}]}
+....
+
+Description::
+Rounds each floating-point element of `ms1` to an integral value toward positive infinity (ceil), stored into `md`.
++
+This instruction is defined only for floating-point datatypes. If the datatype of
+`md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
+register is written.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md = np.ceil(ms1)
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::FRINTP1D, dest_dtype, src1_dtype, 0)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::FRINTP1D, dest_dtype, src1_dtype, 0)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::FRINTP1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:mfrintz_ew]
+=== `mfrintz.ew`
+
+Synopsis::
+Round float to integral (toward zero)
+
+Mnemonic::
+`mfrintz.ew md, ms1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mfrintz-ew-funct12},"type":2}]}
+....
+
+Description::
+Rounds each floating-point element of `ms1` to an integral value toward zero (truncate), stored into `md`.
++
+This instruction is defined only for floating-point datatypes. If the datatype of
+`md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
+register is written.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md = np.trunc(ms1)
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::FRINTZ1D, dest_dtype, src1_dtype, 0)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::FRINTZ1D, dest_dtype, src1_dtype, 0)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::FRINTZ1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
 }
 ----
@@ -4552,7 +5293,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Ad[acc];
-if pass:[(]dest_dtype[7:0] != src_dtype[7:0]) {
+if pass:[(]dest_dtype != src_dtype) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   if pass:[(]AME_NUM_M_REGS == 16) {
@@ -4584,6 +5325,90 @@ if pass:[(]dest_dtype[7:0] != src_dtype[7:0]) {
       }
       M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
     }
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:mmov_m_a]
+=== `mmov.m.a`
+
+Synopsis::
+Elementwise unconditional move from M register to accumulator
+
+Mnemonic::
+`mmov.m.a acc, ms`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": 0x0,"type":2},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "ms","type":4},{"bits":2,"name": "acc","type":4},{"bits":10,"name": {ame-enc-mmov-m-a-funct10},"type":2}]}
+....
+
+Description::
+Copies all `AME_NELEM` elements from the M register group `ms` to accumulator `acc`.
++
+The element datatype of `ms` (from `Md[ms]`) and `acc` (from `Ad[acc]`)
+must match; if they differ, `amestatus.UN` is set and `acc` is left unchanged.
+
+
+NumPy Equivalent::
+[source,python]
+----
+acc[:] = ms.flatten()
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<2> acc = $encoding[21:20];
+Bits<5> ms = $encoding[19:15];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Ad[acc];
+Bits<32> src_dtype = Md[ms];
+if pass:[(]dest_dtype != src_dtype) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  U32 element_size_bits = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
+  if pass:[(]element_size_bits == 0) {
+    CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+  } else {
+    U32 src_nregs = element_size_bits / AME_UNIT_DATATYPE_SIZE;
+    if pass:[(]src_nregs == 0) {
+      src_nregs = 1;
+    }
+    U32 elements_per_reg = AME_NELEM / src_nregs;
+    if pass:[(](ms % src_nregs) != 0) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 src_regno = 0; src_regno < src_nregs; src_regno++) {
+      for pass:[(]U32 local_e = 0; local_e < elements_per_reg; local_e++) {
+        U32 e = src_regno * elements_per_reg pass:[+] local_e;
+        U32 acc_bit_lo = e * element_size_bits;
+        U32 acc_bit_hi = acc_bit_lo pass:[+] element_size_bits - 1;
+        U32 reg_bit_lo = local_e * element_size_bits;
+        U32 reg_bit_hi = reg_bit_lo pass:[+] element_size_bits - 1;
+        result[acc_bit_hi:acc_bit_lo] = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms pass:[+] src_regno], src_dtype)[reg_bit_hi:reg_bit_lo];
+      }
+    }
+    Acc[acc] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
 }
 ----
@@ -4639,7 +5464,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms];
-if pass:[(]dest_dtype[7:0] != src_dtype[7:0]) {
+if pass:[(]dest_dtype != src_dtype) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   if pass:[(]AME_NUM_M_REGS == 16) {
@@ -7994,6 +8819,104 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 
 <<<
 
+[#udb:doc:inst:mrec_ew]
+=== `mrec.ew`
+
+Synopsis::
+Elementwise reciprocal
+
+Mnemonic::
+`mrec.ew md, ms1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mrec-ew-funct12},"type":2}]}
+....
+
+Description::
+Elementwise reciprocal of `ms1`, stored into `md`.
++
+This instruction is defined only for floating-point datatypes. If the datatype of
+`md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
+register is written.
++
+The numerical precision of the result is implementation-defined.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md = 1.0 / ms1
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::REC1D, dest_dtype, src1_dtype, 0)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::REC1D, dest_dtype, src1_dtype, 0)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::REC1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
 [#udb:doc:inst:mreduceadd_col]
 === `mreduceadd.col`
 
@@ -8410,6 +9333,558 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 
 <<<
 
+[#udb:doc:inst:mreducemin_col]
+=== `mreducemin.col`
+
+Synopsis::
+Elementwise column reduce (min)
+
+Mnemonic::
+`mreducemin.col md, ms1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mreducemin-col-funct12},"type":2}]}
+....
+
+Description::
+Reduces each column of `ms1` by minimum and broadcasts the result to all rows of the
+corresponding column in `md`.
++
+For each row `i` and column `j`:
++
+  `md[i,j] = min over k of ms1[k,j]`
++
+All rows in each output column receive the same value (the column minimum).
+For the row-reduction form, see `mreducemin.row`.
+For the column max-reduction form, see `mreducemax.col`.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md[:,:] = np.broadcast_to(np.min(ms1, axis=0), ms1.shape)
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::REDUCEMINCOL1D, dest_dtype, src1_dtype, src1_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::REDUCEMINCOL1D, dest_dtype, src1_dtype, src1_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
+  for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e_dst = dst_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 j = e_dst % N;
+      U32 first_e_src = j;
+      U32 first_src_regno = first_e_src / src1_elements_per_reg;
+      U32 first_src_lo = first_e_src * src1_element_size - (first_src_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 first_src_hi = first_src_lo pass:[+] src1_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> first_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] first_src_regno], src1_dtype)[first_src_hi:first_src_lo];
+      Bits<AME_MAX_DTYPE_SIZE> col_result = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::REDUCEMINCOL1D, src1_dtype, first_value, src1_dtype, first_value, dest_dtype);
+      for pass:[(]U32 k = 1; k < N; k++) {
+        U32 e_src = k * N pass:[+] j;
+        U32 src_regno = e_src / src1_elements_per_reg;
+        U32 src_lo = e_src * src1_element_size - (src_regno * AME_MATRIX_REGISTER_SIZE);
+        U32 src_hi = src_lo pass:[+] src1_element_size - 1;
+        col_result = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::REDUCEMINCOL1D, src1_dtype, <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo], dest_dtype, col_result, dest_dtype);
+      }
+      U32 dst_lo = local_e * dest_element_size;
+      U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
+      result[dst_hi:dst_lo] = col_result;
+    }
+    M[md pass:[+] dst_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:mreducemin_row]
+=== `mreducemin.row`
+
+Synopsis::
+Elementwise row reduce (min)
+
+Mnemonic::
+`mreducemin.row md, ms1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mreducemin-row-funct12},"type":2}]}
+....
+
+Description::
+Reduces each row of `ms1` by minimum and broadcasts the result to all columns of the
+corresponding row in `md`.
++
+For each row `i` and column `j`:
++
+  `md[i,j] = min over k of ms1[i,k]`
++
+All columns in each output row receive the same value (the row minimum).
+For the column-reduction form, see `mreducemin.col`.
+For the row max-reduction form, see `mreducemax.row`.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md[:,:] = np.broadcast_to(np.min(ms1, axis=1)[:,np.newaxis], ms1.shape)
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::REDUCEMIN1D, dest_dtype, src1_dtype, src1_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::REDUCEMIN1D, dest_dtype, src1_dtype, src1_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
+  for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e_dst = dst_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 i = e_dst / N;
+      U32 first_e_src = i * N;
+      U32 first_src_regno = first_e_src / src1_elements_per_reg;
+      U32 first_src_lo = first_e_src * src1_element_size - (first_src_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 first_src_hi = first_src_lo pass:[+] src1_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> first_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] first_src_regno], src1_dtype)[first_src_hi:first_src_lo];
+      Bits<AME_MAX_DTYPE_SIZE> row_result = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::REDUCEMIN1D, src1_dtype, first_value, src1_dtype, first_value, dest_dtype);
+      for pass:[(]U32 k = 1; k < N; k++) {
+        U32 e_src = i * N pass:[+] k;
+        U32 src_regno = e_src / src1_elements_per_reg;
+        U32 src_lo = e_src * src1_element_size - (src_regno * AME_MATRIX_REGISTER_SIZE);
+        U32 src_hi = src_lo pass:[+] src1_element_size - 1;
+        row_result = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::REDUCEMIN1D, src1_dtype, <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo], dest_dtype, row_result, dest_dtype);
+      }
+      U32 dst_lo = local_e * dest_element_size;
+      U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
+      result[dst_hi:dst_lo] = row_result;
+    }
+    M[md pass:[+] dst_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:mrowbcast_ew_x]
+=== `mrowbcast.ew.x`
+
+Synopsis::
+Broadcast one row to all rows
+
+Mnemonic::
+`mrowbcast.ew.x md, ms1, xs1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": {ame-enc-mrowbcast-ew-x-funct7},"type":2}]}
+....
+
+Description::
+Broadcasts row `c` (from integer register `xs1`) of `ms1` to every row of `md`.
++
+For each row `i` and column `j`:
++
+  `md[i,j] = ms1[c, j]`
++
+If `c` is outside `[0, sqrt(AME_NELEM))`, an `Illegal Instruction` exception is raised.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md[:,:] = ms1[c,:][np.newaxis,:]
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+Bits<5> xs1 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ROWBCAST1D, dest_dtype, src1_dtype, src1_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ROWBCAST1D, dest_dtype, src1_dtype, src1_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
+  Bits<32> c = $signed+++(+++X[xs1]);
+  if pass:[(]$signed+++(+++c) < 0 || $signed+++(+++c) >= N) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e_out = dst_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 j = e_out % N;
+      U32 dst_lo = local_e * dest_element_size;
+      U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
+      U32 e_src = c * N pass:[+] j;
+      U32 src_regno = e_src / src1_elements_per_reg;
+      U32 src_lo = e_src * src1_element_size - (src_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src_hi = src_lo pass:[+] src1_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo];
+      result[dst_hi:dst_lo] = src_value;
+    }
+    M[md pass:[+] dst_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:mrowgather_ew]
+=== `mrowgather.ew`
+
+Synopsis::
+Elementwise row gather (take)
+
+Mnemonic::
+`mrowgather.ew md, ms1, ms2`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-mrowgather-ew-funct7},"type":2}]}
+....
+
+Description::
+Elementwise gather: for each element in each column, uses the corresponding index from `ms2`
+to select a row from the same column of `ms1`, and stores the result into `md`.
++
+For each row `i` and column `j`:
++
+  `md[i,j] = ms1[ms2[i,j], j]`
++
+`ms2` provides integer row indices in the range `[0, sqrt(AME_NELEM))`.
+An out-of-range index raises an `Illegal Instruction` exception.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md[i,j] = ms1[ms2[i,j], j]
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+Bits<5> ms2 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+Bits<32> src2_dtype = Md[ms2];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::GATHERROW1D, dest_dtype, src1_dtype, src2_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 src2_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src2_dtype);
+  U32 src2_nregs = src2_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src2_nregs == 0) {
+    src2_nregs = 1;
+  }
+  U32 src2_elements_per_reg = AME_NELEM / src2_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::GATHERROW1D, dest_dtype, src1_dtype, src2_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || ms2 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](ms2 % src2_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
+  for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dst_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 j = e % N;
+      U32 idx_regno = e / src2_elements_per_reg;
+      U32 idx_lo = e * src2_element_size - (idx_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 idx_hi = idx_lo pass:[+] src2_element_size - 1;
+      U32 row_idx = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] idx_regno], src2_dtype)[idx_hi:idx_lo];
+      if pass:[(]row_idx >= N) {
+        <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+      }
+      U32 e_src = row_idx * N pass:[+] j;
+      U32 src_regno = e_src / src1_elements_per_reg;
+      U32 src_lo = e_src * src1_element_size - (src_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src_hi = src_lo pass:[+] src1_element_size - 1;
+      U32 dst_lo = local_e * dest_element_size;
+      U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo];
+      result[dst_hi:dst_lo] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::GATHERROW1D, src1_dtype, src_value, src1_dtype, src_value, dest_dtype);
+    }
+    M[md pass:[+] dst_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:mrowshift_ew_x]
+=== `mrowshift.ew.x`
+
+Synopsis::
+Elementwise row shift by scalar offset
+
+Mnemonic::
+`mrowshift.ew.x md, ms1, xs1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": {ame-enc-mrowshift-ew-x-funct7},"type":2}]}
+....
+
+Description::
+Elementwise shift of each column of `ms1` by a signed scalar row offset `c` from integer
+register `xs1`, stored into `md`.
++
+For each row `i` and column `j`:
++
+  `md[i,j] = ms1[i+c, j]`  if `0 <= i+c < sqrt(AME_NELEM)`, otherwise `md[i,j] = 0`.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md[i,j] = ms1[i+c, j] with zero-fill
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+Bits<5> xs1 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ROWSHIFT1D, dest_dtype, src1_dtype, src1_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ROWSHIFT1D, dest_dtype, src1_dtype, src1_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
+  Bits<32> shift = $signed+++(+++X[xs1]);
+  for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e_out = dst_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 i = e_out / N;
+      U32 j = e_out % N;
+      Bits<32> src_i = i pass:[+] shift;
+      U32 dst_lo = local_e * dest_element_size;
+      U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
+      if pass:[(]$signed+++(+++src_i) >= 0 && $signed+++(+++src_i) < N) {
+        Bits<32> e_src = src_i * N pass:[+] j;
+        Bits<32> src_regno = $signed+++(+++e_src) / src1_elements_per_reg;
+        U32 src_lo = e_src * src1_element_size - ($signed+++(+++src_regno) * AME_MATRIX_REGISTER_SIZE);
+        U32 src_hi = src_lo pass:[+] src1_element_size - 1;
+        Bits<AME_MAX_DTYPE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo];
+        result[dst_hi:dst_lo] = src_value;
+      }
+    }
+    M[md pass:[+] dst_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
 [#udb:doc:inst:mrowunzip_ew]
 === `mrowunzip.ew`
 
@@ -8655,6 +10130,104 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
       U32 dst_odd_lo = ((e_dst_odd pass:[+] 1) * dest_element_size) - (dst_odd_regno * AME_MATRIX_REGISTER_SIZE);
       M[md pass:[+] out_reg_odd pass:[+] dst_odd_regno][dst_odd_hi:dst_odd_lo] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]<<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::ROWZIP1D, src2_dtype, <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype)[src2_hi:src2_lo], src2_dtype, <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype)[src2_hi:src2_lo], dest_dtype), dest_dtype);
     }
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:mrsqrt_ew]
+=== `mrsqrt.ew`
+
+Synopsis::
+Elementwise reciprocal square root
+
+Mnemonic::
+`mrsqrt.ew md, ms1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mrsqrt-ew-funct12},"type":2}]}
+....
+
+Description::
+Elementwise reciprocal square root of `ms1`, stored into `md`.
++
+This instruction is defined only for floating-point datatypes. If the datatype of
+`md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
+register is written.
++
+The numerical precision of the result is implementation-defined.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md = 1.0 / np.sqrt(ms1)
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::RSQRT1D, dest_dtype, src1_dtype, 0)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::RSQRT1D, dest_dtype, src1_dtype, 0)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::RSQRT1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
 }
 ----
@@ -9455,18 +11028,14 @@ if pass:[(]!<<udb:doc:func:ame_datatype_supported,ame_datatype_supported>>pass:[
 
 <<<
 
-[#udb:doc:inst:mshift_ew]
-=== `mshift.ew`
+[#udb:doc:inst:msin_ew]
+=== `msin.ew`
 
 Synopsis::
-Elementwise row shift by constant offset
+Elementwise sine
 
 Mnemonic::
-`mshift.ew md, ms1, imm`
-
-Pseudoinstructions::
-`mshift.p1 md, ms1` when `imm == 1`
-`mshift.m1 md, ms1` when `imm == -1`
+`msin.ew md, ms1`
 
 Encoding::
 +
@@ -9475,24 +11044,23 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":7,"name": "imm","type":4},{"bits":5,"name": 0x0,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-msin-ew-funct12},"type":2}]}
 ....
 
 Description::
-Elementwise shift of each row of `ms1` by a signed immediate offset `imm`, stored into `md`.
+Elementwise sine of `ms1`, stored into `md`.
 +
-For each row `i` and column `j`:
+This instruction is defined only for floating-point datatypes. If the datatype of
+`md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
+register is written.
 +
-  `md[i,j] = ms1[i, j + imm]`  if `0 <= j + imm < sqrt(AME_NELEM)`, otherwise `md[i,j] = 0`.
-+
-Elements shifted beyond the row boundary are filled with zero (no wrap-around).
-The immediate is a 7-bit signed value, giving a range of −64 to +63.
+The numerical precision of the result is implementation-defined.
 
 
 NumPy Equivalent::
 [source,python]
 ----
-conceptual: md[i] = np.roll(ms1[i], -imm) with zero-fill
+md = np.sin(ms1)
 ----
 
 Decode Variables::
@@ -9500,7 +11068,6 @@ Decode Variables::
 ----
 Bits<5> md = $encoding[11:7];
 Bits<5> ms1 = $encoding[19:15];
-Bits<7> imm = $encoding[26:20];
 ----
 
 
@@ -9509,7 +11076,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src1_dtype = Md[ms1];
-if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SHIFT1D, dest_dtype, src1_dtype, src1_dtype)) {
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SIN1D, dest_dtype, src1_dtype, 0)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
@@ -9524,7 +11091,7 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     dest_nregs = 1;
   }
   U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
-  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SHIFT1D, dest_dtype, src1_dtype, src1_dtype)) {
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SIN1D, dest_dtype, src1_dtype, 0)) {
     <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   if pass:[(]AME_NUM_M_REGS == 16) {
@@ -9538,26 +11105,757 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   if pass:[(](md % dest_nregs) != 0) {
     <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
   }
-  U32 N = <<udb:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
-  Bits<32> shift = $signed+++(+++imm);
-  for pass:[(]U32 i = 0; i < N; i++) {
-    for pass:[(]U32 j = 0; j < N; j++) {
-      U32 e_out = i * N pass:[+] j;
-      Bits<32> src_j = j pass:[+] shift;
-      U32 dst_regno = e_out / dest_elements_per_reg;
-      U32 dst_hi = ((e_out pass:[+] 1) * dest_element_size) - (dst_regno * AME_MATRIX_REGISTER_SIZE);
-      U32 dst_lo = ((e_out pass:[+] 1) * dest_element_size) - (dst_regno * AME_MATRIX_REGISTER_SIZE);
-      if pass:[(]$signed+++(+++src_j) >= 0 && $signed+++(+++src_j) < N) {
-        Bits<32> e_src = i * N pass:[+] src_j;
-        Bits<32> src_regno = $signed+++(+++e_src) / src1_elements_per_reg;
-        U32 src_hi = ((e_src pass:[+] 1) * src1_element_size) - ($signed+++(+++src_regno) * AME_MATRIX_REGISTER_SIZE);
-        U32 src_lo = ((e_src pass:[+] 1) * src1_element_size) - ($signed+++(+++src_regno) * AME_MATRIX_REGISTER_SIZE);
-        Bits<AME_MAX_DTYPE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo];
-        M[md pass:[+] dst_regno][dst_hi:dst_lo] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]<<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SHIFT1D, src1_dtype, src_value, src1_dtype, src_value, dest_dtype), dest_dtype);
-      } else {
-        M[md pass:[+] dst_regno][dst_hi:dst_lo] = 0;
-      }
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SIN1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
     }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:msll_ew]
+=== `msll.ew`
+
+Synopsis::
+Elementwise logical left shift
+
+Mnemonic::
+`msll.ew md, ms1, ms2`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-msll-ew-funct7},"type":2}]}
+....
+
+Description::
+Elementwise logical left shift of `ms1` by the per-element shift amount in `ms2`, stored into `md`.
++
+Only the low `lg2(EW)` bits of each shift-amount value are used, where `EW` is the
+element width in bits of `ms1`. Shift amounts are interpreted as unsigned bit patterns.
+
+
+NumPy Equivalent::
+[source,python]
+----
+shamt = ms2 & (EW - 1)
+md = ms1 << shamt
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+Bits<5> ms2 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+Bits<32> src2_dtype = Md[ms2];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SLL1D, dest_dtype, src1_dtype, src2_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 src2_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src2_dtype);
+  U32 src2_nregs = src2_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src2_nregs == 0) {
+    src2_nregs = 1;
+  }
+  U32 src2_elements_per_reg = AME_NELEM / src2_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SLL1D, dest_dtype, src1_dtype, src2_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || ms2 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](ms2 % src2_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 src2_regno = e / src2_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src2_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype);
+      U32 src2_lo_idx = e * src2_element_size - (src2_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src2_hi_idx = src2_lo_idx pass:[+] src2_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
+      Bits<AME_MAX_DTYPE_SIZE> shift_amount = src2_element_value & (src1_element_size - 1);
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SLL1D, src1_dtype, src1_element_value, src2_dtype, shift_amount, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:msll_ew_x]
+=== `msll.ew.x`
+
+Synopsis::
+Elementwise scalar logical left shift
+
+Mnemonic::
+`msll.ew.x md, xs1, ms2`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-msll-ew-x-funct7},"type":2}]}
+....
+
+Description::
+Logical left shift of every element of `ms2` by a scalar amount from integer register `xs1`, stored into `md`.
++
+Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
+element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
+
+
+NumPy Equivalent::
+[source,python]
+----
+shamt = xs1 & (EW - 1)
+md = ms2 << shamt
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> xs1 = $encoding[19:15];
+Bits<5> ms2 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src_dtype = Md[ms2];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SLL1D, dest_dtype, src_dtype, src_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
+  U32 src_nregs = src_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src_nregs == 0) {
+    src_nregs = 1;
+  }
+  U32 src_elements_per_reg = AME_NELEM / src_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SLL1D, dest_dtype, src_dtype, src_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms2 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms2 % src_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  Bits<AME_MAX_DTYPE_SIZE> scalar = X[xs1];
+  Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+  Bits<AME_MAX_DTYPE_SIZE> shift_amount = scalar_element_value & (src_element_size - 1);
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src_regno = e / src_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src_regno], src_dtype);
+      U32 src_lo_idx = e * src_element_size - (src_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src_hi_idx = src_lo_idx pass:[+] src_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SLL1D, src_dtype, src_element_value, src_dtype, shift_amount, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:msqrt_ew]
+=== `msqrt.ew`
+
+Synopsis::
+Elementwise square root
+
+Mnemonic::
+`msqrt.ew md, ms1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-msqrt-ew-funct12},"type":2}]}
+....
+
+Description::
+Elementwise square root of `ms1`, stored into `md`.
++
+This instruction is defined only for floating-point datatypes. If the datatype of
+`md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
+register is written.
++
+The numerical precision of the result is implementation-defined.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md = np.sqrt(ms1)
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SQRT1D, dest_dtype, src1_dtype, 0)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SQRT1D, dest_dtype, src1_dtype, 0)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SQRT1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:msra_ew]
+=== `msra.ew`
+
+Synopsis::
+Elementwise arithmetic right shift
+
+Mnemonic::
+`msra.ew md, ms1, ms2`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-msra-ew-funct7},"type":2}]}
+....
+
+Description::
+Elementwise arithmetic (sign-preserving) right shift of `ms1` by the per-element shift amount in `ms2`, stored into `md`.
++
+Only the low `lg2(EW)` bits of each shift-amount value are used, where `EW` is the
+element width in bits of `ms1`. Shift amounts are interpreted as unsigned bit patterns.
+
+
+NumPy Equivalent::
+[source,python]
+----
+shamt = ms2 & (EW - 1)
+md = ms1 >> shamt  # arithmetic
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+Bits<5> ms2 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+Bits<32> src2_dtype = Md[ms2];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SRA1D, dest_dtype, src1_dtype, src2_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 src2_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src2_dtype);
+  U32 src2_nregs = src2_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src2_nregs == 0) {
+    src2_nregs = 1;
+  }
+  U32 src2_elements_per_reg = AME_NELEM / src2_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SRA1D, dest_dtype, src1_dtype, src2_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || ms2 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](ms2 % src2_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 src2_regno = e / src2_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src2_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype);
+      U32 src2_lo_idx = e * src2_element_size - (src2_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src2_hi_idx = src2_lo_idx pass:[+] src2_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
+      Bits<AME_MAX_DTYPE_SIZE> shift_amount = src2_element_value & (src1_element_size - 1);
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SRA1D, src1_dtype, src1_element_value, src2_dtype, shift_amount, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:msra_ew_x]
+=== `msra.ew.x`
+
+Synopsis::
+Elementwise scalar arithmetic right shift
+
+Mnemonic::
+`msra.ew.x md, xs1, ms2`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-msra-ew-x-funct7},"type":2}]}
+....
+
+Description::
+Arithmetic (sign-preserving) right shift of every element of `ms2` by a scalar amount from integer register `xs1`, stored into `md`.
++
+Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
+element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
+
+
+NumPy Equivalent::
+[source,python]
+----
+shamt = xs1 & (EW - 1)
+md = ms2 >> shamt  # arithmetic
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> xs1 = $encoding[19:15];
+Bits<5> ms2 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src_dtype = Md[ms2];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SRA1D, dest_dtype, src_dtype, src_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
+  U32 src_nregs = src_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src_nregs == 0) {
+    src_nregs = 1;
+  }
+  U32 src_elements_per_reg = AME_NELEM / src_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SRA1D, dest_dtype, src_dtype, src_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms2 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms2 % src_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  Bits<AME_MAX_DTYPE_SIZE> scalar = X[xs1];
+  Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+  Bits<AME_MAX_DTYPE_SIZE> shift_amount = scalar_element_value & (src_element_size - 1);
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src_regno = e / src_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src_regno], src_dtype);
+      U32 src_lo_idx = e * src_element_size - (src_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src_hi_idx = src_lo_idx pass:[+] src_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SRA1D, src_dtype, src_element_value, src_dtype, shift_amount, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:msrl_ew]
+=== `msrl.ew`
+
+Synopsis::
+Elementwise logical right shift
+
+Mnemonic::
+`msrl.ew md, ms1, ms2`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-msrl-ew-funct7},"type":2}]}
+....
+
+Description::
+Elementwise logical (unsigned) right shift of `ms1` by the per-element shift amount in `ms2`, stored into `md`.
++
+Only the low `lg2(EW)` bits of each shift-amount value are used, where `EW` is the
+element width in bits of `ms1`. Shift amounts are interpreted as unsigned bit patterns.
+
+
+NumPy Equivalent::
+[source,python]
+----
+shamt = ms2 & (EW - 1)
+md = ms1 >> shamt  # logical
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+Bits<5> ms2 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+Bits<32> src2_dtype = Md[ms2];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SRL1D, dest_dtype, src1_dtype, src2_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 src2_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src2_dtype);
+  U32 src2_nregs = src2_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src2_nregs == 0) {
+    src2_nregs = 1;
+  }
+  U32 src2_elements_per_reg = AME_NELEM / src2_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SRL1D, dest_dtype, src1_dtype, src2_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || ms2 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](ms2 % src2_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 src2_regno = e / src2_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src2_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src2_regno], src2_dtype);
+      U32 src2_lo_idx = e * src2_element_size - (src2_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src2_hi_idx = src2_lo_idx pass:[+] src2_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
+      Bits<AME_MAX_DTYPE_SIZE> shift_amount = src2_element_value & (src1_element_size - 1);
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SRL1D, src1_dtype, src1_element_value, src2_dtype, shift_amount, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:msrl_ew_x]
+=== `msrl.ew.x`
+
+Synopsis::
+Elementwise scalar logical right shift
+
+Mnemonic::
+`msrl.ew.x md, xs1, ms2`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": {ame-enc-msrl-ew-x-funct7},"type":2}]}
+....
+
+Description::
+Logical (unsigned) right shift of every element of `ms2` by a scalar amount from integer register `xs1`, stored into `md`.
++
+Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
+element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
+
+
+NumPy Equivalent::
+[source,python]
+----
+shamt = xs1 & (EW - 1)
+md = ms2 >> shamt  # logical
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> xs1 = $encoding[19:15];
+Bits<5> ms2 = $encoding[24:20];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src_dtype = Md[ms2];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SRL1D, dest_dtype, src_dtype, src_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
+  U32 src_nregs = src_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src_nregs == 0) {
+    src_nregs = 1;
+  }
+  U32 src_elements_per_reg = AME_NELEM / src_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SRL1D, dest_dtype, src_dtype, src_dtype)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms2 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms2 % src_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  Bits<AME_MAX_DTYPE_SIZE> scalar = X[xs1];
+  Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+  Bits<AME_MAX_DTYPE_SIZE> shift_amount = scalar_element_value & (src_element_size - 1);
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src_regno = e / src_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] src_regno], src_dtype);
+      U32 src_lo_idx = e * src_element_size - (src_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src_hi_idx = src_lo_idx pass:[+] src_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SRL1D, src_dtype, src_element_value, src_dtype, shift_amount, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
 }
 ----
@@ -10216,6 +12514,104 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 
 <<<
 
+[#udb:doc:inst:mtanh_ew]
+=== `mtanh.ew`
+
+Synopsis::
+Elementwise hyperbolic tangent
+
+Mnemonic::
+`mtanh.ew md, ms1`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":12,"name": {ame-enc-mtanh-ew-funct12},"type":2}]}
+....
+
+Description::
+Elementwise hyperbolic tangent of `ms1`, stored into `md`.
++
+This instruction is defined only for floating-point datatypes. If the datatype of
+`md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
+register is written.
++
+The numerical precision of the result is implementation-defined.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md = np.tanh(ms1)
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> ms1 = $encoding[19:15];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+Bits<32> src1_dtype = Md[ms1];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::TANH1D, dest_dtype, src1_dtype, 0)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 src1_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
+  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src1_nregs == 0) {
+    src1_nregs = 1;
+  }
+  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
+  if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::TANH1D, dest_dtype, src1_dtype, 0)) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]ms1 >= 16 || md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](ms1 % src1_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
+      U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
+      U32 src1_regno = e / src1_elements_per_reg;
+      Bits<AME_MAX_SQUARE_SIZE> src1_value = <<udb:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
+      U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
+      U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
+      U32 dest_lo_idx = local_e * dest_element_size;
+      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
+      Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
+      result[dest_hi_idx:dest_lo_idx] = <<udb:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::TANH1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
+    }
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
+}
+----
+
+
+<<<
+
 [#udb:doc:inst:munpack_ew_x]
 === `munpack.ew.x`
 
@@ -10514,14 +12910,14 @@ if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 
 <<<
 
-[#udb:doc:inst:mzero_2d]
-=== `mzero.2d`
+[#udb:doc:inst:mzero_2d_acc]
+=== `mzero.2d.acc`
 
 Synopsis::
 Clear accumulator tile
 
 Mnemonic::
-`mzero.2d acc`
+`mzero.2d.acc acc`
 
 Encoding::
 +
@@ -10530,7 +12926,7 @@ Encodings have not been allocated yet. This is just a placeholder.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":22,"name": 0x40008,"type":2}]}
+{"reg":[{"bits":8,"name": 0x2b,"type":2},{"bits":2,"name": "acc","type":4},{"bits":22,"name": {ame-enc-mzero-2d-acc-funct22},"type":2}]}
 ....
 
 Description::
@@ -10559,16 +12955,78 @@ Bits<32> dest_dtype = Ad[acc];
 if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ZERO1D, dest_dtype, dest_dtype, dest_dtype)) {
   CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
-  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
   if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ZERO1D, dest_dtype, dest_dtype, dest_dtype)) {
     <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   Bits<AME_MAX_SQUARE_SIZE> result = 0;
-  for pass:[(]U32 e = 0; e < AME_NELEM; e++) {
-    U32 dest_hi = ((e pass:[+] 1) * dest_element_size);
-    U32 dest_lo = ((e pass:[+] 1) * dest_element_size);
-    result[dest_hi:dest_lo] = 0;
-  }
   Acc[acc] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+}
+----
+
+
+<<<
+
+[#udb:doc:inst:mzero_2d_m]
+=== `mzero.2d.m`
+
+Synopsis::
+Clear tensor register
+
+Mnemonic::
+`mzero.2d.m md`
+
+Encoding::
++
+[IMPORTANT]
+Encodings have not been allocated yet. This is just a placeholder.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":20,"name": {ame-enc-mzero-2d-m-funct20},"type":2}]}
+....
+
+Description::
+Writes zero to every element of the M register group `md`.
++
+Typically used to initialize a tensor register before an elementwise sequence.
+
+
+NumPy Equivalent::
+[source,python]
+----
+md = np.zeros_like(md)
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+----
+
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> dest_dtype = Md[md];
+if pass:[(]!<<udb:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ZERO1D, dest_dtype, dest_dtype, dest_dtype)) {
+  CSR[<<udb:doc:csr:amestatus,amestatus>>].<<udb:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 dest_element_size = <<udb:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_nregs == 0) {
+    dest_nregs = 1;
+  }
+  if pass:[(]AME_NUM_M_REGS == 16) {
+    if pass:[(]md >= 16) {
+      <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+    }
+  }
+  if pass:[(](md % dest_nregs) != 0) {
+    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<udb:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
+  Bits<AME_MAX_SQUARE_SIZE> result = 0;
+  for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
+    M[md pass:[+] dest_regno] = <<udb:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
+  }
 }
 ----

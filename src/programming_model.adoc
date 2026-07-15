@@ -166,6 +166,38 @@ non-packed operand's `N_sq` squares span `N_sq` registers.
 For 2D matrix multiply instructions, the inner product dimension extends to
 `pack_factor * N` elements; see <<_2_dimensional_matrix_multiply_operations>>.
 
+[[register-group-overlap]]
+==== Register group overlap and atomic writeback
+
+Register operands name groups rather than individual storage locations, so two
+operands can overlap completely or partially when their datatypes require
+different register spans.
+
+[#norm:ame_register_group_overlap]#Unless an instruction explicitly states an
+overlap restriction, any source `M` or `Acc` register group may overlap any
+destination register group, including complete overlap where the base register
+numbers are equal.#
+
+[#norm:ame_source_snapshot]#All source register values, source datatype values,
+scalar operands, and index operands are read from the architectural state that
+exists immediately before the instruction begins.# Consequently, an
+instruction such as a gather, broadcast, shift, or reduction produces the same
+result when its destination overlaps a source as it does when the destination
+is disjoint.  Pseudocode assignments to a destination do not change the source
+snapshot observed by later pseudocode statements.
+
+[#norm:ame_atomic_register_writeback]#For register-only AME instructions, all
+destination `M`, `Md`, `Acc`, and `Ad` writes are staged and become visible
+together only after every operand, datatype, alignment, bounds, and index check
+has completed successfully.#
+
+[#norm:ame_register_exception_atomicity]#If a register-only AME instruction
+raises a synchronous exception, none of its staged destination writes commit;
+only architectural trap state written by exception handling may change.# An
+unsupported datatype or operation is not a synchronous exception: it sets
+`amestatus.UN` and returns without committing any destination write, as
+described in <<datatypes>>.
+
 === Polymorphic instructions
 
 AME instructions do not encode operand datatypes; instead, datatypes are determined by dedicated datatype registers.
@@ -593,7 +625,7 @@ AME permutation operations swizzle data within a single square.
 | `D[i,2j] = A[i,j] +
  D[i,2j+1] = A[i, N/2+j]`
 | Elementwise column zip (interleave)
-| <<udb:doc:inst:mgather_ew,mgather.ew>>
+| <<udb:doc:inst:mcolgather_ew,mcolgather.ew>>
 | `D[i,j] = A[i, B[i,j]]`
 | Elementwise gather (take)
 | <<udb:doc:inst:mrowunzip_ew,mrowunzip.ew>>
@@ -616,7 +648,7 @@ AME permutation operations swizzle data within a single square.
 | <<udb:doc:inst:mscatmax_row,mscatmax.row>>
 | `D[i, B[i,j]] = max(D[i,B[i,j]], A[i,j])`
 | Elementwise scatter-max
-| <<udb:doc:inst:mshift_ew,mshift.ew>>
+| <<udb:doc:inst:mcolshift_ew_x,mcolshift.ew.x>>
 | `D[i,j] = A[i, j+imm]`
 | Elementwise row shift by constant offset
 |===
@@ -627,7 +659,7 @@ AME permutation operations swizzle data within a single square.
 `<<udb:doc:inst:mmov_a_m,mmov.a.m>>` copies all elements from an `Acc` register to an `M` register.
 In both cases, the source and destination datatypes must match; if they differ, `amestatus.UN` is set and the destination is left unchanged.
 
-`<<udb:doc:inst:mzero_2d,mzero.2d>>` writes zero to every element of an `Acc` register,
+`<<udb:doc:inst:mzero_2d_acc,mzero.2d.acc>>` writes zero to every element of an `Acc` register,
 typically used to initialize an accumulator before a matrix multiply sequence.
 
 [cols="1,2,3",options="header"]
@@ -639,7 +671,7 @@ typically used to initialize an accumulator before a matrix multiply sequence.
 | <<udb:doc:inst:mmov_m_m,mmov.m.m>>
 | `D[i] = A[i]`
 | Elementwise unconditional move between M registers
-| <<udb:doc:inst:mzero_2d,mzero.2d>>
+| <<udb:doc:inst:mzero_2d_acc,mzero.2d.acc>>
 | `C = 0`
 | Clear accumulator tile
 |===
