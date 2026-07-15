@@ -5171,7 +5171,7 @@ discarding any previous value in `acc`.
 +
 `acc[i,k] = sum over j of (ms1[i,j] * ms2[j,k])`
 +
-For the accumulating form, see `mmacc.2d`.
+For the accumulating form, see `mmulacc.2d`.
 
 
 NumPy Equivalent::
@@ -5463,8 +5463,8 @@ Accumulates the matrix product of `ms1` and `ms2` into `acc`.
 `acc` is both a source and destination: its current value is read, the matrix
 product is added, and the result is written back.
 +
-For the non-accumulating form, see `mm.2d`.
-For the subtracting form, see `mmaccneg.2d`.
+For the non-accumulating form, see `mmul.2d`.
+For the subtracting form, see `mmulaccneg.2d`.
 
 
 NumPy Equivalent::
@@ -5770,7 +5770,7 @@ Subtracts the matrix product of `ms1` and `ms2` from `acc`.
 `acc` is both a source and destination: its current value is read, the matrix
 product is subtracted, and the result is written back.
 +
-For the adding accumulate form, see `mmacc.2d`.
+For the adding accumulate form, see `mmulacc.2d`.
 
 
 NumPy Equivalent::
@@ -6275,7 +6275,7 @@ result into `acc`, discarding any previous value in `acc`.
 +
 `acc[i,k] = sum over j of (ms1[j,i] * ms2[j,k])`
 +
-For the accumulating form, see `mmatacc.2d`.
+For the accumulating form, see `mmulatacc.2d`.
 
 
 NumPy Equivalent::
@@ -6377,7 +6377,7 @@ Accumulates the matrix product of the transpose of `ms1` with `ms2` into `acc`.
 `acc` is both a source and destination: its current value is read, the transposed-A
 matrix product is added, and the result is written back.
 +
-For the non-accumulating form, see `mmat.2d`.
+For the non-accumulating form, see `mmulat.2d`.
 
 
 NumPy Equivalent::
@@ -6480,7 +6480,7 @@ result into `acc`, discarding any previous value in `acc`.
 +
 `acc[i,k] = sum over j of (ms1[i,j] * ms2[k,j])`
 +
-For the accumulating form, see `mmbtacc.2d`.
+For the accumulating form, see `mmulbtacc.2d`.
 
 
 NumPy Equivalent::
@@ -6582,7 +6582,7 @@ Accumulates the matrix product of `ms1` with the transpose of `ms2` into `acc`.
 `acc` is both a source and destination: its current value is read, the transposed-B
 matrix product is added, and the result is written back.
 +
-For the non-accumulating form, see `mmbt.2d`.
+For the non-accumulating form, see `mmulbt.2d`.
 
 
 NumPy Equivalent::
@@ -6685,7 +6685,7 @@ discarding any previous value in `acc`.
 +
 `acc[i,k] = -(sum over j of (ms1[i,j] * ms2[j,k]))`
 +
-For the accumulating negated form, see `mmaccneg.2d`.
+For the accumulating negated form, see `mmulaccneg.2d`.
 
 
 NumPy Equivalent::
@@ -10110,7 +10110,7 @@ otherwise `md[i] = 0`.
 This allows comparison results or arithmetic sign values to be used directly
 as predicates without normalization.
 +
-Complementary to `mcsellt.ew`.
+Complementary to `msellt.ew`.
 
 
 NumPy Equivalent::
@@ -10216,7 +10216,7 @@ otherwise `md[i] = 0`.
 This allows comparison results or arithmetic sign values to be used directly
 as predicates without normalization.
 +
-Complementary to `mcselge.ew`.
+Complementary to `mselge.ew`.
 
 
 NumPy Equivalent::
