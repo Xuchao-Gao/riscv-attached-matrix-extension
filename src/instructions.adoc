@@ -4120,7 +4120,7 @@ Loads a square from memory in the implementation-defined register format into ma
 register `md`.
 +
 The data in memory must have been previously stored in the implementation-defined
-register format (e.g., by a matching `ss` instruction). No datatype conversion is
+register format (e.g., by a matching `mss` instruction). No datatype conversion is
 performed; the in-memory layout is the exact register representation. All elements
 are loaded unconditionally. This instruction is correct for both compute and
 packed dtypes without any special handling.
@@ -4194,7 +4194,7 @@ unconditionally.
 +
 The address must be aligned to the total data size
 (`pack_factor * AME_NELEM * sizeof(Md[md])`) or 4KB, whichever is smaller.
-Otherwise, `ls.cm` raises a `Load Misaligned` exception.
+Otherwise, `mls.cm` raises a `Load Misaligned` exception.
 
 
 
@@ -4274,7 +4274,7 @@ unconditionally.
 +
 The address must be aligned to the total data size
 (`pack_factor * AME_NELEM * sizeof(Md[md])`) or 4KB, whichever is smaller.
-Otherwise, `ls.rm` raises a `Load Misaligned` exception.
+Otherwise, `mls.rm` raises a `Load Misaligned` exception.
 
 
 
@@ -11185,7 +11185,7 @@ Stores a square from matrix register `ms1` into memory in the implementation-def
 register format.
 +
 The data written to memory is in the same implementation-defined format used by the
-matching load instruction (`ls`). No datatype conversion is performed. All elements
+matching load instruction (`mls`). No datatype conversion is performed. All elements
 are stored unconditionally. This instruction is correct for both compute and
 packed dtypes without any special handling.
 +
@@ -11258,7 +11258,7 @@ unconditionally.
 +
 The address must be aligned to the total data size
 (`pack_factor * AME_NELEM * sizeof(Md[ms1])`) or 4KB, whichever is smaller.
-Otherwise, `ss.cm` raises a `Store/AMO Misaligned` exception.
+Otherwise, `mss.cm` raises a `Store/AMO Misaligned` exception.
 
 
 
@@ -11337,7 +11337,7 @@ unconditionally.
 +
 The address must be aligned to the total data size
 (`pack_factor * AME_NELEM * sizeof(Md[ms1])`) or 4KB, whichever is smaller.
-Otherwise, `ss.rm` raises a `Store/AMO Misaligned` exception.
+Otherwise, `mss.rm` raises a `Store/AMO Misaligned` exception.
 
 
 
