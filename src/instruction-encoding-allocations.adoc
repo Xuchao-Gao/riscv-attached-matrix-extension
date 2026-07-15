@@ -29,7 +29,7 @@ function space; it does not merge or relocate the selector fields.
 | R1 | `funct7` | `xfunct10[9:5]` | `xfunct10[4:0]` | `funct3=000` | `dest`
 |===
 
-`opcode[6:0]` is `CUSTOM-0` (`0x2b`) and `funct3[14:12]` is `000` for every
+`opcode[6:0]` is `CUSTOM-1` (`0x2b`) and `funct3[14:12]` is `000` for every
 AME instruction.  R0 is not defined.  R2 adds 5 selector bits and R1 adds 10
 selector bits without changing the locations or meanings of `funct7`,
 `funct3`, or `opcode`.

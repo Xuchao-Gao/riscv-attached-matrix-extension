@@ -106,19 +106,23 @@ The encoding format of `Ad` datatypes is identical to the format for `Md`, and i
 
 AME adds three CSRs.
 
+The addresses below are provisional allocations in the corresponding
+user-level custom read/write and read-only CSR ranges.  A future ratified
+version may assign different standard CSR addresses.
+
 |===
 | CSR | Address | Description
 
 | <<ame:doc:csr:amenlen,amenlen>>
-| `C01`
+| `CC0`
 | AME tile side length
 
 | <<ame:doc:csr:ameudsz,ameudsz>>
-| `C02`
+| `CC1`
 | AME unit datatype size in bits
 
 | <<ame:doc:csr:amestatus,amestatus>>
-| `C00`
+| `800`
 | Status of the AME extension
 
 |===
@@ -141,9 +145,7 @@ This is analogous to reading `vlenb` in RISC-V Vector code.
 | Field | Location | Description
 
 | VALUE
-a|
-* `31:0` when `CSR[mstatus].UXL == 0`
-* `63:0` when `CSR[mstatus].UXL == 1`
+| `XLEN-1:0`
 | Tile side length (N)
 
 |===
@@ -157,12 +159,12 @@ The value is a design-time constant.  Software reads this CSR together with
 a datatype encoding to compute the *group size*: the number of consecutive M
 registers required to hold one square:
 
-  group_size = dtype_size_bits / AME_UNIT_DATATYPE_SIZE
+  group_size = max(1, ceil(dtype_size_bits / AME_UNIT_DATATYPE_SIZE))
 
 where `dtype_size_bits` is bits [7:0] of the 32-bit datatype encoding.
-Compute datatypes always have `dtype_size_bits >= AME_UNIT_DATATYPE_SIZE`, so
-`group_size >= 1`.  When `group_size > 1`, the register index used with any
-instruction must be a multiple of `group_size`.
+Packed datatypes use one M register and therefore have `group_size = 1`.
+When `group_size > 1`, the register index used with any instruction must be a
+multiple of `group_size`.
 
 This CSR is analogous to `vlenb` in RISC-V Vector code: software reads it
 once at function entry to derive all register-grouping and stride calculations
@@ -173,16 +175,16 @@ without hardcoding any implementation-specific constant.
 | Field | Location | Description
 
 | VALUE
-a|
-* `31:0` when `CSR[mstatus].UXL == 0`
-* `63:0` when `CSR[mstatus].UXL == 1`
+| `XLEN-1:0`
 | Unit datatype size (AME_UNIT_DATATYPE_SIZE) in bits
 
 |===
 
 ==== amestatus
 
-TODO
+`amestatus` reports sticky AME execution status.  It resets to zero.  Software
+clears a reported condition by writing zero to the corresponding bit; writing
+one leaves that bit set.  Reserved bits are WPRI and read as zero.
 
 
 |===
@@ -190,6 +192,9 @@ TODO
 
 | UN
 | `0`
-| Unsupported flag
+| Unsupported-operation flag.  An implemented AME instruction sets `UN` when
+its datatype or operation tuple is unsupported.  The instruction makes no
+other architectural state change in that case.  `UN` remains set until
+software clears it.
 
 |===

@@ -8,7 +8,7 @@ AME uses a 32-bit datatype specifier encoded as follows:
 | Position | Meaning
 
 | `31`   | `0` = standard, `1` = custom
-| `30:7` | Datatype properties
+| `30:8` | Datatype properties
 | `7:0`  | Datatype size, in bits
 |===
 
@@ -213,31 +213,31 @@ The <<ame:doc:csr:amestatus,amestatus>> CSR contains a <<ame:doc:csr_field:amest
 field that is set whenever an implemented AME instruction is executed with unsupported datatypes.
 This serves as a reliable way to test any combination of operation/datatype.
 
-The overall datatypes supported can also be tested by checking <<ame:doc:csr_field:amestatus:UN,amestatus.UN>>.
-after an `msettyp` instruction.
+The overall datatypes supported can also be tested by checking
+<<ame:doc:csr_field:amestatus:UN,amestatus.UN>> after an `msettyp` instruction.
 
 .Testing for datatype support in an `M` register
 [source,bash]
 ====
-  csrw amestatus, 0
-  li t0, 0x40000008    # Int4
+  csrwi amestatus, 0
+  li t0, 0x40000004    # Int4
   msettyp m0, t0
   csrr t1, amestatus
   andi t1, t1, 1
-  bnez t1, int4_m_supported
+  beqz t1, int4_m_supported
 ====
 
 .Testing for datatype support in an `Acc` register
 [source,bash]
 ====
-  csrw amestatus, 0
+  csrwi amestatus, 0
 
   li t0, 0x40000020    # Int32
   asettyp acc0, t0
 
   csrr t1, amestatus
   andi t1, t1, 1
-  bnez t1, int32_acc_supported
+  beqz t1, int32_acc_supported
 ====
 
 A specific operation can also be tested by trying it and checking <<ame:doc:csr_field:amestatus:UN,amestatus.UN>>.
@@ -250,13 +250,13 @@ A specific operation can also be tested by trying it and checking <<ame:doc:csr_
   li t0, 0x40000008    # Int8
   msettyp m0, t0
   li t1, 0x40000020    # Int32
-  asettyp acc0, t0
+  asettyp acc0, t1
 
-  csrw amestatus, 0    # clear amestatus.UN
+  csrwi amestatus, 0   # clear amestatus.UN
 
   mmulacc.2d acc0, m0, m0
 
   csrr t1, amestatus
   andi t1, t1, 1
-  bnez t1, widening_8_32_matmul_supported
+  beqz t1, widening_8_32_matmul_supported
 ====

@@ -67,7 +67,7 @@ File.foreach(instructions_path) do |line|
   unless (mask & skeleton_mask) == skeleton_mask
     abort "#{instruction} must retain fixed funct7[31:25], funct3[14:12], and opcode[6:0] fields"
   end
-  abort "#{instruction} must use CUSTOM-0 opcode 0x2b" unless (value & opcode_mask) == 0x2b
+  abort "#{instruction} must use CUSTOM-1 opcode 0x2b" unless (value & opcode_mask) == 0x2b
   abort "#{instruction} has no destination operand in bits 11:7; R0 is not defined" unless (mask & dest_mask).zero?
 
   src1_fixed = (mask & src1_mask) == src1_mask
@@ -153,6 +153,17 @@ File.read(instructions_path).scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |nam
       field_errors << "#{name} does not decode operand #{field} from diagram bits #{range.join(':')}"
     elsif decoded[field] != range
       field_errors << "#{name} operand #{field}: diagram #{range.join(':')}, decode #{decoded[field].join(':')}"
+    end
+  end
+
+  mnemonic_match = section.match(/^`#{Regexp.escape(name)}(?:\s+([^`]+))?`$/)
+  if !mnemonic_match
+    field_errors << "#{name} has no parseable Mnemonic line"
+  else
+    mnemonic_operands = mnemonic_match[1].to_s.split(',').map(&:strip).reject(&:empty?)
+    diagram_operands = fields.keys
+    unless mnemonic_operands == diagram_operands
+      field_errors << "#{name} mnemonic operands #{mnemonic_operands.join(', ')} do not match diagram operands #{diagram_operands.join(', ')}"
     end
   end
 end

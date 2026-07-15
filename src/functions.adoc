@@ -579,6 +579,47 @@ h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> impl_square, Bits<32> dtype
 |===
 
 
+[#ame:doc:func:ame_read_m_element]
+=== `ame_read_m_element` (builtin)
+Reads one logical row-major element from the pre-instruction snapshot of an
+`M` operand.  `element_index` ranges over every logical element in the formed
+operand, including all packed or `N_sq` squares.  The builtin locates the
+physical register group and square, assembles all registers needed by a wide
+datatype before applying the implementation-to-row-major transformation, and
+returns the low `sizeof(dtype)` bits of the selected element.
+
+This builtin must be called only after base-index, datatype,
+register-group/span, element-index, and operation-support checks have
+succeeded.  It never observes destination writes staged by the current
+instruction.
+
+|===
+h| Return Type l| Bits<AME_MAX_DTYPE_SIZE>
+h| Arguments   l| Bits<5> base, Bits<32> dtype, U32 element_index
+|===
+
+
+[#ame:doc:func:ame_matmul_accumulate]
+=== `ame_matmul_accumulate` (builtin)
+Accumulates one matrix-multiply product into a dot-product partial result.  The
+source bit vectors are interpreted using their source datatypes and the
+partial result is interpreted using `dest_dtype`; this operation is numeric
+for both integer and floating-point tuples and is never raw bit-vector integer
+addition.
+
+The product sign and accumulate/overwrite variant are selected by `op`.  The
+implementation applies the overflow, saturation, floating-point special-value,
+rounding, and optional fused-product behavior defined for the supported matrix
+operation tuple.  Until a tighter matrix precision profile is defined, those
+finite-precision choices remain implementation-defined, but the selected
+behavior must be deterministic for a given implementation.
+
+|===
+h| Return Type l| Bits<AME_MAX_DTYPE_SIZE>
+h| Arguments   l| AmeOperation op, Bits<32> dest_dtype, Bits<AME_MAX_DTYPE_SIZE> partial, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE> src1, Bits<32> src2_dtype, Bits<AME_MAX_DTYPE_SIZE> src2
+|===
+
+
 [#ame:doc:func:ame_stage_m_element_write]
 === `ame_stage_m_element_write` (builtin)
 Stages one logical row-major element write to an `M` register group.
@@ -601,6 +642,79 @@ index, and operation-support checks have succeeded.
 h| Return Type l| void
 h| Arguments   l| U32 md, Bits<32> dtype, U32 element_index, Bits<AME_MAX_DTYPE_SIZE> value
 |===
+
+
+[#ame:doc:func:ame_check_m_index]
+=== `ame_check_m_index`
+Validates an encoded `M` or `Md` register index before any matrix datatype or
+data state is accessed.  An index outside the implemented matrix register file
+raises a precise Illegal Instruction exception.
+
+|===
+h| Return Type l| void
+h| Arguments   l| Bits<5> index, Bits<INSTR_ENC_SIZE> encoding
+|===
+
+[subs="specialchars,macros"]
+----
+if pass:[(]index >= AME_NUM_M_REGS) {
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), encoding);
+}
+----
+
+
+[#ame:doc:func:ame_check_m_group]
+=== `ame_check_m_group`
+Validates the alignment and complete physical-register span of an `M` operand
+after its datatype and instruction square count have been determined.  The
+`alignment` is the number of registers occupied by one non-packed square, or
+one for a packed datatype.  `register_span` is the complete span calculated by
+the operand-formation rules, including all `N_sq` squares.
+
+Zero alignment or span, a misaligned base, or a span extending beyond the
+implemented matrix register file raises a precise Illegal Instruction
+exception.
+
+|===
+h| Return Type l| void
+h| Arguments   l| Bits<5> base, U32 alignment, U32 register_span, Bits<INSTR_ENC_SIZE> encoding
+|===
+
+[subs="specialchars,macros"]
+----
+if pass:[(]alignment == 0 || register_span == 0 ||
+    (base % alignment) != 0 ||
+    (base pass:[+] register_span) > AME_NUM_M_REGS) {
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), encoding);
+}
+----
+
+
+[#ame:doc:func:ame_check_acc_index]
+=== `ame_check_acc_index`
+Validates an encoded `Acc` or `Ad` register index before any accumulator
+datatype or data state is accessed.
+
+If the index names an unimplemented accumulator and
+`AME_UNIMPL_ACC_BEHAVIOR` is `exception`, the instruction raises a precise
+Illegal Instruction exception.  If the configured behavior is `undefined`,
+the instruction enters the specification's unpredictable state.
+
+|===
+h| Return Type l| void
+h| Arguments   l| Bits<5> index, Bits<INSTR_ENC_SIZE> encoding
+|===
+
+[subs="specialchars,macros"]
+----
+if pass:[(]index >= AME_NUM_ACC_REGS) {
+  if pass:[(]AME_UNIMPL_ACC_BEHAVIOR == "exception") {
+    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), encoding);
+  } else {
+    <<ame:doc:func:unpredictable,unpredictable>>pass:[(]"Instruction references an unimplemented Acc or Ad register");
+  }
+}
+----
 
 
 [#ame:doc:func:ame_stage_acc_element_write]
@@ -695,6 +809,59 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 | The numeric value of `src1` converted to the destination datatype; `src2` is ignored
 | A supported source-to-destination conversion tuple
 
+| `ABS1D`
+| `abs(src1)`; `src2` is ignored
+| Supported numeric source and destination datatypes
+
+| `ABSDIFF1D`
+| `abs(src1 - src2)`
+| Supported numeric source and destination datatypes
+
+| `AND1D`, `ANDNOT1D`, `OR1D`, `ORNOT1D`, `XOR1D`
+| `src1 & src2`, `src1 & ~src2`, `src1 \| src2`, `src1 \| ~src2`, and
+`src1 ^ src2`, respectively
+| Identical integer source and destination datatypes
+
+| `CMPGE1D`, `CMPLT1D`
+| All one bits in the destination element when `src1 >= src2` or
+`src1 < src2`, respectively; otherwise all zero bits
+| Ordered numeric source datatypes and an integer destination datatype
+
+| `COLUNZIP1D`, `COLZIP1D`, `ROWUNZIP1D`, `ROWZIP1D`
+| A bit-exact copy of `src1`; source selection and destination placement are
+performed by the instruction pseudocode
+| Identical source and destination datatypes
+
+| `EXP21D`, `LOG21D`
+| `2^src1` and `log2(src1)`, respectively; `src2` is ignored
+| Floating-point source and destination datatypes
+
+| `LDEXP1D`, `RDEXP1D`
+| `src1 * 2^src2` and `src1 * 2^(-src2)`, respectively
+| Numeric data source and destination datatypes; integer exponent datatype
+
+| `LOG2SUB1D`, `SUBLOG21D`
+| `log2(abs(src1)) - src2` and `src2 - log2(abs(src1))`, respectively
+| Floating-point data source and destination datatypes; numeric bias datatype
+
+| `HDIFF1D`, `MEAN1D`
+| `(src2 - src1) / 2` and `(src1 + src2) / 2`, respectively
+| Supported numeric source and destination datatypes
+
+| `MUL1D`, `NMUL1D`
+| `src1 * src2` and `-(src1 * src2)`, respectively
+| Supported numeric source and destination datatypes
+
+| `SELGE1D`, `SEL1D`
+| `src2` when the sign bit of `src1` is clear or set, respectively; otherwise
+semantic zero in the destination datatype
+| A predicate datatype with a defined sign bit; identical `src2` and
+destination datatypes
+
+| `SUB1D`
+| `src2 - src1`
+| Supported numeric source and destination datatypes
+
 | `ADD1D`
 | `src1 + src2`
 | Supported numeric source and destination datatypes
@@ -707,7 +874,7 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 | `-(src1 * src2)`
 | Supported numeric matrix source and accumulator destination datatypes
 
-| `REDUCEMINCOL1D`, `REDUCEMIN1D`
+| `MIN1D`, `REDUCEMINCOL1D`, `REDUCEMIN1D`
 | `min(src1, src2)` according to the source datatype's ordering
 | Identical ordered numeric source and destination datatypes
 
@@ -715,7 +882,7 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 | `src1 + src2`
 | Identical numeric source and destination datatypes
 
-| `PREFIXMAXCOL1D`, `PREFIXMAX1D`, `REDUCEMAXCOL1D`, `REDUCEMAX1D`
+| `MAX1D`, `PREFIXMAXCOL1D`, `PREFIXMAX1D`, `REDUCEMAXCOL1D`, `REDUCEMAX1D`
 | `max(src1, src2)` according to the source datatype's ordering
 | Identical ordered numeric source and destination datatypes
 
@@ -733,15 +900,15 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 
 | `SLL1D`
 | `src1 << src2`
-| Integer data and shift-amount datatypes
+| Integer data and shift-amount datatypes; the data element width is a power of two
 
 | `SRA1D`
 | Signed arithmetic right shift of `src1` by `src2`
-| Signed integer data datatype and integer shift-amount datatype
+| Signed integer data datatype with a power-of-two element width and integer shift-amount datatype
 
 | `SRL1D`
 | Unsigned logical right shift of `src1` by `src2`
-| Integer data and shift-amount datatypes
+| Integer data and shift-amount datatypes; the data element width is a power of two
 
 | `COS1D`, `SIN1D`, `TANH1D`
 | `cos(src1)`, `sin(src1)`, `tanh(src1)`, respectively
@@ -768,6 +935,19 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 | Floating-point source and destination datatypes
 |===
 
+For standard integer arithmetic operations, the mathematical result shown in
+the table is evaluated without intermediate truncation and then converted once
+to the destination integer datatype.  A destination with `Saturation=1`
+clamps an out-of-range result; a destination with `Saturation=0` retains the
+low destination-width bits.  Standard integer tuples for `HDIFF1D` and
+`MEAN1D` are unsupported until their non-integral rounding direction is
+specified.  Custom datatype tuples may define their own conversion rule.
+
+Floating-point `CMPGE1D` and `CMPLT1D` use ordered IEEE comparisons: a NaN
+operand makes the comparison false, and `-0` compares equal to `+0`.
+The unselected result of `SELGE1D` and `SEL1D` is the destination datatype's
+semantic zero, including its canonical zero sign.
+
 For `SLL1D`, `SRA1D`, and `SRL1D`, the caller supplies the already-masked
 unsigned shift amount defined by the corresponding instruction.  `ZERO1D`
 returns the datatype's semantic zero; instructions must not assume that its
@@ -780,14 +960,14 @@ follow the rules below.
 |===
 | Operation | Required special-value result | Finite-result accuracy
 
-| `REDUCEMINCOL1D`, `REDUCEMIN1D`
+| `MIN1D`, `REDUCEMINCOL1D`, `REDUCEMIN1D`
 | If either operand is a NaN, return the destination datatype's canonical quiet
 NaN.  Otherwise compare using the source datatype's numerical ordering.  A tie
 between `-0` and `+0` returns `-0`.
 | Exact selection of one operand.  Reduction instructions apply this binary
 operation in ascending source-element order.
 
-| `PREFIXMAXCOL1D`, `PREFIXMAX1D`, `REDUCEMAXCOL1D`, `REDUCEMAX1D`
+| `MAX1D`, `PREFIXMAXCOL1D`, `PREFIXMAX1D`, `REDUCEMAXCOL1D`, `REDUCEMAX1D`
 | If either operand is a NaN, return the destination datatype's canonical quiet
 NaN.  Otherwise compare using the source datatype's numerical ordering.  A tie
 between `-0` and `+0` returns `+0`.
@@ -806,6 +986,33 @@ the destination datatype's canonical quiet NaN. Otherwise an infinity plus a
 finite value, or two same-signed infinities, returns that infinity.
 | The sum is correctly rounded once according to the destination datatype's
 rounding mode.
+
+| `SUB1D`
+| If either operand is a NaN, or if same-signed infinities are subtracted,
+return the destination datatype's canonical quiet NaN. Otherwise subtraction
+of a finite value from an infinity, or an infinity from a finite value, returns
+the mathematically signed infinity.
+| The difference is correctly rounded once according to the destination
+datatype's rounding mode.
+
+| `ABS1D`
+| A NaN returns the destination datatype's canonical quiet NaN. Either signed
+zero returns `+0`, and either infinity returns `+infinity`.
+| Exact for every representable finite result.
+
+| `ABSDIFF1D`
+| A NaN, or subtraction of two same-signed infinities, returns the destination
+datatype's canonical quiet NaN. Any other infinite difference returns
+`+infinity`.
+| The absolute difference is correctly rounded once according to the
+destination datatype's rounding mode.
+
+| `MUL1D`, `NMUL1D`
+| A NaN, or multiplication of zero by an infinity, returns the destination
+datatype's canonical quiet NaN. Other infinite products follow the
+mathematical sign; `NMUL1D` then negates that sign.
+| The product is correctly rounded once according to the destination
+datatype's rounding mode.
 
 | `PREFIXADDCOL1D`, `PREFIXADD1D`, `REDUCEADDCOL1D`, `REDUCEADD1D`
 | If either operand is a NaN, or if opposite-signed infinities are added, return
@@ -832,6 +1039,32 @@ in ulp, for every supported operation and datatype tuple.
 returns the same signed zero and `tanh(+/-infinity)` returns `+/-1`.
 | Implementation-defined, with the same documented maximum-error requirement.
 
+| `EXP21D`
+| A NaN returns the destination datatype's canonical quiet NaN.
+`exp2(+infinity)` returns `+infinity`, `exp2(-infinity)` returns `+0`, and
+`exp2(+/-0)` returns `+1`.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `LOG21D`
+| A NaN, a negative finite value, or `-infinity` returns the destination
+datatype's canonical quiet NaN. `log2(+/-0)` returns `-infinity`, `log2(+infinity)` returns
+`+infinity`, and `log2(1)` returns `+0`.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `LDEXP1D`, `RDEXP1D`
+| A NaN data operand returns the destination datatype's canonical quiet NaN.
+A signed zero or signed infinity preserves its sign. Scaling overflow and
+underflow are handled by destination conversion.
+| The exact power-of-two-scaled result is rounded once according to the
+destination datatype's rounding mode.
+
+| `LOG2SUB1D`, `SUBLOG21D`
+| NaN inputs and invalid infinity combinations return the destination
+datatype's canonical quiet NaN. The `log2(abs(src1))` term follows the
+`LOG21D` rules above.
+| Implementation-defined. An implementation must document the maximum error
+and whether the compound expression uses an intermediate rounding.
+
 | `REC1D`
 | A NaN returns the destination datatype's canonical quiet NaN. `1/(+/-0)`
 returns the correspondingly signed infinity, and `1/(+/-infinity)` returns the
@@ -839,13 +1072,13 @@ correspondingly signed zero.
 | Implementation-defined, with the same documented maximum-error requirement.
 
 | `RSQRT1D`
-| A NaN or a negative finite value other than `-0` returns the destination
+| A NaN, `-infinity`, or a negative finite value other than `-0` returns the destination
 datatype's canonical quiet NaN. `rsqrt(+0)` returns `+infinity`, `rsqrt(-0)`
 returns `-infinity`, and `rsqrt(+infinity)` returns `+0`.
 | Implementation-defined, with the same documented maximum-error requirement.
 
 | `SQRT1D`
-| A NaN or a negative finite value other than `-0` returns the destination
+| A NaN, `-infinity`, or a negative finite value other than `-0` returns the destination
 datatype's canonical quiet NaN. `sqrt(+/-0)` preserves the signed zero and
 `sqrt(+infinity)` returns `+infinity`.
 | Correctly rounded according to the destination datatype's rounding mode.
@@ -961,11 +1194,13 @@ h| Arguments   l| Bits<64> int_value
 
 [subs="specialchars,macros"]
 ----
+Bits<64> result = 1;
 for pass:[(]U32 i = 0; i < 64; i++) {
-  int_value = int_value / 4;
   if pass:[(]int_value <= 1) {
-    return i pass:[+] 1;
+    return result;
   }
+  int_value = int_value / 4;
+  result = result * 2;
 }
 ----
 
@@ -2342,29 +2577,24 @@ h| Arguments   l| XReg paddr
 
 [#ame:doc:func:read_memory_ame]
 === `read_memory_ame`
-Read dtype_size_btyes from memory
+Reads `size_bytes` consecutive bytes from memory in increasing-address order.
+The byte at the lowest address supplies bits 7:0 of the result.
 
 
 |===
-h| Return Type l| Bits<MXLEN>
-h| Arguments   l| XReg virtual_address, Bits<INSTR_ENC_SIZE> encoding, Bits<AME_MAX_DTYPE_SIZE> dtype_size_bytes
+h| Return Type l| Bits<AME_MAX_SQUARE_SIZE>
+h| Arguments   l| XReg virtual_address, Bits<INSTR_ENC_SIZE> encoding, U32 size_bytes
 |===
 
 [subs="specialchars,macros"]
 ----
-if pass:[(]dtype_size_bytes == 4) {
-  return <<ame:doc:func:read_memory,read_memory>>pass:[(]4, virtual_address, encoding);
-} else if pass:[(]dtype_size_bytes == 8) {
-  return <<ame:doc:func:read_memory,read_memory>>pass:[(]8, virtual_address, encoding);
-} else if pass:[(]dtype_size_bytes == 16) {
-  return <<ame:doc:func:read_memory,read_memory>>pass:[(]16, virtual_address, encoding);
-} else if pass:[(]dtype_size_bytes == 32) {
-  return <<ame:doc:func:read_memory,read_memory>>pass:[(]32, virtual_address, encoding);
-} else if pass:[(]dtype_size_bytes == 64) {
-  return <<ame:doc:func:read_memory,read_memory>>pass:[(]64, virtual_address, encoding);
-} else {
-  <<ame:doc:func:unreachable,unreachable>>pass:[(]"Unsupported dtype size");
+Bits<AME_MAX_SQUARE_SIZE> result = 0;
+for pass:[(]U32 i = 0; i < size_bytes; i++) {
+  U32 bit_lo = i * 8;
+  U32 bit_hi = bit_lo pass:[+] 7;
+  result[bit_hi:bit_lo] = <<ame:doc:func:read_memory,read_memory>>pass:[(]8, virtual_address pass:[+] i, encoding)[7:0];
 }
+return result;
 ----
 
 [#ame:doc:func:ame_xform_cm_to_impl]
@@ -2534,27 +2764,20 @@ h| Arguments   l| XReg paddr, Bits<64> value
 
 [#ame:doc:func:write_memory_ame]
 === `write_memory_ame`
-Write dtype_size_bytes of data to memory.
+Writes `size_bytes` consecutive bytes to memory in increasing-address order.
+Bits 7:0 of `data` are written to the lowest address.
 
 
 |===
 h| Return Type l| void
-h| Arguments   l| XReg virtual_address, Bits<INSTR_ENC_SIZE> encoding, Bits<AME_MAX_SQUARE_SIZE> data, Bits<AME_MAX_DTYPE_SIZE> dtype_size_bytes
+h| Arguments   l| XReg virtual_address, Bits<INSTR_ENC_SIZE> encoding, Bits<AME_MAX_SQUARE_SIZE> data, U32 size_bytes
 |===
 
 [subs="specialchars,macros"]
 ----
-if pass:[(]dtype_size_bytes == 4) {
-  <<ame:doc:func:write_memory,write_memory>>pass:[(]4, virtual_address, encoding, data[31:0]);
-} else if pass:[(]dtype_size_bytes == 8) {
-  <<ame:doc:func:write_memory,write_memory>>pass:[(]8, virtual_address, encoding, data[63:0]);
-} else if pass:[(]dtype_size_bytes == 16) {
-  <<ame:doc:func:write_memory,write_memory>>pass:[(]16, virtual_address, encoding, data[127:0]);
-} else if pass:[(]dtype_size_bytes == 32) {
-  <<ame:doc:func:write_memory,write_memory>>pass:[(]32, virtual_address, encoding, data[255:0]);
-} else if pass:[(]dtype_size_bytes == 64) {
-  <<ame:doc:func:write_memory,write_memory>>pass:[(]64, virtual_address, encoding, data[511:0]);
-} else {
-  <<ame:doc:func:unreachable,unreachable>>pass:[(]"Unsupported dtype size");
+for pass:[(]U32 i = 0; i < size_bytes; i++) {
+  U32 bit_lo = i * 8;
+  U32 bit_hi = bit_lo pass:[+] 7;
+  <<ame:doc:func:write_memory,write_memory>>pass:[(]8, virtual_address pass:[+] i, data[bit_hi:bit_lo], encoding);
 }
 ----

@@ -8,7 +8,7 @@
 [source,bash]
 ----
 
-.equ INT4_DATATYPE, 0x
+.equ INT4_DATATYPE, 0x40000004
 
 
 ----
@@ -139,7 +139,7 @@ gemm_unit_dtype:
     # group_size = 1: A→m0, B→m1
     msettyp m0, a6
     msettyp m1, a6
-    msettyp acc0, a6
+    asettyp acc0, a6
 
     # ── step 3: compute loop-invariant square strides ────────────────
     # elem_bytes = 1, so strides are pure element counts
@@ -205,31 +205,31 @@ gemm_unit_dtype:
 <<<
 
 [[square_gemm]]
-==== Non-portable GEMM, any datatype
+==== Fixed-parameter GEMM, non-packed datatypes
 
 Summary::
-This example is a GEMM kernel that operates on squares that are already formatted in the
-implementation-defined square layout and where all AME parameters are known.
-It represents a kernel written for a specific implementation.
+This example is a GEMM kernel for a specific implementation whose AME parameters
+are known.  Matrices use a block-tiled row-major layout: every `N x N` tile is
+contiguous and row-major internally, and the tile grid is row-major.
 
 Assumptions::
 +
 * `<<ame:doc:param:AME_NELEM,AME_NELEM>> = 16384`
 * `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> = 8`
-* Squares are already formatted in the implementation-defined layout
+* The datatype is non-packed
+* Tiles use the block-tiled row-major layout described above
 
 Details::
 See <<gemm_examples>> for the shared algorithm, group-size model, and tiling diagram.
 +
-`N = 128` and `U = 8` are hardcoded from the known implementation parameters —
-no CSR reads are needed.
-Matrices are pre-formatted in the implementation-defined square layout, so `mls` and
-`mss` are used directly (no row-major conversion).
+`N = 128` and `U = 8` are hardcoded from the known implementation parameters,
+so no CSR reads are needed.  `mls.rm` and `mss.rm` transfer one complete tile,
+including every physical M register of a wide datatype group.
 +
 Memory strides use `square_bytes = AME_NELEM × elem_bytes = 16384 × elem_bytes`.
 +
-`dtype` varies at runtime: `group_size = dtype_bits >> 3` (since `U = 8`).
-Packed datatypes (`dtype_bits < 8`) use `pack_factor > 1` and are handled separately.
+`dtype` varies at runtime but must be non-packed:
+`group_size = dtype_bits >> 3` (since `U = 8`).
 The triple loop is instantiated once per supported group_size via a macro.
 
 Algorithm::
@@ -237,18 +237,14 @@ Algorithm::
 [source%unbreakable,c]
 ----
 // C[M×P] += A[M×K] × B[K×P]
-// Square format, any datatype; N = 128 and U = 8 are hardcoded
+// Block-tiled row-major, non-packed datatype; N = 128 and U = 8 are hardcoded
 
 int N          = 128;                    // t0: sqrt(16384)
 int dtype_bits = dtype & 0xFF;           // t2: element size in bits
 int elem_bytes = dtype_bits / 8;         // t3
 
-int group_size;
-if (dtype_bits < 8) {                   // packed datatype
-  group_size = 1;                        // pack_factor squares per register
-} else {
-  group_size = dtype_bits / 8;           // t2: repurposed (U = 8 hardcoded)
-}
+assert(dtype_bits >= 8 && (dtype_bits % 8) == 0);
+int group_size = dtype_bits / 8;         // t2: repurposed (U = 8 hardcoded)
 // A-sq group: m0…m[group_size-1]
 // B-sq group: m[group_size]…m[2*group_size-1]
 
@@ -269,15 +265,15 @@ for (int i = 0; i < M; i += N) {        // s7
         B_sq = B_col_base;               // t5
 
         for (int k = 0; k < K; k += N) { // t6
-            m0            = load_square(A_sq);  // mls: A[i,k] square
-            m[group_size] = load_square(B_sq);  // mls: B[k,j] square
+            m0            = load_rm_tile(A_sq);  // mls.rm: A[i,k] tile
+            m[group_size] = load_rm_tile(B_sq);  // mls.rm: B[k,j] tile
             acc0 += m0 * m[group_size];         // mmulacc.2d
 
             A_sq += square_bytes;        // advance one k-square right
             B_sq += CB_row_stride;       // advance one k-square down
         }
 
-        store_square(acc0, C_sq);        // mmov.a.m + mss: store result square
+        store_rm_tile(acc0, C_sq);       // mmov.a.m + mss.rm: store result tile
         C_sq       += square_bytes;      // advance one j-square right
         B_col_base += square_bytes;      // advance one j-square right
     }
@@ -292,7 +288,8 @@ Code::
 [source,bash]
 ----
 # GEMM (square format): C[M×P] += A[M×K] * B[K×P]
-# Matrices A, B, C pre-formatted in implementation-defined square layout.
+# Matrices A, B, C use contiguous row-major tiles in a row-major tile grid.
+# Only non-packed datatypes are accepted.
 # AME_NELEM=16384  →  N=128; AME_UNIT_DATATYPE_SIZE=8 bits; both hardcoded.
 #
 # Arguments:   a0=*C  a1=M  a2=*A  a3=K  a4=*B  a5=P  a6=dtype
@@ -314,26 +311,17 @@ gemm_square:
     andi   t2, a6, 0xFF           # t2 = dtype_bits
     srli   t3, t2, 3              # t3 = elem_bytes = dtype_bits / 8
 
-    # ── step 3: handle packed datatypes ────────────────────────────
+    # ── step 3: reject packed datatypes ────────────────────────────
     li     t1, 8
-    bltu   t2, t1, .packed_path    # dtype_bits < 8 → packed datatype
+    bltu   t2, t1, .done            # this example covers non-packed types
 
     # ── step 4: compute group_size ──────────────────────────────────
     # group_size = dtype_bits / U = dtype_bits / 8 (U = 8 is hardcoded)
     srli   t2, t2, 3              # t2 = group_size
-    j      .configure
-
-.packed_path:
-    # Packed datatypes use group_size = 1.
-    # elem_bytes for sub-byte types: use pack_factor to compute stride.
-    # pack_factor = U / dtype_bits; effective square_bytes = N * N * U / 8
-    li     t2, 1                   # t2 = group_size = 1
-    li     t3, 1                   # t3 = elem_bytes = U / 8 = 1 (stride unit)
-
 .configure:
     # ── step 5: configure datatypes ─────────────────────────────────
     msettyp m0, a6                # A-square group starts at m0
-    msettyp acc0, a6
+    asettyp acc0, a6
 
     # ── step 6: compute loop-invariant square strides ──────────────────
     # square_bytes = N² × elem_bytes = AME_NELEM × elem_bytes
@@ -398,8 +386,8 @@ gemm_square:
     sub    ra, a3, t6
     blez   ra, .k_done\suffix
 
-    mls     m0, t4                 # load A[i,k] square
-    mls     \breg, t5              # load B[k,j] square
+    mls.rm  m0, t4                 # load complete A[i,k] tile group
+    mls.rm  \breg, t5              # load complete B[k,j] tile group
     mmulacc.2d  acc0, m0, \breg    # acc0 += A_square × B_square
 
     add    t4, t4, s4             # A ptr: advance one k-square right
@@ -409,7 +397,7 @@ gemm_square:
 
 .k_done\suffix:
     mmov.a.m m0, acc0
-    mss     m0, a6                 # store result square to C
+    mss.rm  m0, a6                 # store complete result tile group to C
 
     add    a6, a6, s4             # C ptr: advance one j-square right
     add    a7, a7, s4             # B col-base: advance one j-square right
@@ -435,10 +423,10 @@ GEMM_LOOPS 8, m8   # group_size = 8: A→m0–m7,  B→m8–m15
 <<<
 
 [[portable_gemm]]
-==== Portable GEMM
+==== Portable GEMM, non-packed datatypes
 
 Summary::
-This example is a generic GEMM kernel that is portable across AME implementations regardless of
+This example is a generic non-packed GEMM kernel that is portable across AME implementations regardless of
 <<ame:doc:param:AME_NELEM,AME_NELEM>>, <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>,
 <<ame:doc:param:AME_NUM_M_REGS,AME_NUM_M_REGS>>, or <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>>.
 It shows the versatility of AME but is *not* how tuned AME would likely work; tuned code would
@@ -446,7 +434,9 @@ likely expect square formatting to occur first, so would look more like <<square
 
 Assumptions::
 +
-* Squares are in row-major format
+* The datatype is non-packed
+* Matrices use a block-tiled row-major layout: each `N x N` tile is
+  contiguous and row-major internally, and the tile grid is row-major
 
 Details::
 See <<gemm_examples>> for the shared algorithm, group-size model, and tiling diagram.
@@ -456,10 +446,9 @@ Because <<ame:doc:param:AME_NELEM,AME_NELEM>> and
 parameters, `N` and `U` are read from CSRs at runtime:
 `csrr t0, amenlen` gives `N = sqrt(AME_NELEM)` and `csrr t1, ameudsz` gives `U`.
 +
-Matrices are in row-major layout, so `mls.rm` and `mss.rm` convert to/from the
-implementation-defined square format on every load/store.
-Row-major addressing requires per-row strides (`K × elem_bytes` for A,
-`P × elem_bytes` for B/C) that are not needed when squares are pre-formatted.
+`mls.rm` and `mss.rm` convert each contiguous row-major tile to/from the
+implementation-defined register format.  The tile-grid strides are
+`K * N * elem_bytes` for A and `P * N * elem_bytes` for B/C.
 +
 `group_size = dtype_bits / U` is computed at runtime via `divu` (both are powers of 2)
 and dispatched to one of four loop instances (group_size 1, 2, 4, 8).
@@ -476,12 +465,8 @@ int U          = read_csr(ameudsz);    // t1: AME_UNIT_DATATYPE_SIZE in bits
 int dtype_bits = dtype & 0xFF;         // t2: element size in bits
 int elem_bytes = dtype_bits / 8;       // t3
 
-int group_size;
-if (dtype_bits < U) {                 // packed datatype
-  group_size = 1;
-} else {
-  group_size = dtype_bits / U;         // t2: repurposed
-}
+assert(dtype_bits >= U && (dtype_bits % U) == 0);
+int group_size = dtype_bits / U;       // t2: repurposed
 // A-tile group: m0…m[group_size-1]
 // B-tile group: m[group_size]…m[2*group_size-1]
 
@@ -527,7 +512,7 @@ Code::
 [source,bash]
 ----
 # Portable GEMM: C[M×P] += A[M×K] * B[K×P]
-# Any compute datatype, row-major layout
+# Any supported non-packed compute datatype, block-tiled row-major layout
 #
 # Arguments:   a0=*C  a1=M  a2=*A  a3=K  a4=*B  a5=P  a6=dtype
 # Callee-saved: s0–s4 strides, s5–s7 loop-invariant ptrs/counter
@@ -548,10 +533,8 @@ gemm_portable:
     andi   t2, a6, 0xFF          # t2 = dtype_bits
     srli   t3, t2, 3             # t3 = elem_bytes = dtype_bits / 8
 
-    # ── step 3: handle packed datatypes ──────────────────────────
-    # Packed types (dtype_bits < U) use pack_factor squares per register.
-    # group_size is 1 for packed types.
-    bltu   t2, t1, .packed_port    # dtype_bits < U → packed datatype
+    # ── step 3: reject packed datatypes ──────────────────────────
+    bltu   t2, t1, .done           # this example covers non-packed types
 
     # ── step 4: compute group_size ─────────────────────────────
     # group_size = dtype_bits / U  (both are powers of 2)
@@ -559,18 +542,10 @@ gemm_portable:
     # group_size == 2 → two M registers per tile (dtype_bits == 2U)
     # etc.
     divu   t2, t2, t1            # t2 = group_size  (t1 = U now free)
-    j      .configure_port
-
-.packed_port:
-    # Packed datatypes use group_size = 1.
-    # elem_bytes for sub-byte types: use U/8 as the stride unit.
-    li     t2, 1                  # t2 = group_size = 1
-    srli   t3, t1, 3             # t3 = U / 8 (stride unit for packed)
-
 .configure_port:
     # ── step 5: configure datatypes ────────────────────────────
     msettyp m0, a6               # A-tile group starts at m0
-    msettyp acc0, a6
+    asettyp acc0, a6
 
     # ── step 6: compute loop-invariant strides ──────────────────
     mul    s0, a3, t3            # s0 = K×elem_bytes   (A row byte stride)

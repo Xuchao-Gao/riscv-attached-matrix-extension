@@ -6,6 +6,7 @@
 
 instructions_path = File.join(__dir__, "..", "src", "instructions.adoc")
 programming_model_path = File.join(__dir__, "..", "src", "programming_model.adoc")
+functions_path = File.join(__dir__, "..", "src", "functions.adoc")
 lines = File.readlines(instructions_path)
 headings = []
 lines.each_with_index do |line, index|
@@ -92,7 +93,30 @@ headings.each_with_index do |(instruction, start_line), index|
        operation_text.match?(/Bits<AME_MAX_DTYPE_SIZE>\s+(?:running|col_result|row_result)\s*=\s*0;/)
       errors << "#{instruction}: prefix/reduction fold must seed from the first source element, not raw zero"
     end
+
+    if operation_text.match?(/sum\s*=\s*sum\s+pass:\[\+\].*AmeOperation::MM/)
+      errors << "#{instruction}: matrix products must use ame_matmul_accumulate, not raw bit-vector addition"
+    end
+
+    conversion_requirements = {
+      "mconv.ew" => %w[ame_check_m_group ame_read_m_element ame_stage_m_element_write],
+      "mpack.ew.x" => %w[ame_check_m_group ame_read_m_element],
+      "munpack.ew.x" => %w[ame_check_m_group ame_stage_m_element_write]
+    }
+    Array(conversion_requirements[instruction]).each do |helper|
+      errors << "#{instruction}: wide-safe conversion path must call #{helper}" unless operation_text.include?(helper)
+    end
   end
+end
+
+functions_text = File.read(functions_path)
+%w[ame_check_m_index ame_check_m_group ame_read_m_element ame_matmul_accumulate].each do |helper|
+  errors << "functions.adoc: missing common #{helper} contract" unless functions_text.include?("[#ame:doc:func:#{helper}]")
+end
+
+programming_model_text = File.read(programming_model_path)
+%w[ame_nsq_1d ame_nsq_structural ame_nsq_matmul].each do |rule|
+  errors << "programming_model.adoc: missing normative #{rule} rule" unless programming_model_text.include?("[#norm:#{rule}]")
 end
 
 {

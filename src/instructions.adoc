@@ -8,6 +8,19 @@
 
 AME defines *124* instructions.
 
+[IMPORTANT]
+====
+The per-instruction `Operation` blocks below are expanded illustrations of the
+instruction-specific dataflow.  They are interpreted together with the common
+rules in <<_programming_model>>, including operand validation and exception
+priority, complete register-group formation, `N_sq` logical-square expansion,
+logical element access, and staged atomic register writeback.  When an expanded
+block shows a one-square loop or direct per-register indexing, the common rules
+are normative and supply the complete behavior for packed and wide datatypes;
+the shorthand does not restrict execution to one square or permit partial
+register-group access.
+====
+
 include::instruction-encoding-allocations.adoc[]
 
 
@@ -263,13 +276,13 @@ Memory::
 | Mnemonic | Name
 
 a| `mls md, xs1`
-| <<ame:doc:inst:mls,Load square from implementation-defined format>>
+| <<ame:doc:inst:mls,Load raw M register from implementation-defined format>>
 a| `mls.cm md, xs1`
 | <<ame:doc:inst:mls_cm,Load square from column-major format>>
 a| `mls.rm md, xs1`
 | <<ame:doc:inst:mls_rm,Load square from row-major format>>
 a| `mss ms1, xs1`
-| <<ame:doc:inst:mss,Store square to implementation-defined format>>
+| <<ame:doc:inst:mss,Store raw M register in implementation-defined format>>
 a| `mss.cm ms1, xs1`
 | <<ame:doc:inst:mss_cm,Store square to column-major format>>
 a| `mss.rm ms1, xs1`
@@ -284,7 +297,7 @@ State Management::
 a| `mmov.a.m md, acc`
 | <<ame:doc:inst:mmov_a_m,Elementwise unconditional move from accumulator to M register>>
 a| `mmov.m.a acc, ms`
-| <<ame:doc:inst:mmov_m_a,Elementwise move from M register to accumulator>>
+| <<ame:doc:inst:mmov_m_a,Elementwise unconditional move from M register to accumulator>>
 a| `mmov.m.m md, ms`
 | <<ame:doc:inst:mmov_m_m,Elementwise unconditional move between M registers>>
 a| `mzero.2d.acc acc`
@@ -381,6 +394,7 @@ Bits<5> ad = $encoding[19:15];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]ad, $encoding);
 X[xd] = Ad[ad];
 ----
 
@@ -427,6 +441,7 @@ Bits<5> xs1 = $encoding[19:15];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]ad, $encoding);
 Bits<32> dtype = X[xs1][31:0];
 if pass:[(]!<<ame:doc:func:ame_datatype_supported,ame_datatype_supported>>pass:[(]dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
@@ -1330,26 +1345,29 @@ Bits<5> xs1 = $encoding[19:15];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
-Bits<32> dtype = Md[md];
 if pass:[(]AME_NUM_M_REGS == 16) {
   if pass:[(]md >= 16) {
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
 }
+Bits<32> dtype = Md[md];
 U32 element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dtype);
-if pass:[(]element_size_bits == 0) {
+if pass:[(]!<<ame:doc:func:ame_datatype_supported,ame_datatype_supported>>pass:[(]dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
+  U32 group_size = (element_size_bits pass:[+] AME_UNIT_DATATYPE_SIZE - 1) / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]group_size == 0) {
+    group_size = 1;
+  }
+  if pass:[(](md % group_size) != 0 || (md pass:[+] group_size) > AME_NUM_M_REGS) {
+    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
   U32 pack_factor = <<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]dtype) ? (AME_UNIT_DATATYPE_SIZE / element_size_bits) : 1;
   U32 total_elements = pack_factor * AME_NELEM;
-  Bits<AME_MAX_SQUARE_SIZE> result = 0;
   Bits<AME_MAX_DTYPE_SIZE> scalar = X[xs1];
   for pass:[(]U32 e = 0; e < total_elements; e++) {
-    U32 bit_lo = e * element_size_bits;
-    U32 bit_hi = bit_lo pass:[+] element_size_bits - 1;
-    result[bit_hi:bit_lo] = scalar[element_size_bits - 1:0];
+    <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dtype, e, scalar[element_size_bits - 1:0]);
   }
-  M[md] = result;
 }
 ----
 
@@ -2526,19 +2544,25 @@ modifying any register.
 **Expand (packed → non-packed):** When `Md[ms1]` is packed and `Md[md]` is a
 non-packed datatype, `ms1` holds `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[ms1])`
 packed squares. `mconv.ew` converts each element from the packed datatype to the non-packed
-datatype and writes `pack_factor` result squares to `md`, `md+1`, ..., `md+pack_factor-1`.
-The register index `md` must be a multiple of `pack_factor`; otherwise,
-`mconv.ew` raises an `Illegal Instruction` exception.
+datatype and writes `pack_factor` consecutive result-square groups.  If the
+destination square occupies `dst_group_size` registers, square `sq` begins at
+`md + sq * dst_group_size`.  The base must be aligned to `dst_group_size`, and
+the complete `pack_factor * dst_group_size` span must fit in the M register
+file; otherwise, `mconv.ew` raises an `Illegal Instruction` exception.
 +
 **Compress (non-packed → packed):** When `Md[ms1]` is a non-packed datatype and `Md[md]`
-is packed, `ms1`, `ms1+1`, ..., `ms1+pack_factor-1` each hold one non-packed square.
+is packed, `pack_factor` consecutive non-packed square groups begin at `ms1`.
+If each source square occupies `src_group_size` registers, square `sq` begins
+at `ms1 + sq * src_group_size`.
 `mconv.ew` converts each element from the non-packed datatype to the packed datatype and packs
 all `pack_factor` result squares into the single register `md`.
-The register index `ms1` must be a multiple of `pack_factor`; otherwise,
-`mconv.ew` raises an `Illegal Instruction` exception.
+The base must be aligned to `src_group_size`, and the complete
+`pack_factor * src_group_size` span must fit; otherwise, `mconv.ew` raises an
+`Illegal Instruction` exception.
 +
-The specific element-level conversion (e.g., sign extension, truncation, rounding) is
-implementation-defined and discoverable via `amestatus.UN`.
+The element-level conversion follows the common `CONV1D` contract in
+`<<ame:doc:func:ame_op,ame_op>>`; unsupported conversion tuples set
+`amestatus.UN` and do not modify any register.
 
 
 
@@ -2569,43 +2593,33 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
     U32 pack_factor = AME_UNIT_DATATYPE_SIZE / src_element_size_bits;
     U32 dst_element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dst_dtype);
-    if pass:[(]md % pack_factor != 0) {
-      <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+    U32 dst_group_size = dst_element_size_bits / AME_UNIT_DATATYPE_SIZE;
+    if pass:[(]dst_group_size == 0) {
+      dst_group_size = 1;
     }
-    if pass:[(]AME_NUM_M_REGS == 16 && md pass:[+] pack_factor > 16) {
-      <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-    }
-    Bits<AME_MAX_SQUARE_SIZE> packed = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1], src_dtype);
-    Bits<AME_MAX_SQUARE_SIZE> result = 0;
+    <<ame:doc:func:ame_check_m_group,ame_check_m_group>>pass:[(]ms1, 1, 1, $encoding);
+    <<ame:doc:func:ame_check_m_group,ame_check_m_group>>pass:[(]md, dst_group_size, pack_factor * dst_group_size, $encoding);
     for pass:[(]U32 sq = 0; sq < pack_factor; sq++) {
-      result = 0;
       for pass:[(]U32 e = 0; e < AME_NELEM; e++) {
-        U32 src_lo = (sq * AME_NELEM pass:[+] e) * src_element_size_bits;
-        U32 src_hi = src_lo pass:[+] src_element_size_bits - 1;
-        Bits<AME_MAX_DTYPE_SIZE> element = packed[src_hi:src_lo];
-        U32 dst_lo = e * dst_element_size_bits;
-        U32 dst_hi = dst_lo pass:[+] dst_element_size_bits - 1;
-        result[dst_hi:dst_lo] = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::CONV1D, src_dtype, element, src_dtype, element, dst_dtype);
+        Bits<AME_MAX_DTYPE_SIZE> element = <<ame:doc:func:ame_read_m_element,ame_read_m_element>>pass:[(]ms1, src_dtype, sq * AME_NELEM pass:[+] e);
+        Bits<AME_MAX_DTYPE_SIZE> converted = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::CONV1D, src_dtype, element, src_dtype, element, dst_dtype);
+        <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md pass:[+] sq * dst_group_size, dst_dtype, e, converted);
       }
-      M[md pass:[+] sq] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dst_dtype);
     }
   } else {
     U32 dst_element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dst_dtype);
     U32 pack_factor = AME_UNIT_DATATYPE_SIZE / dst_element_size_bits;
     U32 src_element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
-    if pass:[(]ms1 % pack_factor != 0) {
-      <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+    U32 src_group_size = src_element_size_bits / AME_UNIT_DATATYPE_SIZE;
+    if pass:[(]src_group_size == 0) {
+      src_group_size = 1;
     }
-    if pass:[(]AME_NUM_M_REGS == 16 && ms1 pass:[+] pack_factor > 16) {
-      <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-    }
+    <<ame:doc:func:ame_check_m_group,ame_check_m_group>>pass:[(]ms1, src_group_size, pack_factor * src_group_size, $encoding);
+    <<ame:doc:func:ame_check_m_group,ame_check_m_group>>pass:[(]md, 1, 1, $encoding);
     Bits<AME_MAX_SQUARE_SIZE> packed = 0;
     for pass:[(]U32 sq = 0; sq < pack_factor; sq++) {
-      Bits<AME_MAX_SQUARE_SIZE> src_data = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] sq], src_dtype);
       for pass:[(]U32 e = 0; e < AME_NELEM; e++) {
-        U32 src_lo = e * src_element_size_bits;
-        U32 src_hi = src_lo pass:[+] src_element_size_bits - 1;
-        Bits<AME_MAX_DTYPE_SIZE> element = src_data[src_hi:src_lo];
+        Bits<AME_MAX_DTYPE_SIZE> element = <<ame:doc:func:ame_read_m_element,ame_read_m_element>>pass:[(]ms1 pass:[+] sq * src_group_size, src_dtype, e);
         U32 dst_lo = (sq * AME_NELEM pass:[+] e) * dst_element_size_bits;
         U32 dst_hi = dst_lo pass:[+] dst_element_size_bits - 1;
         packed[dst_hi:dst_lo] = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::CONV1D, src_dtype, element, src_dtype, element, dst_dtype);
@@ -2870,19 +2884,15 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
-    Bits<AME_MAX_SQUARE_SIZE> result = 0;
     for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
       U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
       U32 src1_regno = e / src1_elements_per_reg;
       Bits<AME_MAX_SQUARE_SIZE> src1_value = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
       U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
       U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
-      U32 dest_lo_idx = local_e * dest_element_size;
-      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
       Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
-      result[dest_hi_idx:dest_lo_idx] = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::FRINTM1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
+      <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::FRINTM1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype));
     }
-    M[md pass:[+] dest_regno] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
 }
 ----
@@ -2963,19 +2973,15 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
-    Bits<AME_MAX_SQUARE_SIZE> result = 0;
     for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
       U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
       U32 src1_regno = e / src1_elements_per_reg;
       Bits<AME_MAX_SQUARE_SIZE> src1_value = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
       U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
       U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
-      U32 dest_lo_idx = local_e * dest_element_size;
-      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
       Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
-      result[dest_hi_idx:dest_lo_idx] = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::FRINTN1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
+      <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::FRINTN1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype));
     }
-    M[md pass:[+] dest_regno] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
 }
 ----
@@ -3056,19 +3062,15 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
-    Bits<AME_MAX_SQUARE_SIZE> result = 0;
     for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
       U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
       U32 src1_regno = e / src1_elements_per_reg;
       Bits<AME_MAX_SQUARE_SIZE> src1_value = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
       U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
       U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
-      U32 dest_lo_idx = local_e * dest_element_size;
-      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
       Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
-      result[dest_hi_idx:dest_lo_idx] = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::FRINTP1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
+      <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::FRINTP1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype));
     }
-    M[md pass:[+] dest_regno] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
 }
 ----
@@ -3149,19 +3151,15 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   for pass:[(]U32 dest_regno = 0; dest_regno < dest_nregs; dest_regno++) {
-    Bits<AME_MAX_SQUARE_SIZE> result = 0;
     for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
       U32 e = dest_regno * dest_elements_per_reg pass:[+] local_e;
       U32 src1_regno = e / src1_elements_per_reg;
       Bits<AME_MAX_SQUARE_SIZE> src1_value = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src1_regno], src1_dtype);
       U32 src1_lo_idx = e * src1_element_size - (src1_regno * AME_MATRIX_REGISTER_SIZE);
       U32 src1_hi_idx = src1_lo_idx pass:[+] src1_element_size - 1;
-      U32 dest_lo_idx = local_e * dest_element_size;
-      U32 dest_hi_idx = dest_lo_idx pass:[+] dest_element_size - 1;
       Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
-      result[dest_hi_idx:dest_lo_idx] = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::FRINTZ1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype);
+      <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::FRINTZ1D, src1_dtype, src1_element_value, src1_dtype, src1_element_value, dest_dtype));
     }
-    M[md pass:[+] dest_regno] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
 }
 ----
@@ -3189,7 +3187,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Get the datatype of an `M` register by read from `Md`.
+Get the datatype of an `M` register by reading from `Md`.
 
 
 
@@ -4100,7 +4098,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 === `mls`
 
 Synopsis::
-Load square from implementation-defined format
+Load raw M register from implementation-defined format
 
 Mnemonic::
 `mls md, xs1`
@@ -4116,19 +4114,20 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Loads a square from memory in the implementation-defined register format into matrix
-register `md`.
+Loads exactly one physical M register from memory in the implementation-defined
+register format into matrix register `md`.
 +
 The data in memory must have been previously stored in the implementation-defined
 register format (e.g., by a matching `mss` instruction). No datatype conversion is
-performed; the in-memory layout is the exact register representation. All elements
-are loaded unconditionally. This instruction is correct for both compute and
-packed dtypes without any special handling.
+performed; the in-memory layout is the exact physical-register representation.
+The datatype in `Md[md]` is not interpreted.  Consequently, packed sub-squares
+resident in `md` are transferred together, while a wide logical square requires
+one `mls` for each physical M register in its group.
 +
 For portable interoperability with other implementations, use
 <<ame:doc:inst:mls_rm,mls.rm>> or <<ame:doc:inst:mls_cm,mls.cm>>.
 +
-The address must be aligned to the implementation-defined square size or 4KB,
+The address must be aligned to the physical M-register size or 4KB,
 whichever is smaller. Otherwise, `mls` raises a `Load Misaligned` exception.
 
 
@@ -4150,10 +4149,10 @@ if pass:[(]AME_NUM_M_REGS == 16) {
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
 }
-XReg impl_size_bytes = AME_MAX_SQUARE_SIZE >> 3;
+XReg impl_size_bytes = AME_MATRIX_REGISTER_SIZE >> 3;
 XReg alignment = <<ame:doc:func:min,min>>pass:[(]impl_size_bytes, 4096);
 if pass:[(]address % alignment != 0) {
-  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::LoadAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::LoadAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), address);
 }
 M[md] = <<ame:doc:func:read_memory_ame,read_memory_ame>>pass:[(]address, $encoding, impl_size_bytes);
 ----
@@ -4210,32 +4209,34 @@ Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg address = X[xs1];
-Bits<32> dtype = Md[md];
 if pass:[(]AME_NUM_M_REGS == 16) {
   if pass:[(]md >= 16) {
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
 }
+Bits<32> dtype = Md[md];
+if pass:[(]!<<ame:doc:func:ame_datatype_supported,ame_datatype_supported>>pass:[(]dtype)) {
+  CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
 U32 element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dtype);
-U32 element_size_bytes = element_size_bits >> 3;
 U32 pack_factor = <<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]dtype) ? (AME_UNIT_DATATYPE_SIZE / element_size_bits) : 1;
-XReg total_bytes = pack_factor * AME_NELEM * element_size_bytes;
+U32 group_size = (element_size_bits pass:[+] AME_UNIT_DATATYPE_SIZE - 1) / AME_UNIT_DATATYPE_SIZE;
+if pass:[(](md % group_size) != 0 || (md pass:[+] group_size) > AME_NUM_M_REGS) {
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+}
+XReg total_bytes = (pack_factor * AME_NELEM * element_size_bits pass:[+] 7) / 8;
 XReg alignment = <<ame:doc:func:min,min>>pass:[(]total_bytes, 4096);
 if pass:[(]address % alignment != 0) {
-  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::LoadAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::LoadAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), address);
 }
-Bits<AME_MAX_SQUARE_SIZE> tmp = 0;
-for pass:[(]U32 sq = 0; sq < pack_factor; sq++) {
-  for pass:[(]U32 j = 0; j < <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM); j++) {
-    for pass:[(]U32 i = 0; i < <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM); i++) {
-      U32 element_idx = sq * AME_NELEM pass:[+] j * <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM) pass:[+] i;
-      U32 bit_lo = element_idx * element_size_bits;
-      U32 bit_hi = bit_lo pass:[+] element_size_bits - 1;
-      tmp[bit_hi:bit_lo] = <<ame:doc:func:read_memory_ame,read_memory_ame>>pass:[(]address pass:[+] element_idx * element_size_bytes, $encoding, element_size_bytes);
-    }
-  }
+Bits<AME_MAX_SQUARE_SIZE> tmp = <<ame:doc:func:read_memory_ame,read_memory_ame>>pass:[(]address, $encoding, total_bytes);
+Bits<AME_MAX_SQUARE_SIZE> impl = <<ame:doc:func:ame_xform_cm_to_impl,ame_xform_cm_to_impl>>pass:[(]tmp, dtype);
+for pass:[(]U32 regno = 0; regno < group_size; regno++) {
+  U32 bit_lo = regno * AME_MATRIX_REGISTER_SIZE;
+  U32 bit_hi = bit_lo pass:[+] AME_MATRIX_REGISTER_SIZE - 1;
+  M[md pass:[+] regno] = impl[bit_hi:bit_lo];
 }
-M[md] = <<ame:doc:func:ame_xform_cm_to_impl,ame_xform_cm_to_impl>>pass:[(]tmp, dtype);
+}
 ----
 
 
@@ -4290,32 +4291,34 @@ Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg address = X[xs1];
-Bits<32> dtype = Md[md];
 if pass:[(]AME_NUM_M_REGS == 16) {
   if pass:[(]md >= 16) {
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
 }
+Bits<32> dtype = Md[md];
+if pass:[(]!<<ame:doc:func:ame_datatype_supported,ame_datatype_supported>>pass:[(]dtype)) {
+  CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
 U32 element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dtype);
-U32 element_size_bytes = element_size_bits >> 3;
 U32 pack_factor = <<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]dtype) ? (AME_UNIT_DATATYPE_SIZE / element_size_bits) : 1;
-XReg total_bytes = pack_factor * AME_NELEM * element_size_bytes;
+U32 group_size = (element_size_bits pass:[+] AME_UNIT_DATATYPE_SIZE - 1) / AME_UNIT_DATATYPE_SIZE;
+if pass:[(](md % group_size) != 0 || (md pass:[+] group_size) > AME_NUM_M_REGS) {
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+}
+XReg total_bytes = (pack_factor * AME_NELEM * element_size_bits pass:[+] 7) / 8;
 XReg alignment = <<ame:doc:func:min,min>>pass:[(]total_bytes, 4096);
 if pass:[(]address % alignment != 0) {
-  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::LoadAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::LoadAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), address);
 }
-Bits<AME_MAX_SQUARE_SIZE> tmp = 0;
-for pass:[(]U32 sq = 0; sq < pack_factor; sq++) {
-  for pass:[(]U32 i = 0; i < <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM); i++) {
-    for pass:[(]U32 j = 0; j < <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM); j++) {
-      U32 element_idx = sq * AME_NELEM pass:[+] i * <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM) pass:[+] j;
-      U32 bit_lo = element_idx * element_size_bits;
-      U32 bit_hi = bit_lo pass:[+] element_size_bits - 1;
-      tmp[bit_hi:bit_lo] = <<ame:doc:func:read_memory_ame,read_memory_ame>>pass:[(]address pass:[+] element_idx * element_size_bytes, $encoding, element_size_bytes);
-    }
-  }
+Bits<AME_MAX_SQUARE_SIZE> tmp = <<ame:doc:func:read_memory_ame,read_memory_ame>>pass:[(]address, $encoding, total_bytes);
+Bits<AME_MAX_SQUARE_SIZE> impl = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]tmp, dtype);
+for pass:[(]U32 regno = 0; regno < group_size; regno++) {
+  U32 bit_lo = regno * AME_MATRIX_REGISTER_SIZE;
+  U32 bit_hi = bit_lo pass:[+] AME_MATRIX_REGISTER_SIZE - 1;
+  M[md pass:[+] regno] = impl[bit_hi:bit_lo];
 }
-M[md] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]tmp, dtype);
+}
 ----
 
 
@@ -4942,6 +4945,7 @@ Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 Bits<32> dest_dtype = Md[md];
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc, $encoding);
 Bits<32> src_dtype = Ad[acc];
 if pass:[(]dest_dtype != src_dtype) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
@@ -5025,6 +5029,7 @@ Bits<5> ms = $encoding[19:15];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc, $encoding);
 Bits<32> dest_dtype = Ad[acc];
 Bits<32> src_dtype = Md[ms];
 if pass:[(]dest_dtype != src_dtype) {
@@ -5192,6 +5197,7 @@ Bits<5> ms2 = $encoding[24:20];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc, $encoding);
 Bits<32> dest_dtype = Ad[acc];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
@@ -5234,7 +5240,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
         U32 b_regno = e_b / src2_elements_per_reg;
         U32 b_hi = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - 1;
         U32 b_lo = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - src2_element_size;
-        sum = sum pass:[+] <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MM1D, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo], dest_dtype);
+        sum = <<ame:doc:func:ame_matmul_accumulate,ame_matmul_accumulate>>pass:[(]AmeOperation::MM1D, dest_dtype, sum, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo]);
       }
       U32 e_d = i * N pass:[+] k;
       <<ame:doc:func:ame_stage_acc_element_write,ame_stage_acc_element_write>>pass:[(]acc, dest_dtype, e_d, sum);
@@ -5485,6 +5491,7 @@ Bits<5> ms2 = $encoding[24:20];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc, $encoding);
 Bits<32> dest_dtype = Ad[acc];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
@@ -5531,7 +5538,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
         U32 b_regno = e_b / src2_elements_per_reg;
         U32 b_hi = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - 1;
         U32 b_lo = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - src2_element_size;
-        sum = sum pass:[+] <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MMACC1D, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo], dest_dtype);
+        sum = <<ame:doc:func:ame_matmul_accumulate,ame_matmul_accumulate>>pass:[(]AmeOperation::MMACC1D, dest_dtype, sum, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo]);
       }
       <<ame:doc:func:ame_stage_acc_element_write,ame_stage_acc_element_write>>pass:[(]acc, dest_dtype, e_d, sum);
     }
@@ -5791,6 +5798,7 @@ Bits<5> ms2 = $encoding[24:20];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc, $encoding);
 Bits<32> dest_dtype = Ad[acc];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
@@ -5837,7 +5845,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
         U32 b_regno = e_b / src2_elements_per_reg;
         U32 b_hi = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - 1;
         U32 b_lo = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - src2_element_size;
-        sum = sum pass:[+] <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MMACCNEG1D, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo], dest_dtype);
+        sum = <<ame:doc:func:ame_matmul_accumulate,ame_matmul_accumulate>>pass:[(]AmeOperation::MMACCNEG1D, dest_dtype, sum, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo]);
       }
       <<ame:doc:func:ame_stage_acc_element_write,ame_stage_acc_element_write>>pass:[(]acc, dest_dtype, e_d, sum);
     }
@@ -6296,6 +6304,7 @@ Bits<5> ms2 = $encoding[24:20];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc, $encoding);
 Bits<32> dest_dtype = Ad[acc];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
@@ -6338,7 +6347,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
         U32 b_regno = e_b / src2_elements_per_reg;
         U32 b_hi = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - 1;
         U32 b_lo = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - src2_element_size;
-        sum = sum pass:[+] <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MMAT1D, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo], dest_dtype);
+        sum = <<ame:doc:func:ame_matmul_accumulate,ame_matmul_accumulate>>pass:[(]AmeOperation::MMAT1D, dest_dtype, sum, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo]);
       }
       U32 e_d = i * N pass:[+] k;
       <<ame:doc:func:ame_stage_acc_element_write,ame_stage_acc_element_write>>pass:[(]acc, dest_dtype, e_d, sum);
@@ -6398,6 +6407,7 @@ Bits<5> ms2 = $encoding[24:20];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc, $encoding);
 Bits<32> dest_dtype = Ad[acc];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
@@ -6444,7 +6454,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
         U32 b_regno = e_b / src2_elements_per_reg;
         U32 b_hi = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - 1;
         U32 b_lo = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - src2_element_size;
-        sum = sum pass:[+] <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MMATACC1D, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo], dest_dtype);
+        sum = <<ame:doc:func:ame_matmul_accumulate,ame_matmul_accumulate>>pass:[(]AmeOperation::MMATACC1D, dest_dtype, sum, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo]);
       }
       <<ame:doc:func:ame_stage_acc_element_write,ame_stage_acc_element_write>>pass:[(]acc, dest_dtype, e_d, sum);
     }
@@ -6501,6 +6511,7 @@ Bits<5> ms2 = $encoding[24:20];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc, $encoding);
 Bits<32> dest_dtype = Ad[acc];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
@@ -6543,7 +6554,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
         U32 b_regno = e_b / src2_elements_per_reg;
         U32 b_hi = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - 1;
         U32 b_lo = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - src2_element_size;
-        sum = sum pass:[+] <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MMBT1D, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo], dest_dtype);
+        sum = <<ame:doc:func:ame_matmul_accumulate,ame_matmul_accumulate>>pass:[(]AmeOperation::MMBT1D, dest_dtype, sum, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo]);
       }
       U32 e_d = i * N pass:[+] k;
       <<ame:doc:func:ame_stage_acc_element_write,ame_stage_acc_element_write>>pass:[(]acc, dest_dtype, e_d, sum);
@@ -6603,6 +6614,7 @@ Bits<5> ms2 = $encoding[24:20];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc, $encoding);
 Bits<32> dest_dtype = Ad[acc];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
@@ -6649,7 +6661,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
         U32 b_regno = e_b / src2_elements_per_reg;
         U32 b_hi = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - 1;
         U32 b_lo = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - src2_element_size;
-        sum = sum pass:[+] <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MMBTACC1D, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo], dest_dtype);
+        sum = <<ame:doc:func:ame_matmul_accumulate,ame_matmul_accumulate>>pass:[(]AmeOperation::MMBTACC1D, dest_dtype, sum, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo]);
       }
       <<ame:doc:func:ame_stage_acc_element_write,ame_stage_acc_element_write>>pass:[(]acc, dest_dtype, e_d, sum);
     }
@@ -6706,6 +6718,7 @@ Bits<5> ms2 = $encoding[24:20];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc, $encoding);
 Bits<32> dest_dtype = Ad[acc];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
@@ -6748,7 +6761,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
         U32 b_regno = e_b / src2_elements_per_reg;
         U32 b_hi = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - 1;
         U32 b_lo = ((e_b pass:[+] 1) * src2_element_size) - (b_regno * AME_MATRIX_REGISTER_SIZE) - src2_element_size;
-        sum = sum pass:[+] <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MMNEG1D, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo], dest_dtype);
+        sum = <<ame:doc:func:ame_matmul_accumulate,ame_matmul_accumulate>>pass:[(]AmeOperation::MMNEG1D, dest_dtype, sum, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] a_regno], src1_dtype)[a_hi:a_lo], src2_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2 pass:[+] b_regno], src2_dtype)[b_hi:b_lo]);
       }
       U32 e_d = i * N pass:[+] k;
       <<ame:doc:func:ame_stage_acc_element_write,ame_stage_acc_element_write>>pass:[(]acc, dest_dtype, e_d, sum);
@@ -7559,7 +7572,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Inserts the single non-packed square in `ms1` into the sub-square slot selected by the
+Inserts the single non-packed square group beginning at `ms1` into the sub-square slot selected by the
 index in integer register `xs1` of the packed M register `md`, converting each element
 from the non-packed datatype (`Md[ms1]`) to the packed datatype (`Md[md]`). The other
 sub-square slots of `md` are preserved (read-modify-write).
@@ -7611,12 +7624,15 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   U32 src_element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
+  U32 src_group_size = src_element_size_bits / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]src_group_size == 0) {
+    src_group_size = 1;
+  }
+  <<ame:doc:func:ame_check_m_group,ame_check_m_group>>pass:[(]ms1, src_group_size, src_group_size, $encoding);
+  <<ame:doc:func:ame_check_m_group,ame_check_m_group>>pass:[(]md, 1, 1, $encoding);
   Bits<AME_MAX_SQUARE_SIZE> packed = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md], dst_dtype);
-  Bits<AME_MAX_SQUARE_SIZE> src_data = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1], src_dtype);
   for pass:[(]U32 e = 0; e < AME_NELEM; e++) {
-    U32 src_lo = e * src_element_size_bits;
-    U32 src_hi = src_lo pass:[+] src_element_size_bits - 1;
-    Bits<AME_MAX_DTYPE_SIZE> element = src_data[src_hi:src_lo];
+    Bits<AME_MAX_DTYPE_SIZE> element = <<ame:doc:func:ame_read_m_element,ame_read_m_element>>pass:[(]ms1, src_dtype, e);
     U32 dst_lo = (index * AME_NELEM pass:[+] e) * dst_element_size_bits;
     U32 dst_hi = dst_lo pass:[+] dst_element_size_bits - 1;
     packed[dst_hi:dst_lo] = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::CONV1D, src_dtype, element, src_dtype, element, dst_dtype);
@@ -8805,7 +8821,6 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   U32 N = <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
   for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
-    Bits<AME_MAX_SQUARE_SIZE> result = 0;
     for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
       U32 e_dst = dst_regno * dest_elements_per_reg pass:[+] local_e;
       U32 j = e_dst % N;
@@ -8822,11 +8837,8 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
         U32 src_hi = src_lo pass:[+] src1_element_size - 1;
         col_result = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::REDUCEMINCOL1D, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo], dest_dtype, col_result, dest_dtype);
       }
-      U32 dst_lo = local_e * dest_element_size;
-      U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
-      result[dst_hi:dst_lo] = col_result;
+      <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e_dst, col_result);
     }
-    M[md pass:[+] dst_regno] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
 }
 ----
@@ -8913,7 +8925,6 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
   }
   U32 N = <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
   for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
-    Bits<AME_MAX_SQUARE_SIZE> result = 0;
     for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
       U32 e_dst = dst_regno * dest_elements_per_reg pass:[+] local_e;
       U32 i = e_dst / N;
@@ -8930,11 +8941,8 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
         U32 src_hi = src_lo pass:[+] src1_element_size - 1;
         row_result = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::REDUCEMIN1D, src1_dtype, <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo], dest_dtype, row_result, dest_dtype);
       }
-      U32 dst_lo = local_e * dest_element_size;
-      U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
-      result[dst_hi:dst_lo] = row_result;
+      <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e_dst, row_result);
     }
-    M[md pass:[+] dst_regno] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
 }
 ----
@@ -10342,8 +10350,18 @@ if pass:[(]AME_NUM_M_REGS == 16) {
 if pass:[(]!<<ame:doc:func:ame_datatype_supported,ame_datatype_supported>>pass:[(]dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
+  U32 element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dtype);
+  U32 group_size = (element_size_bits pass:[+] AME_UNIT_DATATYPE_SIZE - 1) / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]group_size == 0) {
+    group_size = 1;
+  }
+  if pass:[(](md % group_size) != 0 || (md pass:[+] group_size) > AME_NUM_M_REGS) {
+    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+  }
   Md[md] = X[xs1];
-  M[md] = 0;
+  for pass:[(]U32 regno = 0; regno < group_size; regno++) {
+    M[md pass:[+] regno] = 0;
+  }
 }
 ----
 
@@ -10678,7 +10696,7 @@ This instruction is defined only for floating-point datatypes. If the datatype o
 `md` or `ms1` is not a supported floating-point type, `amestatus.UN` is set and no
 register is written.
 +
-The numerical precision of the result is implementation-defined.
+The result is correctly rounded according to the destination datatype's rounding mode.
 
 
 NumPy Equivalent::
@@ -11165,7 +11183,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 === `mss`
 
 Synopsis::
-Store square to implementation-defined format
+Store raw M register in implementation-defined format
 
 Mnemonic::
 `mss ms1, xs1`
@@ -11181,18 +11199,19 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Stores a square from matrix register `ms1` into memory in the implementation-defined
-register format.
+Stores exactly one physical M register `ms1` into memory in the
+implementation-defined register format.
 +
 The data written to memory is in the same implementation-defined format used by the
-matching load instruction (`mls`). No datatype conversion is performed. All elements
-are stored unconditionally. This instruction is correct for both compute and
-packed dtypes without any special handling.
+matching load instruction (`mls`). No datatype conversion is performed, and
+the datatype in `Md[ms1]` is not interpreted.  Packed sub-squares resident in
+`ms1` are transferred together, while a wide logical square requires one
+`mss` for each physical M register in its group.
 +
 For portable interoperability with other implementations, use
 <<ame:doc:inst:mss_rm,mss.rm>> or <<ame:doc:inst:mss_cm,mss.cm>>.
 +
-The address must be aligned to the implementation-defined square size or 4KB,
+The address must be aligned to the physical M-register size or 4KB,
 whichever is smaller. Otherwise, `mss` raises a `Store/AMO Misaligned` exception.
 
 
@@ -11214,10 +11233,10 @@ if pass:[(]AME_NUM_M_REGS == 16) {
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
 }
-XReg impl_size_bytes = AME_MAX_SQUARE_SIZE >> 3;
+XReg impl_size_bytes = AME_MATRIX_REGISTER_SIZE >> 3;
 XReg alignment = <<ame:doc:func:min,min>>pass:[(]impl_size_bytes, 4096);
 if pass:[(]address % alignment != 0) {
-  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::StoreAmoAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::StoreAmoAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), address);
 }
 <<ame:doc:func:write_memory_ame,write_memory_ame>>pass:[(]address, $encoding, M[ms1], impl_size_bytes);
 ----
@@ -11274,30 +11293,34 @@ Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg address = X[xs1];
-Bits<32> dtype = Md[ms1];
 if pass:[(]AME_NUM_M_REGS == 16) {
   if pass:[(]ms1 >= 16) {
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
 }
+Bits<32> dtype = Md[ms1];
+if pass:[(]!<<ame:doc:func:ame_datatype_supported,ame_datatype_supported>>pass:[(]dtype)) {
+  CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
 U32 element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dtype);
-U32 element_size_bytes = element_size_bits >> 3;
 U32 pack_factor = <<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]dtype) ? (AME_UNIT_DATATYPE_SIZE / element_size_bits) : 1;
-XReg total_bytes = pack_factor * AME_NELEM * element_size_bytes;
+U32 group_size = (element_size_bits pass:[+] AME_UNIT_DATATYPE_SIZE - 1) / AME_UNIT_DATATYPE_SIZE;
+if pass:[(](ms1 % group_size) != 0 || (ms1 pass:[+] group_size) > AME_NUM_M_REGS) {
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+}
+XReg total_bytes = (pack_factor * AME_NELEM * element_size_bits pass:[+] 7) / 8;
 XReg alignment = <<ame:doc:func:min,min>>pass:[(]total_bytes, 4096);
 if pass:[(]address % alignment != 0) {
-  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::StoreAmoAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::StoreAmoAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), address);
 }
-Bits<AME_MAX_SQUARE_SIZE> tmp = <<ame:doc:func:ame_xform_impl_to_cm,ame_xform_impl_to_cm>>pass:[(]M[ms1], dtype);
-for pass:[(]U32 sq = 0; sq < pack_factor; sq++) {
-  for pass:[(]U32 j = 0; j < <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM); j++) {
-    for pass:[(]U32 i = 0; i < <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM); i++) {
-      U32 element_idx = sq * AME_NELEM pass:[+] j * <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM) pass:[+] i;
-      U32 bit_lo = element_idx * element_size_bits;
-      U32 bit_hi = bit_lo pass:[+] element_size_bits - 1;
-      <<ame:doc:func:write_memory_ame,write_memory_ame>>pass:[(]address pass:[+] element_idx * element_size_bytes, $encoding, tmp[bit_hi:bit_lo], element_size_bytes);
-    }
-  }
+Bits<AME_MAX_SQUARE_SIZE> impl = 0;
+for pass:[(]U32 regno = 0; regno < group_size; regno++) {
+  U32 bit_lo = regno * AME_MATRIX_REGISTER_SIZE;
+  U32 bit_hi = bit_lo pass:[+] AME_MATRIX_REGISTER_SIZE - 1;
+  impl[bit_hi:bit_lo] = M[ms1 pass:[+] regno];
+}
+Bits<AME_MAX_SQUARE_SIZE> tmp = <<ame:doc:func:ame_xform_impl_to_cm,ame_xform_impl_to_cm>>pass:[(]impl, dtype);
+<<ame:doc:func:write_memory_ame,write_memory_ame>>pass:[(]address, $encoding, tmp, total_bytes);
 }
 ----
 
@@ -11353,30 +11376,34 @@ Operation::
 [source,idl,subs="specialchars,macros"]
 ----
 XReg address = X[xs1];
-Bits<32> dtype = Md[ms1];
 if pass:[(]AME_NUM_M_REGS == 16) {
   if pass:[(]ms1 >= 16) {
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
 }
+Bits<32> dtype = Md[ms1];
+if pass:[(]!<<ame:doc:func:ame_datatype_supported,ame_datatype_supported>>pass:[(]dtype)) {
+  CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
 U32 element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dtype);
-U32 element_size_bytes = element_size_bits >> 3;
 U32 pack_factor = <<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]dtype) ? (AME_UNIT_DATATYPE_SIZE / element_size_bits) : 1;
-XReg total_bytes = pack_factor * AME_NELEM * element_size_bytes;
+U32 group_size = (element_size_bits pass:[+] AME_UNIT_DATATYPE_SIZE - 1) / AME_UNIT_DATATYPE_SIZE;
+if pass:[(](ms1 % group_size) != 0 || (ms1 pass:[+] group_size) > AME_NUM_M_REGS) {
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+}
+XReg total_bytes = (pack_factor * AME_NELEM * element_size_bits pass:[+] 7) / 8;
 XReg alignment = <<ame:doc:func:min,min>>pass:[(]total_bytes, 4096);
 if pass:[(]address % alignment != 0) {
-  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::StoreAmoAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::StoreAmoAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), address);
 }
-Bits<AME_MAX_SQUARE_SIZE> tmp = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1], dtype);
-for pass:[(]U32 sq = 0; sq < pack_factor; sq++) {
-  for pass:[(]U32 i = 0; i < <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM); i++) {
-    for pass:[(]U32 j = 0; j < <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM); j++) {
-      U32 element_idx = sq * AME_NELEM pass:[+] i * <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM) pass:[+] j;
-      U32 bit_lo = element_idx * element_size_bits;
-      U32 bit_hi = bit_lo pass:[+] element_size_bits - 1;
-      <<ame:doc:func:write_memory_ame,write_memory_ame>>pass:[(]address pass:[+] element_idx * element_size_bytes, $encoding, tmp[bit_hi:bit_lo], element_size_bytes);
-    }
-  }
+Bits<AME_MAX_SQUARE_SIZE> impl = 0;
+for pass:[(]U32 regno = 0; regno < group_size; regno++) {
+  U32 bit_lo = regno * AME_MATRIX_REGISTER_SIZE;
+  U32 bit_hi = bit_lo pass:[+] AME_MATRIX_REGISTER_SIZE - 1;
+  impl[bit_hi:bit_lo] = M[ms1 pass:[+] regno];
+}
+Bits<AME_MAX_SQUARE_SIZE> tmp = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]impl, dtype);
+<<ame:doc:func:write_memory_ame,write_memory_ame>>pass:[(]address, $encoding, tmp, total_bytes);
 }
 ----
 
@@ -11888,7 +11915,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 
 Description::
 Extracts a single sub-square, selected by the index in integer register `xs1`, from the
-packed M register `ms1` and writes it to the non-packed M register `md`, converting each
+packed M register `ms1` and writes it to the non-packed M register group beginning at `md`, converting each
 element from the packed datatype (`Md[ms1]`) to the non-packed datatype (`Md[md]`).
 +
 `Md[ms1]` must be a packed datatype and `Md[md]` a non-packed datatype; otherwise
@@ -11938,17 +11965,20 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   U32 dst_element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dst_dtype);
+  U32 dst_group_size = dst_element_size_bits / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dst_group_size == 0) {
+    dst_group_size = 1;
+  }
+  <<ame:doc:func:ame_check_m_group,ame_check_m_group>>pass:[(]ms1, 1, 1, $encoding);
+  <<ame:doc:func:ame_check_m_group,ame_check_m_group>>pass:[(]md, dst_group_size, dst_group_size, $encoding);
   Bits<AME_MAX_SQUARE_SIZE> packed = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1], src_dtype);
-  Bits<AME_MAX_SQUARE_SIZE> result = 0;
   for pass:[(]U32 e = 0; e < AME_NELEM; e++) {
     U32 src_lo = (index * AME_NELEM pass:[+] e) * src_element_size_bits;
     U32 src_hi = src_lo pass:[+] src_element_size_bits - 1;
     Bits<AME_MAX_DTYPE_SIZE> element = packed[src_hi:src_lo];
-    U32 dst_lo = e * dst_element_size_bits;
-    U32 dst_hi = dst_lo pass:[+] dst_element_size_bits - 1;
-    result[dst_hi:dst_lo] = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::CONV1D, src_dtype, element, src_dtype, element, dst_dtype);
+    Bits<AME_MAX_DTYPE_SIZE> converted = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::CONV1D, src_dtype, element, src_dtype, element, dst_dtype);
+    <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dst_dtype, e, converted);
   }
-  M[md] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dst_dtype);
 }
 ----
 
@@ -12186,6 +12216,7 @@ Bits<5> acc = $encoding[11:7];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
+<<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc, $encoding);
 Bits<32> dest_dtype = Ad[acc];
 if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ZERO1D, dest_dtype, dest_dtype, dest_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;

@@ -29,9 +29,9 @@ The table below summarizes the key differences.
 h| Matrix State | Two new register files | One new register file | In vector registers
 h| Vector operations | New instructions | RVV | RVV
 h| Matrix multiply | Primitive instruction | Sum of outer product | ?
-h| Resouce Management | Included | ? | N/A
-h| Datatypes | Polymorhpic ISA | ? | ?
-h| Tensor layout | Supports both standard (row-major) and implementaion-specic layouts | ? | ?
+h| Resource Management | Included | ? | N/A
+h| Datatypes | Polymorphic ISA | ? | ?
+h| Tensor layout | Supports both standard (row-major) and implementation-specific layouts | ? | ?
 h| Traps | Mix of precise and imprecise | Precise | Precise
 h| Memory model | Weaker than RVWMO | ? | RVWMO
 |===
@@ -49,5 +49,3 @@ Open TODO items:
 * Rename the internal `AmeOperation::MUX1D` selector to the direction-explicit
   `AmeOperation::MUXLT1D`, or otherwise standardize the internal conditional-move
   operation names. The architectural instruction is already named `mcmovlt.ew`.
-* Complete the public `ame_op` operation table for the ordinary element-wise operations,
-  including their supported source/destination datatype relationships.

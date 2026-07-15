@@ -22,9 +22,7 @@ instruction_operations.transform_values!(&:uniq)
 
 contract = File.read(functions_path)
 contract_operations = contract.scan(/`([A-Z][A-Z0-9]+1D)`/).flatten.uniq
-managed_instructions = instruction_operations.select do |_name, operations|
-  !(operations & contract_operations).empty?
-end
+managed_instructions = instruction_operations.reject { |_name, operations| operations.empty? }
 operations = managed_instructions.values.flatten.uniq
 
 missing = operations - contract_operations
