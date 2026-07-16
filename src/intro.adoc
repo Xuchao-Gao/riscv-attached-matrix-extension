@@ -46,6 +46,3 @@ Open TODO items:
 * Decide whether prefix and reduction operations support widening source-to-destination
   datatype tuples. If widening is supported, define the accumulator datatype, initial
   source conversion, per-step rounding, overflow, and saturation behavior.
-* Rename the internal `AmeOperation::MUX1D` selector to the direction-explicit
-  `AmeOperation::MUXLT1D`, or otherwise standardize the internal conditional-move
-  operation names. The architectural instruction is already named `mcmovlt.ew`.

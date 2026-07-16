@@ -1533,7 +1533,7 @@ Operation::
 Bits<32> dest_dtype = Md[md];
 Bits<32> src1_dtype = Md[ms1];
 Bits<32> src2_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::MUX1D, dest_dtype, src1_dtype, src2_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::MUXLT1D, dest_dtype, src1_dtype, src2_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src1_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
@@ -1578,7 +1578,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src2_lo_idx = ((e pass:[+] 1) * src2_element_size) - (src2_regno * (AME_MATRIX_REGISTER_SIZE)) - src2_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src1_element_value = src1_value[src1_hi_idx:src1_lo_idx];
     Bits<AME_MAX_DTYPE_SIZE> src2_element_value = src2_value[src2_hi_idx:src2_lo_idx];
-    <<ame:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MUX1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value);
+    <<ame:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MUXLT1D, src1_dtype, src1_element_value, src2_dtype, src2_element_value);
   }
 }
 ----

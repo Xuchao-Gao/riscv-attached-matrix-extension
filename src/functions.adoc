@@ -1128,7 +1128,7 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 | `src2` when the sign bit of `src1` is clear; otherwise `current`
 | A predicate datatype with a defined sign bit; identical `src2` and destination datatypes
 
-| `MUX1D`
+| `MUXLT1D`
 | `src2` when the sign bit of `src1` is set; otherwise `current`
 | A predicate datatype with a defined sign bit; identical `src2` and destination datatypes
 
@@ -1157,7 +1157,7 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 | Supported numeric source and destination datatypes
 |===
 
-For `MUXGE1D` and `MUX1D`, an unselected `current` value is preserved bit
+For `MUXGE1D` and `MUXLT1D`, an unselected `current` value is preserved bit
 exactly in its low `sizeof(dest_dtype)` bits.  For every arithmetic operation
 above, the complete mathematical expression is evaluated without an
 intermediate destination conversion and is converted to `dest_dtype` once.
