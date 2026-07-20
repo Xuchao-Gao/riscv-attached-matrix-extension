@@ -220,7 +220,7 @@ Register move / data conversion::
 | Mnemonic | Name
 
 a| `mconv.ew md, ms1`
-| <<ame:doc:inst:mconv_ew,Convert between packed and non-packed datatypes>>
+| <<ame:doc:inst:mconv_ew,Convert element data between supported datatypes, including packed and non-packed representations>>
 a| `mpack.ew.x md, ms1, xs1`
 | <<ame:doc:inst:mpack_ew_x,Pack one square into a slot of a packed M register>>
 a| `munpack.ew.x md, ms1, xs1`
@@ -2518,7 +2518,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 === `mconv.ew`
 
 Synopsis::
-Convert between packed and non-packed datatypes
+Convert element data between supported datatypes, including packed and non-packed representations
 
 Mnemonic::
 `mconv.ew md, ms1`
