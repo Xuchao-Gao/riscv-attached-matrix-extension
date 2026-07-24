@@ -43,6 +43,50 @@ h| Return Type l| Boolean
 h| Arguments   l| AmeOperation op, Bits<32> dest_dtype, Bits<32> src1_dtype, Bits<32> src2_dtype
 |===
 
+[#ame:doc:func:ame_scalar_op_supported]
+=== `ame_scalar_op_supported`
+Returns true when a data-scalar element-wise operation is supported after the
+X-register scalar has been interpreted using `CSR[ame_scalar_dtype]` and
+converted to the tensor operand datatype.
+
+The scalar conversion is checked separately from the operation tuple.  The
+operation itself therefore retains the ordinary AME contract in which both
+data inputs use `tensor_dtype`.  This conversion precedes the operation for
+all data-scalar forms, including bitwise operations; the converted value is
+therefore interpreted in the same datatype domain as the tensor operand.
+
+|===
+h| Return Type l| Boolean
+h| Arguments   l| AmeOperation op, Bits<32> dest_dtype, Bits<32> tensor_dtype
+|===
+
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> scalar_dtype = CSR[<<ame:doc:csr:ame_scalar_dtype,ame_scalar_dtype>>];
+return <<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::CONV1D, tensor_dtype, scalar_dtype, scalar_dtype) &&
+       <<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]op, dest_dtype, tensor_dtype, tensor_dtype);
+----
+
+[#ame:doc:func:ame_scalar_data_value]
+=== `ame_scalar_data_value`
+Interprets an X-register bit pattern using `CSR[ame_scalar_dtype]` and
+converts it to `target_dtype` using the common `CONV1D` semantics.  Callers
+must first establish that `ame_scalar_op_supported` is true.  Only the low
+`ame_dtype_val_to_size(scalar_dtype)` bits of the X-register value are used;
+higher bits are ignored.
+
+|===
+h| Return Type l| Bits<AME_MAX_DTYPE_SIZE>
+h| Arguments   l| Bits<32> target_dtype, Bits<AME_MAX_DTYPE_SIZE> raw_value
+|===
+
+[source,idl,subs="specialchars,macros"]
+----
+Bits<32> scalar_dtype = CSR[<<ame:doc:csr:ame_scalar_dtype,ame_scalar_dtype>>];
+U32 scalar_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]scalar_dtype);
+return <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::CONV1D, scalar_dtype, raw_value[scalar_element_size - 1:0], scalar_dtype, 0, target_dtype);
+----
+
 [#ame:doc:func:ame_dtype_is_packed]
 === `ame_dtype_is_packed`
 Returns true if dtype_val is a packed datatype: its size in bits (bits 7:0) is
@@ -801,7 +845,7 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 |===
 | `AmeOperation` | Mathematical result before destination conversion | Required operand class
 
-| `COLBCAST1D`, `ROWBCAST1D`, `GATHER1D`, `GATHERROW1D`, `SHIFT1D`, `ROWSHIFT1D`
+| `GATHER1D`, `GATHERROW1D`, `SHIFT1D`, `ROWSHIFT1D`
 | `src1`
 | The data source and destination datatypes are identical. Gather index operands are integer datatypes.
 

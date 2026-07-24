@@ -116,8 +116,13 @@ abort "Chapter 2 categories contain unknown instructions: #{extra_categories.joi
 funct3_values = entries.map { |entry| entry[:funct3] }.uniq
 abort "AME instructions must all use funct3=0, found #{funct3_values.sort.join(', ')}" unless funct3_values == [0]
 
+reserved_funct7 = {
+  "R3" => [0x35],
+  "R2" => [],
+  "R1" => []
+}
 expected_funct7 = {
-  "R3" => (0x00..0x50).to_a,
+  "R3" => (0x00..0x50).to_a - reserved_funct7.fetch("R3"),
   "R2" => [0x51, 0x52],
   "R1" => [0x53]
 }
@@ -187,18 +192,23 @@ end
 # Within R2/R1, consume the extension field densely before opening another
 # funct7 bank.  This turns the space-saving policy into a checked invariant
 # rather than a documentation preference.
+reserved_extensions = {
+  ["R2", 0x51] => [9]
+}
 [["R2", 32], ["R1", 1024]].each do |format_name, capacity|
   entries.select { |entry| entry[:format] == format_name }
          .group_by { |entry| entry[:funct3] }.each do |funct3, family|
     partial_banks = []
     family.group_by { |entry| entry[:funct7] }.each do |funct7, bank_entries|
       values = bank_entries.map { |entry| entry[:extension] }.sort
-      expected = (0...values.length).to_a
+      expected = (0...capacity).to_a - reserved_extensions.fetch([format_name, funct7], [])
+      expected = expected.take(values.length)
       unless values == expected
         abort format("%s funct3=%d funct7=0x%02x has sparse extension values: %s",
                      format_name, funct3, funct7, values.join(","))
       end
-      partial_banks << funct7 if values.length < capacity
+      bank_capacity = capacity - reserved_extensions.fetch([format_name, funct7], []).length
+      partial_banks << funct7 if values.length < bank_capacity
     end
     next if partial_banks.length <= 1
 

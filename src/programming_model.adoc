@@ -370,7 +370,7 @@ AME supports six broad classes of arithmetic and/or logical operators:
 *  1D Element-wise/vector
 *  Intra-tensor (reduction/expansion/permutation)
 *  Register move / data conversion
-*  Scalar broadcast
+*  Scalar ingress and data scalar operands
 *  Load/store
 
 AME does not support general masking/predication on computational instructions, though a future extension may add support.
@@ -765,9 +765,6 @@ AME permutation operations swizzle data within a single square.
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
-| <<ame:doc:inst:mcolbcast_ew_x,mcolbcast.ew.x>>
-| `D[i,j] = A[i,c]`
-| Broadcast one selected column to all columns
 | <<ame:doc:inst:mcolunzip_ew,mcolunzip.ew>>
 | `D[i,j] = A[i,2j] +
  D[i, N/2+j] = A[i,2j+1]`
@@ -802,9 +799,6 @@ AME permutation operations swizzle data within a single square.
 | <<ame:doc:inst:mcolshift_ew_x,mcolshift.ew.x>>
 | `D[i,j] = A[i, j+c]`, with `zero(Md[md])` fill
 | Elementwise column shift by scalar offset
-| <<ame:doc:inst:mrowbcast_ew_x,mrowbcast.ew.x>>
-| `D[i,j] = A[c,j]`
-| Broadcast one selected row to all rows
 | <<ame:doc:inst:mrowgather_ew,mrowgather.ew>>
 | `D[i,j] = A[B[i,j],j]`
 | Elementwise row gather
@@ -860,43 +854,33 @@ reducing register pressure when a full expand or compress is not required.
 
 ==== Scalars
 
-In any AME implementation, software can use scalar broadcast instructions to use the same scalar
-value with every element.
-For example, software can implement elementwise add by a common constant using a scalar broadcast
-followed by an elementwise add.
+AME provides an explicit typed scalar ingress instruction and data-scalar
+elementwise forms.  Software can therefore use a converted scalar repeatedly
+through an M register, or use a data scalar directly without allocating an M
+register for it.
 
-An optional extension, `Ztts`, provides instructions that take scalars as an input for elementwise
-operations.
-With `Ztts`, elementwise add by a common constant is a single instruction.
+===== Scalar ingress and data scalar operands
 
-===== Scalar broadcast
+`mmov.m.x` is the explicit scalar ingress instruction. It interprets an X-register
+bit pattern using a datatype encoding supplied in another X register, converts the
+value to the destination `Md` datatype with `CONV1D`, and broadcasts the converted
+value to every logical element of the destination M operand.
 
-AME provides an instruction to fill every element of an M register with a single scalar value,
-analogous to `np.full_like`. The element size is determined by the register's programmed datatype.
-Both non-packed and packed dtypes are supported; for packed dtypes all
-`pack_factor * AME_NELEM` element positions are filled.
+Data scalar `.ew.x` instructions use `CSR[ame_scalar_dtype]` for the source scalar
+type. The scalar is converted to the tensor operand datatype before the ordinary
+same-datatype operation is evaluated. This keeps the operation support table
+polymorphic without requiring a separate mixed-type tuple for every instruction.
 
-`<<ame:doc:inst:mbcast_x,mbcast.x>>` sources the scalar from an integer (`X`) register.
-
-[cols="1,2,3",options="header"]
-|===
-| Instruction | Operation | Description
-| <<ame:doc:inst:mbcast_x,mbcast.x>>
-| `D[i] = xs1`
-| Broadcast integer scalar to all elements of a square
-|===
-
-===== Scalar operand instructions
-
-When a scalar is used as an operand, its type either comes from one of the AME datatype registers
-or is pre-determined (for example, a constant exponent operand is always an XLEN-bit integer).
+Shift amounts, indices, offsets, and other control scalar operands are fixed-type
+integer values defined by their instruction. They do not read
+`CSR[ame_scalar_dtype]` and do not undergo AME datatype conversion.
 
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
-| <<ame:doc:inst:mbcast_x,mbcast.x>>
-| `D[i] = xs1`
-| Broadcast integer scalar to all elements of a square
+| <<ame:doc:inst:mmov_m_x,mmov.m.x>>
+| `D[i] = CONV1D(X[xs1], X[xtyp], Md[md])`
+| Convert one X scalar and broadcast it to an M operand
 |===
 
 ==== Load and store

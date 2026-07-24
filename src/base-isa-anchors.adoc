@@ -18,6 +18,10 @@ amestatus::
 ameudsz::
   See the RISC-V Privileged Specification for details on the `ameudsz` CSR.
 
+[#ame:doc:csr:ame_scalar_dtype]
+ame_scalar_dtype::
+  See the RISC-V Privileged Specification for details on the `ame_scalar_dtype` CSR.
+
 [#ame:doc:csr:hedeleg]
 hedeleg::
   See the RISC-V Privileged Specification for details on the `hedeleg` CSR.

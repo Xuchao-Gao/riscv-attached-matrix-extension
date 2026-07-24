@@ -67,6 +67,26 @@ headings.each_with_index do |(instruction, start_line), index|
   if operation
     section_text = section.join
     operation_text = operation.join
+
+    scalar_data_instructions = %w[
+      mabsdiff.ew.x madd.ew.x mand.ew.x mandnot.ew.x mcmpge.ew.x mcmplt.ew.x
+      mhdiff.ew.x mlog2sub.ew.x mmax.ew.x mmean.ew.x mmin.ew.x mmul.ew.x
+      mmulacc.ew.x mmulaccneg.ew.x mmuladd.ew.x mmulneg.ew.x mmulsub.ew.x
+      mor.ew.x mornot.ew.x msub.ew.x msublog2.ew.x mxor.ew.x
+    ]
+    if scalar_data_instructions.include?(instruction)
+      errors << "#{instruction}: data-scalar operation must use ame_scalar_op_supported" unless operation_text.include?("ame_scalar_op_supported")
+      errors << "#{instruction}: data-scalar value must use ame_scalar_data_value" unless operation_text.include?("ame_scalar_data_value")
+    end
+
+    fixed_control_instructions = %w[
+      mldexp.ew.x mldexpacc.ew.x mrowshift.ew.x mcolshift.ew.x
+      msll.ew.x msra.ew.x msrl.ew.x mpack.ew.x munpack.ew.x
+    ]
+    if fixed_control_instructions.include?(instruction) && operation_text.include?("ame_scalar_")
+      errors << "#{instruction}: fixed control scalar must not use scalar datatype CSR helpers"
+    end
+
     idl_type = /(?:Bool|XReg|U(?:32|64)|S(?:32|64)|Integer|Bits<[^>]+>)/
     declarations = section_text.scan(/\b#{idl_type}\s+(\w+)\s*(?==|;)/).flatten
 
@@ -77,6 +97,7 @@ headings.each_with_index do |(instruction, start_line), index|
     # operands such as md, ms1, and xs1.
     derived_suffix = /(?:regno|hi|lo|hi_idx|lo_idx|dtype|element_size|nregs|elements_per_reg|value|current|element_value)/
     derived_variables = operation_text.scan(/\b([A-Za-z_]\w*_#{derived_suffix})\b/).flatten.uniq
+    derived_variables -= %w[ame_scalar_data_value]
     (derived_variables - declarations).each do |variable|
       errors << "#{instruction}: Operation block uses undefined variable #{variable}"
     end

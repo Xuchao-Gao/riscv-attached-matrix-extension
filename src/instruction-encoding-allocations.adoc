@@ -36,15 +36,16 @@ selector bits without changing the locations or meanings of `funct7`,
 
 One `(funct7, funct3, opcode)` bank is assigned to exactly one format.  R2
 and R1 consume their `xfunct` space densely before another `funct7` bank may
-be opened.  This prevents a more-specific R1/R2 pattern from being hidden
-inside an R2/R3 decode and minimizes use of the shared `funct7` namespace.
+be opened, except for explicitly reserved values.  This prevents a
+more-specific R1/R2 pattern from being hidden inside an R2/R3 decode and
+minimizes use of the shared `funct7` namespace.
 
 [cols="1,1,1,2,2",options="header"]
 |===
 | Format | Instruction count | `funct7` allocation | Extension allocation | Remaining capacity
 
-| R3 | 81 | `0x00..0x50` | n/a | 0 in allocated banks
-| R2 bank 0 | 32 | `{ame-enc-r2-bank0-funct7}` | `xfunct5=0..31` | 0
+| R3 | 80 | `0x00..0x50` except `0x35` | n/a | 1 reserved value
+| R2 bank 0 | 31 | `{ame-enc-r2-bank0-funct7}` | `xfunct5=0..31` except `0x09` | 1 reserved value
 | R2 bank 1 | 9 | `{ame-enc-r2-bank1-funct7}` | `xfunct5=0..8` | 23
 | R1 | 2 | `{ame-enc-r1-bank-funct7}` | `xfunct10=0..1` | 1022
 | Unallocated | 0 | `0x54..0x7f` | n/a | 44 `funct7` banks

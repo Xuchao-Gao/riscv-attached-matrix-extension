@@ -6,7 +6,7 @@
 
 
 
-AME defines *124* instructions.
+AME defines *122* instructions.
 
 [IMPORTANT]
 ====
@@ -147,15 +147,6 @@ a| `mxor.ew.x md, xs1, ms2`
 | <<ame:doc:inst:mxor_ew_x,Elementwise scalar bitwise XOR>>
 !===
 
-Scalar Broadcast::
-[cols="1,2",%unbreakable]
-!===
-| Mnemonic | Name
-
-a| `mbcast.x md, xs1`
-| <<ame:doc:inst:mbcast_x,Broadcast integer scalar to all elements of a square>>
-!===
-
 Compare and Predication::
 [cols="1,2",%unbreakable]
 !===
@@ -184,8 +175,6 @@ Permutation::
 !===
 | Mnemonic | Name
 
-a| `mcolbcast.ew.x md, ms1, xs1`
-| <<ame:doc:inst:mcolbcast_ew_x,Broadcast one column to all columns>>
 a| `mcolgather.ew md, ms1, ms2`
 | <<ame:doc:inst:mcolgather_ew,Elementwise gather (take)>>
 a| `mcolshift.ew.x md, ms1, xs1`
@@ -194,8 +183,6 @@ a| `mcolunzip.ew md, ms1`
 | <<ame:doc:inst:mcolunzip_ew,Elementwise column unzip (de-interleave)>>
 a| `mcolzip.ew md, ms1`
 | <<ame:doc:inst:mcolzip_ew,Elementwise column zip (interleave)>>
-a| `mrowbcast.ew.x md, ms1, xs1`
-| <<ame:doc:inst:mrowbcast_ew_x,Broadcast one row to all rows>>
 a| `mrowgather.ew md, ms1, ms2`
 | <<ame:doc:inst:mrowgather_ew,Elementwise row gather (take)>>
 a| `mrowshift.ew.x md, ms1, xs1`
@@ -219,6 +206,8 @@ Register move / data conversion::
 !===
 | Mnemonic | Name
 
+a| `mmov.m.x md, xs1, xtyp`
+| <<ame:doc:inst:mmov_m_x,Typed scalar ingress and broadcast to M>>
 a| `mconv.ew md, ms1`
 | <<ame:doc:inst:mconv_ew,Convert element data between supported datatypes, including packed and non-packed representations>>
 a| `mpack.ew.x md, ms1, xs1`
@@ -656,8 +645,8 @@ Description::
 Computes the elementwise absolute difference between a scalar constant from integer
 register `xs1` and every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = |xs1 - ms2[i]|`
 +
@@ -685,7 +674,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ABSDIFF1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::ABSDIFF1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -717,7 +706,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::ABSDIFF1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
   }
 }
@@ -846,8 +835,8 @@ Description::
 Adds a scalar constant from integer register `xs1` to every element of square `ms2`,
 stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 + ms2[i]`
 +
@@ -875,7 +864,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ADD1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::ADD1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -907,7 +896,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::ADD1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
   }
 }
@@ -1036,8 +1025,8 @@ Description::
 Computes the elementwise bitwise AND of a scalar constant from integer register `xs1`
 with every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 & ms2[i]`
 +
@@ -1065,7 +1054,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::AND1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::AND1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -1097,7 +1086,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::AND1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
   }
 }
@@ -1228,8 +1217,8 @@ Description::
 Computes the elementwise bitwise AND of a scalar constant from integer register `xs1`
 with the bitwise complement of every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 & ~ms2[i]`
 +
@@ -1257,7 +1246,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ANDNOT1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::ANDNOT1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -1289,84 +1278,8 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::ANDNOT1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
-  }
-}
-----
-
-
-<<<
-
-[#ame:doc:inst:mbcast_x]
-=== `mbcast.x`
-
-Synopsis::
-Broadcast integer scalar to all elements of a square
-
-Mnemonic::
-`mbcast.x md, xs1`
-
-Encoding::
-+
-[IMPORTANT]
-This encoding is provisional and is not a final RISC-V allocation.
-+
-[wavedrom, ,svg,subs='attributes',width="100%"]
-....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x9,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
-....
-
-Description::
-Broadcasts the scalar value from integer register `xs1` to all element positions of
-matrix register `md`.
-+
-The element size is determined by `Md[md]`. For non-packed datatypes, all `AME_NELEM`
-elements are set to the lower `sizeof(Md[md])` bits of `xs1`. For packed datatypes,
-all `pack_factor * AME_NELEM` elements are set.
-+
-If `Md[md]` is uninitialized (zero), `amestatus.UN` is set and no register is written.
-
-
-NumPy Equivalent::
-[source,python]
-----
-np.full_like(md, xs1)
-----
-
-Decode Variables::
-[source,idl,subs="specialchars,macros"]
-----
-Bits<5> md = $encoding[11:7];
-Bits<5> xs1 = $encoding[19:15];
-----
-
-
-Operation::
-[source,idl,subs="specialchars,macros"]
-----
-if pass:[(]AME_NUM_M_REGS == 16) {
-  if pass:[(]md >= 16) {
-    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-  }
-}
-Bits<32> dtype = Md[md];
-U32 element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dtype);
-if pass:[(]!<<ame:doc:func:ame_datatype_supported,ame_datatype_supported>>pass:[(]dtype)) {
-  CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
-} else {
-  U32 group_size = (element_size_bits pass:[+] AME_UNIT_DATATYPE_SIZE - 1) / AME_UNIT_DATATYPE_SIZE;
-  if pass:[(]group_size == 0) {
-    group_size = 1;
-  }
-  if pass:[(](md % group_size) != 0 || (md pass:[+] group_size) > AME_NUM_M_REGS) {
-    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-  }
-  U32 pack_factor = <<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]dtype) ? (AME_UNIT_DATATYPE_SIZE / element_size_bits) : 1;
-  U32 total_elements = pack_factor * AME_NELEM;
-  Bits<AME_MAX_DTYPE_SIZE> scalar = X[xs1];
-  for pass:[(]U32 e = 0; e < total_elements; e++) {
-    <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dtype, e, scalar[element_size_bits - 1:0]);
   }
 }
 ----
@@ -1714,8 +1627,8 @@ Compares a scalar constant from integer register `xs1` against every element of 
 `ms2`, storing -1 (all bits set) where the scalar is greater than or equal to the element,
 and 0 otherwise, into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = (xs1 >= ms2[i]) ? -1 : 0`
 +
@@ -1743,7 +1656,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::CMPGE1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::CMPGE1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -1775,7 +1688,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::CMPGE1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
   }
 }
@@ -1912,8 +1825,8 @@ Compares a scalar constant from integer register `xs1` against every element of 
 `ms2`, storing -1 (all bits set) where the scalar is strictly less than the element,
 and 0 otherwise, into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = (xs1 < ms2[i]) ? -1 : 0`
 +
@@ -1941,7 +1854,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::CMPLT1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::CMPLT1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -1973,110 +1886,8 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::CMPLT1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
-  }
-}
-----
-
-
-<<<
-
-[#ame:doc:inst:mcolbcast_ew_x]
-=== `mcolbcast.ew.x`
-
-Synopsis::
-Broadcast one column to all columns
-
-Mnemonic::
-`mcolbcast.ew.x md, ms1, xs1`
-
-Encoding::
-+
-[IMPORTANT]
-This encoding is provisional and is not a final RISC-V allocation.
-+
-[wavedrom, ,svg,subs='attributes',width="100%"]
-....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x32,"type":2}]}
-....
-
-Description::
-Broadcasts column `c` (from integer register `xs1`) of `ms1` to every column of `md`.
-+
-For each row `i` and column `j`:
-+
-  `md[i,j] = ms1[i, c]`
-+
-If `c` is outside `[0, sqrt(AME_NELEM))`, an `Illegal Instruction` exception is raised.
-
-
-NumPy Equivalent::
-[source,python]
-----
-md[:,:] = ms1[:,c][:,np.newaxis]
-----
-
-Decode Variables::
-[source,idl,subs="specialchars,macros"]
-----
-Bits<5> md = $encoding[11:7];
-Bits<5> ms1 = $encoding[19:15];
-Bits<5> xs1 = $encoding[24:20];
-----
-
-
-Operation::
-[source,idl,subs="specialchars,macros"]
-----
-Bits<32> dest_dtype = Md[md];
-Bits<32> src1_dtype = Md[ms1];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::COLBCAST1D, dest_dtype, src1_dtype, src1_dtype)) {
-  CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
-} else {
-  U32 src1_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
-  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
-  if pass:[(]src1_nregs == 0) {
-    src1_nregs = 1;
-  }
-  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
-  U32 dest_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
-  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
-  if pass:[(]dest_nregs == 0) {
-    dest_nregs = 1;
-  }
-  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
-  if pass:[(]AME_NUM_M_REGS == 16) {
-    if pass:[(]ms1 >= 16 || md >= 16) {
-      <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-    }
-  }
-  if pass:[(](ms1 % src1_nregs) != 0) {
-    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-  }
-  if pass:[(](md % dest_nregs) != 0) {
-    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-  }
-  U32 N = <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
-  Bits<32> c = $signed+++(+++X[xs1]);
-  if pass:[(]$signed+++(+++c) < 0 || $signed+++(+++c) >= N) {
-    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-  }
-  for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
-    Bits<AME_MAX_SQUARE_SIZE> result = 0;
-    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
-      U32 e_out = dst_regno * dest_elements_per_reg pass:[+] local_e;
-      U32 i = e_out / N;
-      U32 dst_lo = local_e * dest_element_size;
-      U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
-      U32 e_src = i * N pass:[+] c;
-      U32 src_regno = e_src / src1_elements_per_reg;
-      U32 src_lo = e_src * src1_element_size - (src_regno * AME_MATRIX_REGISTER_SIZE);
-      U32 src_hi = src_lo pass:[+] src1_element_size - 1;
-      Bits<AME_MAX_DTYPE_SIZE> src_value = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo];
-      result[dst_hi:dst_lo] = src_value;
-    }
-    M[md pass:[+] dst_regno] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
   }
 }
 ----
@@ -2222,8 +2033,9 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Elementwise column shift of `ms1` by a signed scalar offset `c` from integer register `xs1`,
-stored into `md`.
+Elementwise column shift of `ms1` by a signed 32-bit integer offset `c` from integer
+register `xs1`, stored into `md`.  This fixed-type control operand does not read
+`CSR[ame_scalar_dtype]`.
 +
 For each row `i` and column `j`:
 +
@@ -2286,7 +2098,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   U32 N = <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
-  Bits<32> shift = $signed+++(+++X[xs1]);
+  Bits<32> shift = $signed(X[xs1][31:0]);
   Bits<AME_MAX_DTYPE_SIZE> zero_value = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::ZERO1D, dest_dtype, 0, dest_dtype, 0, dest_dtype);
   for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
     Bits<AME_MAX_SQUARE_SIZE> result = 0;
@@ -2626,6 +2438,86 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
       }
     }
     M[md] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]packed, dst_dtype);
+  }
+}
+----
+
+
+<<<
+
+[#ame:doc:inst:mmov_m_x]
+=== `mmov.m.x`
+
+Synopsis::
+Convert an X-register scalar and broadcast it to an M operand
+
+Mnemonic::
+`mmov.m.x md, xs1, xtyp`
+
+Encoding::
++
+[IMPORTANT]
+This encoding is provisional and is not a final RISC-V allocation.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs1","type":4},{"bits":5,"name":"xtyp","type":4},{"bits":7,"name":0x32,"type":2}]}
+....
+
+Description::
+Interprets the low 32 bits of `X[xtyp]` as an AME datatype encoding and the
+low `ame_dtype_val_to_size(src_dtype)` bits of `X[xs1]` as one scalar of that datatype, where
+`src_dtype = X[xtyp][31:0]`.  The
+scalar is converted once to the destination datatype `Md[md]` using the
+common `CONV1D` contract, then the converted value is written to every
+logical element of `M[md]`.  Packed destinations receive the value in every
+logical packed element.
++
+The source and destination datatype encodings must be supported, and the
+source-to-destination conversion must be supported.  Otherwise,
+`amestatus.UN` is set and no destination state is modified.  The instruction
+does not read `CSR[ame_scalar_dtype]`; the source datatype is its explicit
+`xtyp` operand.
+
+NumPy Equivalent::
+[source,python]
+----
+md[:] = broadcast(convert(X[xs1], source_dtype=src_dtype, target_dtype=Md[md]))
+----
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> md = $encoding[11:7];
+Bits<5> xs1 = $encoding[19:15];
+Bits<5> xtyp = $encoding[24:20];
+----
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+if pass:[(]AME_NUM_M_REGS == 16 && (md >= 16)) {
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+}
+Bits<32> dest_dtype = Md[md];
+Bits<32> src_dtype = X[xtyp][31:0];
+if pass:[(]!<<ame:doc:func:ame_datatype_supported,ame_datatype_supported>>pass:[(]dest_dtype) ||
+    !<<ame:doc:func:ame_datatype_supported,ame_datatype_supported>>pass:[(]src_dtype) ||
+  !<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::CONV1D, dest_dtype, src_dtype, src_dtype)) {
+  CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
+} else {
+  U32 dest_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
+  U32 dest_group_size = dest_element_size / AME_UNIT_DATATYPE_SIZE;
+  if pass:[(]dest_group_size == 0) {
+    dest_group_size = 1;
+  }
+  <<ame:doc:func:ame_check_m_group,ame_check_m_group>>pass:[(]md, dest_group_size, dest_group_size, $encoding);
+  U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
+  Bits<AME_MAX_DTYPE_SIZE> raw_scalar = X[xs1];
+  Bits<AME_MAX_DTYPE_SIZE> converted = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::CONV1D, src_dtype, raw_scalar[src_element_size - 1:0], src_dtype, 0, dest_dtype);
+  U32 total_elements = <<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]dest_dtype) ? (AME_UNIT_DATATYPE_SIZE / dest_element_size) * AME_NELEM : AME_NELEM;
+  for pass:[(]U32 e = 0; e < total_elements; e++) {
+    <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, converted);
   }
 }
 ----
@@ -3334,8 +3226,8 @@ Description::
 Computes the elementwise half-difference between a scalar constant from integer register
 `xs1` and every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = (xs1 - ms2[i]) / 2`
 +
@@ -3363,7 +3255,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::HDIFF1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::HDIFF1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -3395,7 +3287,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::HDIFF1D, src_dtype, src_element_value, src_dtype, scalar_element_value, dest_dtype));
   }
 }
@@ -3535,6 +3427,7 @@ For each element position `i`:
 +
 The type of the matrix elements is determined by `Md[ms2]`. The scalar exponent is
 interpreted as an integer of the maximum supported AME integer datatype (`AME_MAX_INT_DTYPE`).
+The exponent is a fixed-type control operand and does not read `CSR[ame_scalar_dtype]`.
 +
 Equivalent to C `ldexp` applied elementwise with a broadcast scalar exponent.
 Complementary to `mrdexp.ew`.
@@ -3742,6 +3635,7 @@ is added, and the sum is written back.
 +
 The type of the matrix elements is determined by `Md[ms2]`. The scalar exponent is
 interpreted as an integer of the maximum supported AME integer datatype (`AME_MAX_INT_DTYPE`).
+The exponent is a fixed-type control operand and does not read `CSR[ame_scalar_dtype]`.
 +
 Complementary to `mrdexpacc.ew`.
 +
@@ -4021,8 +3915,8 @@ Description::
 Computes the elementwise base-2 logarithm of the absolute value of every element of
 square `ms2`, minus a scalar bias from integer register `xs1`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar bias value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before being used as the bias for every element position `i`:
 +
   `md[i] = log2(|ms2[i]|) - xs1`
 +
@@ -4053,7 +3947,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::LOG2SUB1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::LOG2SUB1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -4085,7 +3979,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::LOG2SUB1D, src_dtype, src_element_value, src_dtype, scalar_element_value, dest_dtype));
   }
 }
@@ -4445,8 +4339,8 @@ Description::
 Computes the elementwise maximum of a scalar constant from integer register `xs1` and
 every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = max(xs1, ms2[i])`
 +
@@ -4474,7 +4368,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::MAX1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::MAX1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -4506,7 +4400,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MAX1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
   }
 }
@@ -4636,8 +4530,8 @@ Description::
 Computes the elementwise mean of a scalar constant from integer register `xs1` and
 every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = (xs1 + ms2[i]) / 2`
 +
@@ -4665,7 +4559,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::MEAN1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::MEAN1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -4697,7 +4591,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MEAN1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
   }
 }
@@ -4827,8 +4721,8 @@ Description::
 Computes the elementwise minimum of a scalar constant from integer register `xs1` and
 every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = min(xs1, ms2[i])`
 +
@@ -4856,7 +4750,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::MIN1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::MIN1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -4888,7 +4782,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MIN1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
   }
 }
@@ -5372,8 +5266,8 @@ Description::
 Multiplies every element of square `ms2` by a scalar constant from integer register
 `xs1`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 × ms2[i]`
 +
@@ -5401,7 +5295,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::MUL1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::MUL1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -5433,7 +5327,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::MUL1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
   }
 }
@@ -5680,8 +5574,8 @@ Multiplies every element of square `ms2` by a scalar constant from integer regis
 `md` is both a source and destination: the existing element is read, the scaled value
 `xs1 × ms2[i]` is added, and the sum is written back.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = md[i] + xs1 × ms2[i]`
 +
@@ -5709,7 +5603,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::MULACC1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::MULACC1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -5741,7 +5635,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MULACC1D, src_dtype, scalar_element_value, src_dtype, src_element_value);
   }
 }
@@ -5987,8 +5881,8 @@ Multiplies every element of square `ms2` by a scalar constant from integer regis
 `md` is both a source and destination: the existing element is read, the product
 `xs1 × ms2[i]` is subtracted, and the result is written back.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = md[i] - xs1 × ms2[i]`
 +
@@ -6016,7 +5910,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::MULNACC1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::MULNACC1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -6048,7 +5942,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MULNACC1D, src_dtype, scalar_element_value, src_dtype, src_element_value);
   }
 }
@@ -6188,8 +6082,8 @@ destination.
 `md` is both a source and destination: each existing element is multiplied by the
 corresponding element of `ms2`, the scalar `xs1` is added, and the result is written back.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 + ms2[i] × md[i]`
 +
@@ -6217,7 +6111,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::MULADD1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::MULADD1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -6249,7 +6143,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MULADD1D, src_dtype, scalar_element_value, src_dtype, src_element_value);
   }
 }
@@ -6897,8 +6791,8 @@ Description::
 Negates the product of a scalar constant from integer register `xs1` and every element
 of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = -(xs1 × ms2[i])`
 +
@@ -6926,7 +6820,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::NMUL1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::NMUL1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -6958,7 +6852,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::NMUL1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
   }
 }
@@ -7100,8 +6994,8 @@ and the destination.
 corresponding element of `ms2`, that product is subtracted from the scalar `xs1`,
 and the result is written back.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 - ms2[i] × md[i]`
 +
@@ -7129,7 +7023,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::MULSUB1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::MULSUB1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -7161,7 +7055,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_op3,ame_stage_m_element_op3>>pass:[(]md, dest_dtype, e, AmeOperation::MULSUB1D, src_dtype, scalar_element_value, src_dtype, src_element_value);
   }
 }
@@ -7290,8 +7184,8 @@ Description::
 Computes the elementwise bitwise OR of a scalar constant from integer register `xs1`
 with every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 | ms2[i]`
 +
@@ -7319,7 +7213,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::OR1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::OR1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -7351,7 +7245,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::OR1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
   }
 }
@@ -7482,8 +7376,8 @@ Description::
 Computes the elementwise bitwise OR of a scalar constant from integer register `xs1`
 with the bitwise complement of every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 | ~ms2[i]`
 +
@@ -7511,7 +7405,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ORNOT1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::ORNOT1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -7543,7 +7437,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::ORNOT1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
   }
 }
@@ -7581,6 +7475,9 @@ sub-square slots of `md` are preserved (read-modify-write).
 `amestatus.UN` is set and no register is written. The index must be less than
 `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[md])`; an out-of-range index raises an
 `Illegal Instruction` exception.
+The index is a fixed U32 unsigned integer control operand (the low 32 bits of
+`X[xs1]`) and does not read
+`CSR[ame_scalar_dtype]`.
 +
 This is the single-square form of the pack (compress) direction of
 <<ame:doc:inst:mconv_ew,mconv.ew>>; use it to pack one square at a time without holding
@@ -7607,7 +7504,7 @@ Operation::
 ----
 Bits<32> src_dtype = Md[ms1];
 Bits<32> dst_dtype = Md[md];
-U32 index = X[xs1];
+U32 index = X[xs1][31:0];
 if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::CONV1D, dst_dtype, src_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else if pass:[(]<<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]src_dtype) || !<<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]dst_dtype)) {
@@ -8950,108 +8847,6 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
 
 <<<
 
-[#ame:doc:inst:mrowbcast_ew_x]
-=== `mrowbcast.ew.x`
-
-Synopsis::
-Broadcast one row to all rows
-
-Mnemonic::
-`mrowbcast.ew.x md, ms1, xs1`
-
-Encoding::
-+
-[IMPORTANT]
-This encoding is provisional and is not a final RISC-V allocation.
-+
-[wavedrom, ,svg,subs='attributes',width="100%"]
-....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x35,"type":2}]}
-....
-
-Description::
-Broadcasts row `c` (from integer register `xs1`) of `ms1` to every row of `md`.
-+
-For each row `i` and column `j`:
-+
-  `md[i,j] = ms1[c, j]`
-+
-If `c` is outside `[0, sqrt(AME_NELEM))`, an `Illegal Instruction` exception is raised.
-
-
-NumPy Equivalent::
-[source,python]
-----
-md[:,:] = ms1[c,:][np.newaxis,:]
-----
-
-Decode Variables::
-[source,idl,subs="specialchars,macros"]
-----
-Bits<5> md = $encoding[11:7];
-Bits<5> ms1 = $encoding[19:15];
-Bits<5> xs1 = $encoding[24:20];
-----
-
-
-Operation::
-[source,idl,subs="specialchars,macros"]
-----
-Bits<32> dest_dtype = Md[md];
-Bits<32> src1_dtype = Md[ms1];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::ROWBCAST1D, dest_dtype, src1_dtype, src1_dtype)) {
-  CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
-} else {
-  U32 src1_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src1_dtype);
-  U32 src1_nregs = src1_element_size / AME_UNIT_DATATYPE_SIZE;
-  if pass:[(]src1_nregs == 0) {
-    src1_nregs = 1;
-  }
-  U32 src1_elements_per_reg = AME_NELEM / src1_nregs;
-  U32 dest_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
-  U32 dest_nregs = dest_element_size / AME_UNIT_DATATYPE_SIZE;
-  if pass:[(]dest_nregs == 0) {
-    dest_nregs = 1;
-  }
-  U32 dest_elements_per_reg = AME_NELEM / dest_nregs;
-  if pass:[(]AME_NUM_M_REGS == 16) {
-    if pass:[(]ms1 >= 16 || md >= 16) {
-      <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-    }
-  }
-  if pass:[(](ms1 % src1_nregs) != 0) {
-    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-  }
-  if pass:[(](md % dest_nregs) != 0) {
-    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-  }
-  U32 N = <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
-  Bits<32> c = $signed+++(+++X[xs1]);
-  if pass:[(]$signed+++(+++c) < 0 || $signed+++(+++c) >= N) {
-    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-  }
-  for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
-    Bits<AME_MAX_SQUARE_SIZE> result = 0;
-    for pass:[(]U32 local_e = 0; local_e < dest_elements_per_reg; local_e++) {
-      U32 e_out = dst_regno * dest_elements_per_reg pass:[+] local_e;
-      U32 j = e_out % N;
-      U32 dst_lo = local_e * dest_element_size;
-      U32 dst_hi = dst_lo pass:[+] dest_element_size - 1;
-      U32 e_src = c * N pass:[+] j;
-      U32 src_regno = e_src / src1_elements_per_reg;
-      U32 src_lo = e_src * src1_element_size - (src_regno * AME_MATRIX_REGISTER_SIZE);
-      U32 src_hi = src_lo pass:[+] src1_element_size - 1;
-      Bits<AME_MAX_DTYPE_SIZE> src_value = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms1 pass:[+] src_regno], src1_dtype)[src_hi:src_lo];
-      result[dst_hi:dst_lo] = src_value;
-    }
-    M[md pass:[+] dst_regno] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]result, dest_dtype);
-  }
-}
-----
-
-
-<<<
-
 [#ame:doc:inst:mrowgather_ew]
 === `mrowgather.ew`
 
@@ -9190,8 +8985,9 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Elementwise shift of each column of `ms1` by a signed scalar row offset `c` from integer
-register `xs1`, stored into `md`.
+Elementwise shift of each column of `ms1` by a signed 32-bit integer row offset `c` from
+integer register `xs1`, stored into `md`.  This fixed-type control operand does not read
+`CSR[ame_scalar_dtype]`.
 +
 For each row `i` and column `j`:
 +
@@ -9251,7 +9047,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
   }
   U32 N = <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
-  Bits<32> shift = $signed+++(+++X[xs1]);
+  Bits<32> shift = $signed(X[xs1][31:0]);
   Bits<AME_MAX_DTYPE_SIZE> zero_value = <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::ZERO1D, dest_dtype, 0, dest_dtype, 0, dest_dtype);
   for pass:[(]U32 dst_regno = 0; dst_regno < dest_nregs; dst_regno++) {
     Bits<AME_MAX_SQUARE_SIZE> result = 0;
@@ -10597,6 +10393,8 @@ Logical left shift of every element of `ms2` by a scalar amount from integer reg
 +
 Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
 element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
+The X operand is a fixed unsigned integer control value and does not read
+`CSR[ame_scalar_dtype]`.
 
 
 NumPy Equivalent::
@@ -10899,6 +10697,8 @@ Arithmetic (sign-preserving) right shift of every element of `ms2` by a scalar a
 +
 Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
 element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
+The X operand is a fixed unsigned integer control value and does not read
+`CSR[ame_scalar_dtype]`.
 
 
 NumPy Equivalent::
@@ -11106,6 +10906,8 @@ Logical (unsigned) right shift of every element of `ms2` by a scalar amount from
 +
 Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
 element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
+The X operand is a fixed unsigned integer control value and does not read
+`CSR[ame_scalar_dtype]`.
 
 
 NumPy Equivalent::
@@ -11530,8 +11332,8 @@ Description::
 Subtracts every element of square `ms2` from a scalar constant from integer register `xs1`,
 stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 - ms2[i]`
 +
@@ -11559,7 +11361,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SUB1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::SUB1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -11591,7 +11393,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SUB1D, src_dtype, src_element_value, src_dtype, scalar_element_value, dest_dtype));
   }
 }
@@ -11726,8 +11528,8 @@ Description::
 Subtracts the elementwise base-2 logarithm of the absolute value of every element of
 square `ms2` from a scalar constant from integer register `xs1`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar bias value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before being used as the bias for every element position `i`:
 +
   `md[i] = xs1 - log2(|ms2[i]|)`
 +
@@ -11758,7 +11560,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::SUBLOG21D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::SUBLOG21D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -11790,7 +11592,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::SUBLOG21D, src_dtype, src_element_value, src_dtype, scalar_element_value, dest_dtype));
   }
 }
@@ -11922,6 +11724,9 @@ element from the packed datatype (`Md[ms1]`) to the non-packed datatype (`Md[md]
 `amestatus.UN` is set and no register is written. The index must be less than
 `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[ms1])`; an out-of-range index raises an
 `Illegal Instruction` exception.
+The index is a fixed U32 unsigned integer control operand (the low 32 bits of
+`X[xs1]`) and does not read
+`CSR[ame_scalar_dtype]`.
 +
 This is the single-square form of the unpack (expand) direction of
 <<ame:doc:inst:mconv_ew,mconv.ew>>; use it to unpack one square at a time and limit the
@@ -11948,7 +11753,7 @@ Operation::
 ----
 Bits<32> src_dtype = Md[ms1];
 Bits<32> dst_dtype = Md[md];
-U32 index = X[xs1];
+U32 index = X[xs1][31:0];
 if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::CONV1D, dst_dtype, src_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else if pass:[(]!<<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]src_dtype) || <<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]dst_dtype)) {
@@ -12105,8 +11910,8 @@ Description::
 Computes the elementwise bitwise XOR of a scalar constant from integer register `xs1`
 with every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `Md[ms2]`. The lower `sizeof(Md[ms2])` bits of
-`xs1` are used as the scalar value for every element position `i`:
+The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 ^ ms2[i]`
 +
@@ -12134,7 +11939,7 @@ Operation::
 ----
 Bits<32> dest_dtype = Md[md];
 Bits<32> src_dtype = Md[ms2];
-if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::XOR1D, dest_dtype, src_dtype, src_dtype)) {
+if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass:[(]AmeOperation::XOR1D, dest_dtype, src_dtype)) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
   U32 src_element_size = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
@@ -12166,7 +11971,7 @@ if pass:[(]!<<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperati
     U32 src_hi_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - 1;
     U32 src_lo_idx = ((e pass:[+] 1) * src_element_size) - (src_regno * (AME_MATRIX_REGISTER_SIZE)) - src_element_size;
     Bits<AME_MAX_DTYPE_SIZE> src_element_value = src_value[src_hi_idx:src_lo_idx];
-    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = scalar[src_element_size - 1:0];
+    Bits<AME_MAX_DTYPE_SIZE> scalar_element_value = <<ame:doc:func:ame_scalar_data_value,ame_scalar_data_value>>pass:[(]src_dtype, scalar);
     <<ame:doc:func:ame_stage_m_element_write,ame_stage_m_element_write>>pass:[(]md, dest_dtype, e, <<ame:doc:func:ame_op,ame_op>>pass:[(]AmeOperation::XOR1D, src_dtype, scalar_element_value, src_dtype, src_element_value, dest_dtype));
   }
 }
