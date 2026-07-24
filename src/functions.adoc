@@ -6,7 +6,7 @@
 
 
 
-[#udb:doc:func:ame_datatype_supported]
+[#ame:doc:func:ame_datatype_supported]
 === `ame_datatype_supported` (builtin)
 Returns true if dtype is a supported datatype, false otherwise.
 
@@ -20,10 +20,12 @@ h| Arguments   l| Bits<32> dtype
 |===
 
 
-[#udb:doc:func:ame_op_supported]
+[#ame:doc:func:ame_op_supported]
 === `ame_op_supported` (builtin)
 Returns true if `src1 op src2 = dest` is a supported operation for the exact
-datatype tuple supplied by the caller.
+datatype tuple supplied by the caller.  For a destination-as-source operation
+implemented by `ame_op3`, the third value operand is the pre-instruction value
+of the destination and is interpreted using `dest_dtype`.
 
 [#norm:ame_op_supported_contract]#`ame_op_supported` returns false when any
 required datatype is zero, when `op` is not implemented, when the datatype
@@ -31,8 +33,9 @@ classes do not satisfy the operation requirements, or when the implementation
 does not support that operation/datatype combination.#
 
 [#norm:ame_op_supported_defined_result]#If `ame_op_supported` returns true, a
-subsequent `ame_op` call with the same operation and datatype tuple has the
-defined result described by the instruction and by the operation table below.#
+subsequent `ame_op` or `ame_op3` call, as appropriate, with the same operation
+and datatype tuple has the defined result described by the instruction and by
+the operation tables below.#
 
 
 |===
@@ -40,7 +43,7 @@ h| Return Type l| Boolean
 h| Arguments   l| AmeOperation op, Bits<32> dest_dtype, Bits<32> src1_dtype, Bits<32> src2_dtype
 |===
 
-[#udb:doc:func:ame_dtype_is_packed]
+[#ame:doc:func:ame_dtype_is_packed]
 === `ame_dtype_is_packed`
 Returns true if dtype_val is a packed datatype: its size in bits (bits 7:0) is
 greater than zero and less than AME_UNIT_DATATYPE_SIZE.
@@ -59,7 +62,20 @@ U32 size = dtype_val[7:0];
 return size > 0 && size < AME_UNIT_DATATYPE_SIZE;
 ----
 
-[#udb:doc:func:ame_dtype_val_to_size]
+[#ame:doc:func:ame_dtype_is_integer]
+=== `ame_dtype_is_integer` (builtin)
+Returns true if `dtype` is a supported signed or unsigned integer datatype.
+Returns false for zero, unknown, floating-point, and other non-integer
+datatypes. Indexed operations use this predicate independently from their
+data-operation support check so that an index datatype is never mistaken for
+an arithmetic operand datatype.
+
+|===
+h| Return Type l| Boolean
+h| Arguments   l| Bits<32> dtype
+|===
+
+[#ame:doc:func:ame_dtype_val_to_size]
 === `ame_dtype_val_to_size`
 Given an integral datatype value, return the size of the datatype in bits
 
@@ -74,7 +90,7 @@ h| Arguments   l| Bits<AME_DTYPE_WIDTH> dtype_val
 return dtype_val[7:0];
 ----
 
-[#udb:doc:func:implemented?]
+[#ame:doc:func:implemented?]
 === `implemented?` (generated)
 Return true if the implementation supports `extension`.
 
@@ -85,7 +101,7 @@ h| Arguments   l| ExtensionName extension
 |===
 
 
-[#udb:doc:func:mode]
+[#ame:doc:func:mode]
 === `mode`
 Returns the current active privilege mode.
 
@@ -97,14 +113,14 @@ h| Arguments   l|
 
 [subs="specialchars,macros"]
 ----
-if pass:[(](!<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::S)) && (!<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::U)) && (!<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H))) {
+if pass:[(](!<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::S)) && (!<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::U)) && (!<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H))) {
   return PrivilegeMode::M;
 } else {
   return current_mode;
 }
 ----
 
-[#udb:doc:func:unpredictable]
+[#ame:doc:func:unpredictable]
 === `unpredictable` (builtin)
 Indicate that the hart has reached a state that is unpredictable because the
 RISC-V spec allows multiple behaviors. Generally, this will be a fatal condition
@@ -120,7 +136,7 @@ h| Arguments   l| String why
 |===
 
 
-[#udb:doc:func:unreachable]
+[#ame:doc:func:unreachable]
 === `unreachable` (builtin)
 Indicate that the IDL line should be unreachable.
 
@@ -133,7 +149,7 @@ h| Arguments   l|
 |===
 
 
-[#udb:doc:func:exception_handling_mode]
+[#ame:doc:func:exception_handling_mode]
 === `exception_handling_mode`
 Returns the target privilege mode that will handle synchronous exception `exception_code`
 
@@ -145,17 +161,17 @@ h| Arguments   l| ExceptionCode exception_code
 
 [subs="specialchars,macros"]
 ----
-if pass:[(]<<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::M) {
+if pass:[(]<<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::M) {
   return PrivilegeMode::M;
-} else if pass:[(]<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::S) && ((<<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::HS) || (<<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::U))) {
-  if pass:[(]($bits(CSR[<<udb:doc:csr:medeleg,CSR[medeleg]>>]) & (MXLEN'1 << $bits(exception_code))) != 0) {
+} else if pass:[(]<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::S) && ((<<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::HS) || (<<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::U))) {
+  if pass:[(]($bits(CSR[<<ame:doc:csr:medeleg,CSR[medeleg]>>]) & (MXLEN'1 << $bits(exception_code))) != 0) {
     return PrivilegeMode::HS;
   } else {
     return PrivilegeMode::M;
   }
-} else if pass:[(]<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) && ((<<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::VS) || (<<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::VU))) {
-  if pass:[(]($bits(CSR[<<udb:doc:csr:medeleg,CSR[medeleg]>>]) & (MXLEN'1 << $bits(exception_code))) != 0) {
-    if pass:[(]($bits(CSR[<<udb:doc:csr:hedeleg,CSR[hedeleg]>>]) & (MXLEN'1 << $bits(exception_code))) != 0) {
+} else if pass:[(]<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) && ((<<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::VS) || (<<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::VU))) {
+  if pass:[(]($bits(CSR[<<ame:doc:csr:medeleg,CSR[medeleg]>>]) & (MXLEN'1 << $bits(exception_code))) != 0) {
+    if pass:[(]($bits(CSR[<<ame:doc:csr:hedeleg,CSR[hedeleg]>>]) & (MXLEN'1 << $bits(exception_code))) != 0) {
       return PrivilegeMode::VS;
     } else {
       return PrivilegeMode::HS;
@@ -164,11 +180,11 @@ if pass:[(]<<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::M) {
     return PrivilegeMode::M;
   }
 } else {
-  <<udb:doc:func:unreachable,unreachable>>pass:[(]);
+  <<ame:doc:func:unreachable,unreachable>>pass:[(]);
 }
 ----
 
-[#udb:doc:func:mtval_readonly?]
+[#ame:doc:func:mtval_readonly?]
 === `mtval_readonly?`
 Returns whether or not CSR[mtval] is read-only based on implementation options
 
@@ -183,7 +199,7 @@ h| Arguments   l|
 return !(REPORT_VA_IN_MTVAL_ON_BREAKPOINT || REPORT_VA_IN_MTVAL_ON_LOAD_MISALIGNED || REPORT_VA_IN_MTVAL_ON_STORE_AMO_MISALIGNED || REPORT_VA_IN_MTVAL_ON_INSTRUCTION_MISALIGNED || REPORT_VA_IN_MTVAL_ON_LOAD_ACCESS_FAULT || REPORT_VA_IN_MTVAL_ON_STORE_AMO_ACCESS_FAULT || REPORT_VA_IN_MTVAL_ON_INSTRUCTION_ACCESS_FAULT || REPORT_VA_IN_MTVAL_ON_LOAD_PAGE_FAULT || REPORT_VA_IN_MTVAL_ON_STORE_AMO_PAGE_FAULT || REPORT_VA_IN_MTVAL_ON_INSTRUCTION_PAGE_FAULT || REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION || REPORT_CAUSE_IN_MTVAL_ON_SHADOW_STACK_SOFTWARE_CHECK || REPORT_CAUSE_IN_MTVAL_ON_LANDING_PAD_SOFTWARE_CHECK);
 ----
 
-[#udb:doc:func:mtval_for]
+[#ame:doc:func:mtval_for]
 === `mtval_for`
 Given an exception code and a *legal* non-zero value for mtval,
 returns the value to be written in mtval considering implementation options
@@ -225,7 +241,7 @@ if pass:[(]exception_code == ExceptionCode::Breakpoint) {
 }
 ----
 
-[#udb:doc:func:stval_readonly?]
+[#ame:doc:func:stval_readonly?]
 === `stval_readonly?`
 Returns whether or not CSR[stval] is read-only based on implementation options
 
@@ -237,14 +253,14 @@ h| Arguments   l|
 
 [subs="specialchars,macros"]
 ----
-if pass:[(]<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::S)) {
+if pass:[(]<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::S)) {
   return !(REPORT_VA_IN_STVAL_ON_BREAKPOINT || REPORT_VA_IN_STVAL_ON_LOAD_MISALIGNED || REPORT_VA_IN_STVAL_ON_STORE_AMO_MISALIGNED || REPORT_VA_IN_STVAL_ON_INSTRUCTION_MISALIGNED || REPORT_VA_IN_STVAL_ON_LOAD_ACCESS_FAULT || REPORT_VA_IN_STVAL_ON_STORE_AMO_ACCESS_FAULT || REPORT_VA_IN_STVAL_ON_INSTRUCTION_ACCESS_FAULT || REPORT_VA_IN_STVAL_ON_LOAD_PAGE_FAULT || REPORT_VA_IN_STVAL_ON_STORE_AMO_PAGE_FAULT || REPORT_VA_IN_STVAL_ON_INSTRUCTION_PAGE_FAULT || REPORT_ENCODING_IN_STVAL_ON_ILLEGAL_INSTRUCTION || REPORT_CAUSE_IN_STVAL_ON_SHADOW_STACK_SOFTWARE_CHECK || REPORT_CAUSE_IN_STVAL_ON_LANDING_PAD_SOFTWARE_CHECK);
 } else {
   return true;
 }
 ----
 
-[#udb:doc:func:stval_for]
+[#ame:doc:func:stval_for]
 === `stval_for`
 Given an exception code and a *legal* non-zero value for stval,
 returns the value to be written in stval considering implementation options
@@ -286,7 +302,7 @@ if pass:[(]exception_code == ExceptionCode::Breakpoint) {
 }
 ----
 
-[#udb:doc:func:vstval_readonly?]
+[#ame:doc:func:vstval_readonly?]
 === `vstval_readonly?`
 Returns whether or not CSR[vstval] is read-only based on implementation options
 
@@ -298,14 +314,14 @@ h| Arguments   l|
 
 [subs="specialchars,macros"]
 ----
-if pass:[(]<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H)) {
+if pass:[(]<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H)) {
   return !(REPORT_VA_IN_VSTVAL_ON_BREAKPOINT || REPORT_VA_IN_VSTVAL_ON_LOAD_MISALIGNED || REPORT_VA_IN_VSTVAL_ON_STORE_AMO_MISALIGNED || REPORT_VA_IN_VSTVAL_ON_INSTRUCTION_MISALIGNED || REPORT_VA_IN_VSTVAL_ON_LOAD_ACCESS_FAULT || REPORT_VA_IN_VSTVAL_ON_STORE_AMO_ACCESS_FAULT || REPORT_VA_IN_VSTVAL_ON_INSTRUCTION_ACCESS_FAULT || REPORT_VA_IN_VSTVAL_ON_LOAD_PAGE_FAULT || REPORT_VA_IN_VSTVAL_ON_STORE_AMO_PAGE_FAULT || REPORT_VA_IN_VSTVAL_ON_INSTRUCTION_PAGE_FAULT || REPORT_ENCODING_IN_VSTVAL_ON_ILLEGAL_INSTRUCTION || REPORT_CAUSE_IN_VSTVAL_ON_SHADOW_STACK_SOFTWARE_CHECK || REPORT_CAUSE_IN_VSTVAL_ON_LANDING_PAD_SOFTWARE_CHECK);
 } else {
   return true;
 }
 ----
 
-[#udb:doc:func:vstval_for]
+[#ame:doc:func:vstval_for]
 === `vstval_for`
 Given an exception code and a *legal* non-zero value for vstval,
 returns the value to be written in vstval considering implementation options
@@ -347,7 +363,7 @@ if pass:[(]exception_code == ExceptionCode::Breakpoint) {
 }
 ----
 
-[#udb:doc:func:notify_mode_change]
+[#ame:doc:func:notify_mode_change]
 === `notify_mode_change` (builtin)
 Called whenever the privilege mode changes. Downstream tools can use this to hook events.
 
@@ -358,7 +374,7 @@ h| Arguments   l| PrivilegeMode new_mode, PrivilegeMode old_mode
 |===
 
 
-[#udb:doc:func:implemented_version?]
+[#ame:doc:func:implemented_version?]
 === `implemented_version?` (generated)
 Return true if the implementation supports `extension` meeting 'version_requirement'.
 
@@ -369,7 +385,7 @@ h| Arguments   l| ExtensionName extension, String version_requirement
 |===
 
 
-[#udb:doc:func:refresh_pending_interrupts]
+[#ame:doc:func:refresh_pending_interrupts]
 === `refresh_pending_interrupts`
 refreshes the calculation of a pending interrupt
 
@@ -395,20 +411,20 @@ h| Arguments   l|
 
 [subs="specialchars,macros"]
 ----
-Bits<MXLEN> pending_ints = CSR[<<udb:doc:csr:mip,CSR[mip]>>].sw_read() & $bits(CSR[<<udb:doc:csr:mie,CSR[mie]>>]);
+Bits<MXLEN> pending_ints = CSR[<<ame:doc:csr:mip,CSR[mip]>>].sw_read() & $bits(CSR[<<ame:doc:csr:mie,CSR[mie]>>]);
 if pass:[(]pending_ints == 0) {
   pending_and_enabled_interrupts = 0;
   return ;
 }
-Boolean HAS_MIDELEG = <<udb:doc:func:implemented_version?,implemented_version?>>pass:[(]ExtensionName::S, "<= 1.9.1") || (<<udb:doc:func:implemented_version?,implemented_version?>>pass:[(]ExtensionName::S, "> 1.9.1") && <<udb:doc:func:implemented_version?,implemented_version?>>pass:[(]ExtensionName::Sm, "> 1.9.1"));
-Bits<MXLEN> mmode_enabled_ints = ((<<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::M) && (CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MIE,MIE>> == 1'b0)) ? 0 : ($bits(CSR[<<udb:doc:csr:mie,CSR[mie]>>]) & (HAS_MIDELEG ? ~$bits(CSR[<<udb:doc:csr:mideleg,CSR[mideleg]>>]) : ~MXLEN'0));
+Boolean HAS_MIDELEG = <<ame:doc:func:implemented_version?,implemented_version?>>pass:[(]ExtensionName::S, "<= 1.9.1") || (<<ame:doc:func:implemented_version?,implemented_version?>>pass:[(]ExtensionName::S, "> 1.9.1") && <<ame:doc:func:implemented_version?,implemented_version?>>pass:[(]ExtensionName::Sm, "> 1.9.1"));
+Bits<MXLEN> mmode_enabled_ints = ((<<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::M) && (CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MIE,MIE>> == 1'b0)) ? 0 : ($bits(CSR[<<ame:doc:csr:mie,CSR[mie]>>]) & (HAS_MIDELEG ? ~$bits(CSR[<<ame:doc:csr:mideleg,CSR[mideleg]>>]) : ~MXLEN'0));
 Bits<MXLEN> mmode_pending_and_enabled = pending_ints & mmode_enabled_ints;
 if pass:[(]mmode_pending_and_enabled != 0) {
   pending_and_enabled_interrupts = mmode_pending_and_enabled;
   return ;
 }
-if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:S,S>> == 1'b1) {
-  Bits<MXLEN> smode_enabled_ints = ((<<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::M) || (CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:SIE,SIE>> == 1'b0)) ? 0 : $bits(CSR[<<udb:doc:csr:mie,CSR[mie]>>]) & ($bits(CSR[<<udb:doc:csr:mideleg,CSR[mideleg]>>]));
+if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:S,S>> == 1'b1) {
+  Bits<MXLEN> smode_enabled_ints = ((<<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::M) || (CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:SIE,SIE>> == 1'b0)) ? 0 : $bits(CSR[<<ame:doc:csr:mie,CSR[mie]>>]) & ($bits(CSR[<<ame:doc:csr:mideleg,CSR[mideleg]>>]));
   Bits<MXLEN> smode_pending_and_enabled = pending_ints & smode_enabled_ints;
   if pass:[(]smode_pending_and_enabled != 0) {
     pending_and_enabled_interrupts = smode_pending_and_enabled;
@@ -418,7 +434,7 @@ if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:S,S>> == 1'b1
 pending_and_enabled_interrupts = 0;
 ----
 
-[#udb:doc:func:set_mode]
+[#ame:doc:func:set_mode]
 === `set_mode`
 Set the current privilege mode to `new_mode`
 
@@ -431,13 +447,13 @@ h| Arguments   l| PrivilegeMode new_mode
 [subs="specialchars,macros"]
 ----
 if pass:[(]new_mode != current_mode) {
-  <<udb:doc:func:notify_mode_change,notify_mode_change>>pass:[(]new_mode, current_mode);
+  <<ame:doc:func:notify_mode_change,notify_mode_change>>pass:[(]new_mode, current_mode);
   current_mode = new_mode;
-  <<udb:doc:func:refresh_pending_interrupts,refresh_pending_interrupts>>pass:[(]);
+  <<ame:doc:func:refresh_pending_interrupts,refresh_pending_interrupts>>pass:[(]);
 }
 ----
 
-[#udb:doc:func:abort_current_instruction]
+[#ame:doc:func:abort_current_instruction]
 === `abort_current_instruction` (builtin)
 Abort the current instruction, and start refetching from $pc.
 
@@ -448,7 +464,7 @@ h| Arguments   l|
 |===
 
 
-[#udb:doc:func:raise_precise]
+[#ame:doc:func:raise_precise]
 === `raise_precise`
 Raise synchronous exception number `exception_code`.
 
@@ -460,74 +476,74 @@ h| Arguments   l| ExceptionCode exception_code, PrivilegeMode from_mode, XReg tv
 
 [subs="specialchars,macros"]
 ----
-PrivilegeMode handling_mode = <<udb:doc:func:exception_handling_mode,exception_handling_mode>>pass:[(]exception_code);
+PrivilegeMode handling_mode = <<ame:doc:func:exception_handling_mode,exception_handling_mode>>pass:[(]exception_code);
 if pass:[(]handling_mode == PrivilegeMode::M) {
-  CSR[<<udb:doc:csr:mepc,mepc>>].<<udb:doc:csr_field:mepc:PC,PC>> = $pc;
-  if pass:[(]!<<udb:doc:func:mtval_readonly?,mtval_readonly?>>pass:[(])) {
-    CSR[<<udb:doc:csr:mtval,mtval>>].<<udb:doc:csr_field:mtval:VALUE,VALUE>> = <<udb:doc:func:mtval_for,mtval_for>>pass:[(]exception_code, tval);
+  CSR[<<ame:doc:csr:mepc,mepc>>].<<ame:doc:csr_field:mepc:PC,PC>> = $pc;
+  if pass:[(]!<<ame:doc:func:mtval_readonly?,mtval_readonly?>>pass:[(])) {
+    CSR[<<ame:doc:csr:mtval,mtval>>].<<ame:doc:csr_field:mtval:VALUE,VALUE>> = <<ame:doc:func:mtval_for,mtval_for>>pass:[(]exception_code, tval);
   }
-  $pc = {CSR[<<udb:doc:csr:mtvec,mtvec>>].<<udb:doc:csr_field:mtvec:BASE,BASE>>, 2'b00};
-  CSR[<<udb:doc:csr:mcause,mcause>>].<<udb:doc:csr_field:mcause:INT,INT>> = 1'b0;
-  CSR[<<udb:doc:csr:mcause,mcause>>].<<udb:doc:csr_field:mcause:CODE,CODE>> = $bits(exception_code);
-  if pass:[(]<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) && CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1) {
-    CSR[<<udb:doc:csr:mtval2,mtval2>>].<<udb:doc:csr_field:mtval2:VALUE,VALUE>> = 0;
-    CSR[<<udb:doc:csr:mtinst,mtinst>>].<<udb:doc:csr_field:mtinst:VALUE,VALUE>> = 0;
+  $pc = {CSR[<<ame:doc:csr:mtvec,mtvec>>].<<ame:doc:csr_field:mtvec:BASE,BASE>>, 2'b00};
+  CSR[<<ame:doc:csr:mcause,mcause>>].<<ame:doc:csr_field:mcause:INT,INT>> = 1'b0;
+  CSR[<<ame:doc:csr:mcause,mcause>>].<<ame:doc:csr_field:mcause:CODE,CODE>> = $bits(exception_code);
+  if pass:[(]<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) && CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:H,H>> == 1) {
+    CSR[<<ame:doc:csr:mtval2,mtval2>>].<<ame:doc:csr_field:mtval2:VALUE,VALUE>> = 0;
+    CSR[<<ame:doc:csr:mtinst,mtinst>>].<<ame:doc:csr_field:mtinst:VALUE,VALUE>> = 0;
     if pass:[(]from_mode == PrivilegeMode::VU || from_mode == PrivilegeMode::VS) {
       if pass:[(]MXLEN == 32) {
-        CSR[<<udb:doc:csr:mstatush,mstatush>>].<<udb:doc:csr_field:mstatush:MPV,MPV>> = 1;
+        CSR[<<ame:doc:csr:mstatush,mstatush>>].<<ame:doc:csr_field:mstatush:MPV,MPV>> = 1;
       } else {
-        CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MPV,MPV>> = 1;
+        CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MPV,MPV>> = 1;
       }
     } else {
       if pass:[(]MXLEN == 32) {
-        CSR[<<udb:doc:csr:mstatush,mstatush>>].<<udb:doc:csr_field:mstatush:MPV,MPV>> = 0;
+        CSR[<<ame:doc:csr:mstatush,mstatush>>].<<ame:doc:csr_field:mstatush:MPV,MPV>> = 0;
       } else {
-        CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MPV,MPV>> = 0;
+        CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MPV,MPV>> = 0;
       }
     }
   }
-  CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MPP,MPP>> = $bits(from_mode);
-} else if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:S,S>> == 1 && (handling_mode == PrivilegeMode::S)) {
-  CSR[<<udb:doc:csr:sepc,sepc>>].<<udb:doc:csr_field:sepc:PC,PC>> = $pc;
-  if pass:[(]!<<udb:doc:func:stval_readonly?,stval_readonly?>>pass:[(])) {
-    CSR[<<udb:doc:csr:stval,stval>>].<<udb:doc:csr_field:stval:VALUE,VALUE>> = <<udb:doc:func:stval_for,stval_for>>pass:[(]exception_code, tval);
+  CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MPP,MPP>> = $bits(from_mode);
+} else if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:S,S>> == 1 && (handling_mode == PrivilegeMode::S)) {
+  CSR[<<ame:doc:csr:sepc,sepc>>].<<ame:doc:csr_field:sepc:PC,PC>> = $pc;
+  if pass:[(]!<<ame:doc:func:stval_readonly?,stval_readonly?>>pass:[(])) {
+    CSR[<<ame:doc:csr:stval,stval>>].<<ame:doc:csr_field:stval:VALUE,VALUE>> = <<ame:doc:func:stval_for,stval_for>>pass:[(]exception_code, tval);
   }
-  $pc = {CSR[<<udb:doc:csr:stvec,stvec>>].<<udb:doc:csr_field:stvec:BASE,BASE>>, 2'b00};
-  CSR[<<udb:doc:csr:scause,scause>>].<<udb:doc:csr_field:scause:INT,INT>> = 1'b0;
-  CSR[<<udb:doc:csr:scause,scause>>].<<udb:doc:csr_field:scause:CODE,CODE>> = $bits(exception_code);
-  CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:SPP,SPP>> = $bits(from_mode)[0];
-  if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1) {
-    CSR[<<udb:doc:csr:htval,htval>>].<<udb:doc:csr_field:htval:VALUE,VALUE>> = 0;
-    CSR[<<udb:doc:csr:htinst,htinst>>].<<udb:doc:csr_field:htinst:VALUE,VALUE>> = 0;
-    CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:SPV,SPV>> = $bits(from_mode)[2];
+  $pc = {CSR[<<ame:doc:csr:stvec,stvec>>].<<ame:doc:csr_field:stvec:BASE,BASE>>, 2'b00};
+  CSR[<<ame:doc:csr:scause,scause>>].<<ame:doc:csr_field:scause:INT,INT>> = 1'b0;
+  CSR[<<ame:doc:csr:scause,scause>>].<<ame:doc:csr_field:scause:CODE,CODE>> = $bits(exception_code);
+  CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:SPP,SPP>> = $bits(from_mode)[0];
+  if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:H,H>> == 1) {
+    CSR[<<ame:doc:csr:htval,htval>>].<<ame:doc:csr_field:htval:VALUE,VALUE>> = 0;
+    CSR[<<ame:doc:csr:htinst,htinst>>].<<ame:doc:csr_field:htinst:VALUE,VALUE>> = 0;
+    CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:SPV,SPV>> = $bits(from_mode)[2];
     if pass:[(]from_mode == PrivilegeMode::VU || from_mode == PrivilegeMode::VS) {
-      CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:SPV,SPV>> = 1;
+      CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:SPV,SPV>> = 1;
       if pass:[(]((exception_code == ExceptionCode::Breakpoint) && (REPORT_VA_IN_STVAL_ON_BREAKPOINT)) || ((exception_code == ExceptionCode::LoadAddressMisaligned) && (REPORT_VA_IN_STVAL_ON_LOAD_MISALIGNED)) || ((exception_code == ExceptionCode::StoreAmoAddressMisaligned) && (REPORT_VA_IN_STVAL_ON_STORE_AMO_MISALIGNED)) || ((exception_code == ExceptionCode::InstructionAddressMisaligned) && (REPORT_VA_IN_STVAL_ON_INSTRUCTION_MISALIGNED)) || ((exception_code == ExceptionCode::LoadAccessFault) && (REPORT_VA_IN_STVAL_ON_LOAD_ACCESS_FAULT)) || ((exception_code == ExceptionCode::StoreAmoAccessFault) && (REPORT_VA_IN_STVAL_ON_STORE_AMO_ACCESS_FAULT)) || ((exception_code == ExceptionCode::InstructionAccessFault) && (REPORT_VA_IN_STVAL_ON_INSTRUCTION_ACCESS_FAULT)) || ((exception_code == ExceptionCode::LoadPageFault) && (REPORT_VA_IN_STVAL_ON_LOAD_PAGE_FAULT)) || ((exception_code == ExceptionCode::StoreAmoPageFault) && (REPORT_VA_IN_STVAL_ON_STORE_AMO_PAGE_FAULT)) || ((exception_code == ExceptionCode::InstructionPageFault) && (REPORT_VA_IN_STVAL_ON_INSTRUCTION_PAGE_FAULT))) {
-        CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:GVA,GVA>> = 1;
+        CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:GVA,GVA>> = 1;
       } else {
-        CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:GVA,GVA>> = 0;
+        CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:GVA,GVA>> = 0;
       }
-      CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:SPVP,SPVP>> = $bits(from_mode)[0];
+      CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:SPVP,SPVP>> = $bits(from_mode)[0];
     } else {
-      CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:SPV,SPV>> = 0;
-      CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:GVA,GVA>> = 0;
+      CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:SPV,SPV>> = 0;
+      CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:GVA,GVA>> = 0;
     }
   }
-} else if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1 && (handling_mode == PrivilegeMode::VS)) {
-  CSR[<<udb:doc:csr:vsepc,vsepc>>].<<udb:doc:csr_field:vsepc:PC,PC>> = $pc;
-  if pass:[(]!<<udb:doc:func:vstval_readonly?,vstval_readonly?>>pass:[(])) {
-    CSR[<<udb:doc:csr:vstval,vstval>>].<<udb:doc:csr_field:vstval:VALUE,VALUE>> = <<udb:doc:func:vstval_for,vstval_for>>pass:[(]exception_code, tval);
+} else if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:H,H>> == 1 && (handling_mode == PrivilegeMode::VS)) {
+  CSR[<<ame:doc:csr:vsepc,vsepc>>].<<ame:doc:csr_field:vsepc:PC,PC>> = $pc;
+  if pass:[(]!<<ame:doc:func:vstval_readonly?,vstval_readonly?>>pass:[(])) {
+    CSR[<<ame:doc:csr:vstval,vstval>>].<<ame:doc:csr_field:vstval:VALUE,VALUE>> = <<ame:doc:func:vstval_for,vstval_for>>pass:[(]exception_code, tval);
   }
-  $pc = {CSR[<<udb:doc:csr:vstvec,vstvec>>].<<udb:doc:csr_field:vstvec:BASE,BASE>>, 2'b00};
-  CSR[<<udb:doc:csr:vscause,vscause>>].<<udb:doc:csr_field:vscause:INT,INT>> = 1'b0;
-  CSR[<<udb:doc:csr:vscause,vscause>>].<<udb:doc:csr_field:vscause:CODE,CODE>> = $bits(exception_code);
-  CSR[<<udb:doc:csr:vsstatus,vsstatus>>].<<udb:doc:csr_field:vsstatus:SPP,SPP>> = $bits(from_mode)[0];
+  $pc = {CSR[<<ame:doc:csr:vstvec,vstvec>>].<<ame:doc:csr_field:vstvec:BASE,BASE>>, 2'b00};
+  CSR[<<ame:doc:csr:vscause,vscause>>].<<ame:doc:csr_field:vscause:INT,INT>> = 1'b0;
+  CSR[<<ame:doc:csr:vscause,vscause>>].<<ame:doc:csr_field:vscause:CODE,CODE>> = $bits(exception_code);
+  CSR[<<ame:doc:csr:vsstatus,vsstatus>>].<<ame:doc:csr_field:vsstatus:SPP,SPP>> = $bits(from_mode)[0];
 }
-<<udb:doc:func:set_mode,set_mode>>pass:[(]handling_mode);
-<<udb:doc:func:abort_current_instruction,abort_current_instruction>>pass:[(]);
+<<ame:doc:func:set_mode,set_mode>>pass:[(]handling_mode);
+<<ame:doc:func:abort_current_instruction,abort_current_instruction>>pass:[(]);
 ----
 
-[#udb:doc:func:raise]
+[#ame:doc:func:raise]
 === `raise`
 Raise synchronous exception number `exception_code`.
 
@@ -545,13 +561,13 @@ h| Arguments   l| ExceptionCode exception_code, PrivilegeMode from_mode, XReg tv
 [subs="specialchars,macros"]
 ----
 if pass:[(]!PRECISE_SYNCHRONOUS_EXCEPTIONS) {
-  <<udb:doc:func:unpredictable,unpredictable>>pass:[(]"Imprecise synchronous exception");
+  <<ame:doc:func:unpredictable,unpredictable>>pass:[(]"Imprecise synchronous exception");
 } else {
-  <<udb:doc:func:raise_precise,raise_precise>>pass:[(]exception_code, from_mode, tval);
+  <<ame:doc:func:raise_precise,raise_precise>>pass:[(]exception_code, from_mode, tval);
 }
 ----
 
-[#udb:doc:func:ame_xform_impl_to_rm]
+[#ame:doc:func:ame_xform_impl_to_rm]
 === `ame_xform_impl_to_rm` (builtin)
 Given a square in implementation-defined format, return the row-major
 representation of the square.
@@ -559,11 +575,205 @@ representation of the square.
 
 |===
 h| Return Type l| Bits<AME_MAX_SQUARE_SIZE>
-h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> impl_square, Bits<8> dtype
+h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> impl_square, Bits<32> dtype
 |===
 
 
-[#udb:doc:func:ame_op]
+[#ame:doc:func:ame_read_m_element]
+=== `ame_read_m_element` (builtin)
+Reads one logical row-major element from the pre-instruction snapshot of an
+`M` operand.  `element_index` ranges over every logical element in the formed
+operand, including all packed or `N_sq` squares.  The builtin locates the
+physical register group and square, assembles all registers needed by a wide
+datatype before applying the implementation-to-row-major transformation, and
+returns the low `sizeof(dtype)` bits of the selected element.
+
+This builtin must be called only after base-index, datatype,
+register-group/span, element-index, and operation-support checks have
+succeeded.  It never observes destination writes staged by the current
+instruction.
+
+|===
+h| Return Type l| Bits<AME_MAX_DTYPE_SIZE>
+h| Arguments   l| Bits<5> base, Bits<32> dtype, U32 element_index
+|===
+
+
+[#ame:doc:func:ame_matmul_accumulate]
+=== `ame_matmul_accumulate` (builtin)
+Accumulates one matrix-multiply product into a dot-product partial result.  The
+source bit vectors are interpreted using their source datatypes and the
+partial result is interpreted using `dest_dtype`; this operation is numeric
+for both integer and floating-point tuples and is never raw bit-vector integer
+addition.
+
+The product sign and accumulate/overwrite variant are selected by `op`.  The
+implementation applies the overflow, saturation, floating-point special-value,
+rounding, and optional fused-product behavior defined for the supported matrix
+operation tuple.  Until a tighter matrix precision profile is defined, those
+finite-precision choices remain implementation-defined, but the selected
+behavior must be deterministic for a given implementation.
+
+|===
+h| Return Type l| Bits<AME_MAX_DTYPE_SIZE>
+h| Arguments   l| AmeOperation op, Bits<32> dest_dtype, Bits<AME_MAX_DTYPE_SIZE> partial, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE> src1, Bits<32> src2_dtype, Bits<AME_MAX_DTYPE_SIZE> src2
+|===
+
+
+[#ame:doc:func:ame_stage_m_element_write]
+=== `ame_stage_m_element_write` (builtin)
+Stages one logical row-major element write to an `M` register group.
+
+The register containing `element_index` and the element's physical bit
+position within that register are derived from `dtype` and the
+implementation-defined register layout.  The low `sizeof(dtype)` bits of
+`value` are written.
+
+The first call for a destination group in an instruction initializes its
+staged image from the pre-instruction architectural value.  Subsequent calls
+for that group update the same staged image, so distinct element writes
+compose rather than overwrite one another.  The staged image becomes visible
+only under the atomic register writeback rules in the Programming Model.
+
+This builtin must be called only after datatype, register-group alignment,
+index, and operation-support checks have succeeded.
+
+|===
+h| Return Type l| void
+h| Arguments   l| U32 md, Bits<32> dtype, U32 element_index, Bits<AME_MAX_DTYPE_SIZE> value
+|===
+
+
+[#ame:doc:func:ame_check_m_index]
+=== `ame_check_m_index`
+Validates an encoded `M` or `Md` register index before any matrix datatype or
+data state is accessed.  An index outside the implemented matrix register file
+raises a precise Illegal Instruction exception.
+
+|===
+h| Return Type l| void
+h| Arguments   l| Bits<5> index, Bits<INSTR_ENC_SIZE> encoding
+|===
+
+[subs="specialchars,macros"]
+----
+if pass:[(]index >= AME_NUM_M_REGS) {
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), encoding);
+}
+----
+
+
+[#ame:doc:func:ame_check_m_group]
+=== `ame_check_m_group`
+Validates the alignment and complete physical-register span of an `M` operand
+after its datatype and instruction square count have been determined.  The
+`alignment` is the number of registers occupied by one non-packed square, or
+one for a packed datatype.  `register_span` is the complete span calculated by
+the operand-formation rules, including all `N_sq` squares.
+
+Zero alignment or span, a misaligned base, or a span extending beyond the
+implemented matrix register file raises a precise Illegal Instruction
+exception.
+
+|===
+h| Return Type l| void
+h| Arguments   l| Bits<5> base, U32 alignment, U32 register_span, Bits<INSTR_ENC_SIZE> encoding
+|===
+
+[subs="specialchars,macros"]
+----
+if pass:[(]alignment == 0 || register_span == 0 ||
+    (base % alignment) != 0 ||
+    (base pass:[+] register_span) > AME_NUM_M_REGS) {
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), encoding);
+}
+----
+
+
+[#ame:doc:func:ame_check_acc_index]
+=== `ame_check_acc_index`
+Validates an encoded `Acc` or `Ad` register index before any accumulator
+datatype or data state is accessed.
+
+If the index names an unimplemented accumulator and
+`AME_UNIMPL_ACC_BEHAVIOR` is `exception`, the instruction raises a precise
+Illegal Instruction exception.  If the configured behavior is `undefined`,
+the instruction enters the specification's unpredictable state.
+
+|===
+h| Return Type l| void
+h| Arguments   l| Bits<5> index, Bits<INSTR_ENC_SIZE> encoding
+|===
+
+[subs="specialchars,macros"]
+----
+if pass:[(]index >= AME_NUM_ACC_REGS) {
+  if pass:[(]AME_UNIMPL_ACC_BEHAVIOR == "exception") {
+    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), encoding);
+  } else {
+    <<ame:doc:func:unpredictable,unpredictable>>pass:[(]"Instruction references an unimplemented Acc or Ad register");
+  }
+}
+----
+
+
+[#ame:doc:func:ame_stage_acc_element_write]
+=== `ame_stage_acc_element_write` (builtin)
+Stages one logical row-major element write to an `Acc` register.  Element
+mapping, composition of repeated writes, and commit behavior are identical to
+`ame_stage_m_element_write`, except that the destination is the accumulator
+named by `acc`.
+
+|===
+h| Return Type l| void
+h| Arguments   l| Bits<5> acc, Bits<32> dtype, U32 element_index, Bits<AME_MAX_DTYPE_SIZE> value
+|===
+
+
+[#ame:doc:func:ame_stage_m_element_rmw]
+=== `ame_stage_m_element_rmw` (builtin)
+Performs a staged read-modify-write of one logical row-major element in an `M`
+register group.  The current operand is read from the staged destination image
+if that element was written earlier by the same instruction, and otherwise
+from the pre-instruction architectural value.  The builtin computes
+`ame_op(op, src_dtype, src_value, dest_dtype, current_value, dest_dtype)` and
+stages the result.
+
+This ordering gives deterministic scatter behavior when multiple source
+elements select the same destination: updates are applied in the instruction's
+specified loop order.  The same support and atomic writeback preconditions as
+`ame_stage_m_element_write` apply.
+
+|===
+h| Return Type l| void
+h| Arguments   l| U32 md, Bits<32> dest_dtype, U32 element_index, AmeOperation op, Bits<32> src_dtype, Bits<AME_MAX_DTYPE_SIZE> src_value
+|===
+
+
+[#ame:doc:func:ame_stage_m_element_op3]
+=== `ame_stage_m_element_op3` (builtin)
+Stages a destination-as-source operation on one logical row-major element in
+an `M` register group.  The current destination operand is always read from
+the pre-instruction architectural snapshot, never from the staged destination
+image.  The builtin computes
+`ame_op3(op, src1_dtype, src1_value, src2_dtype, src2_value, current_value,
+dest_dtype)` and stages the result.
+
+Reading the pre-instruction snapshot preserves the register-overlap semantics
+when `md` overlaps either source group and makes each element independent of
+earlier staged writes by the same instruction.  Commit and exception behavior
+follow the same atomic writeback rules as `ame_stage_m_element_write`.
+
+This builtin must be called only after datatype, register-group alignment,
+index, and operation-support checks have succeeded.
+
+|===
+h| Return Type l| void
+h| Arguments   l| U32 md, Bits<32> dest_dtype, U32 element_index, AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE> src1_value, Bits<32> src2_dtype, Bits<AME_MAX_DTYPE_SIZE> src2_value
+|===
+
+
+[#ame:doc:func:ame_op]
 === `ame_op` (builtin)
 Returns the result of src1 op src2 in dest_type.
 
@@ -595,9 +805,94 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 | `src1`
 | The data source and destination datatypes are identical. Gather index operands are integer datatypes.
 
-| `REDUCEMINCOL1D`, `REDUCEMIN1D`
+| `CONV1D`
+| The numeric value of `src1` converted to the destination datatype; `src2` is ignored
+| A supported source-to-destination conversion tuple
+
+| `ABS1D`
+| `abs(src1)`; `src2` is ignored
+| Supported numeric source and destination datatypes
+
+| `ABSDIFF1D`
+| `abs(src1 - src2)`
+| Supported numeric source and destination datatypes
+
+| `AND1D`, `ANDNOT1D`, `OR1D`, `ORNOT1D`, `XOR1D`
+| `src1 & src2`, `src1 & ~src2`, `src1 \| src2`, `src1 \| ~src2`, and
+`src1 ^ src2`, respectively
+| Identical integer source and destination datatypes
+
+| `CMPGE1D`, `CMPLT1D`
+| All one bits in the destination element when `src1 >= src2` or
+`src1 < src2`, respectively; otherwise all zero bits
+| Ordered numeric source datatypes and an integer destination datatype
+
+| `COLUNZIP1D`, `COLZIP1D`, `ROWUNZIP1D`, `ROWZIP1D`
+| A bit-exact copy of `src1`; source selection and destination placement are
+performed by the instruction pseudocode
+| Identical source and destination datatypes
+
+| `EXP21D`, `LOG21D`
+| `2^src1` and `log2(src1)`, respectively; `src2` is ignored
+| Floating-point source and destination datatypes
+
+| `LDEXP1D`, `RDEXP1D`
+| `src1 * 2^src2` and `src1 * 2^(-src2)`, respectively
+| Numeric data source and destination datatypes; integer exponent datatype
+
+| `LOG2SUB1D`, `SUBLOG21D`
+| `log2(abs(src1)) - src2` and `src2 - log2(abs(src1))`, respectively
+| Floating-point data source and destination datatypes; numeric bias datatype
+
+| `HDIFF1D`, `MEAN1D`
+| `(src2 - src1) / 2` and `(src1 + src2) / 2`, respectively
+| Supported numeric source and destination datatypes
+
+| `MUL1D`, `NMUL1D`
+| `src1 * src2` and `-(src1 * src2)`, respectively
+| Supported numeric source and destination datatypes
+
+| `SELGE1D`, `SEL1D`
+| `src2` when the sign bit of `src1` is clear or set, respectively; otherwise
+semantic zero in the destination datatype
+| A predicate datatype with a defined sign bit; identical `src2` and
+destination datatypes
+
+| `SUB1D`
+| `src2 - src1`
+| Supported numeric source and destination datatypes
+
+| `ADD1D`
+| `src1 + src2`
+| Supported numeric source and destination datatypes
+
+| `MM1D`, `MMACC1D`, `MMAT1D`, `MMATACC1D`, `MMBT1D`, `MMBTACC1D`
+| `src1 * src2`
+| Supported numeric matrix source and accumulator destination datatypes
+
+| `MMNEG1D`, `MMACCNEG1D`
+| `-(src1 * src2)`
+| Supported numeric matrix source and accumulator destination datatypes
+
+| `MIN1D`, `REDUCEMINCOL1D`, `REDUCEMIN1D`
 | `min(src1, src2)` according to the source datatype's ordering
-| Ordered numeric source and destination datatypes
+| Identical ordered numeric source and destination datatypes
+
+| `PREFIXADDCOL1D`, `PREFIXADD1D`, `REDUCEADDCOL1D`, `REDUCEADD1D`
+| `src1 + src2`
+| Identical numeric source and destination datatypes
+
+| `MAX1D`, `PREFIXMAXCOL1D`, `PREFIXMAX1D`, `REDUCEMAXCOL1D`, `REDUCEMAX1D`
+| `max(src1, src2)` according to the source datatype's ordering
+| Identical ordered numeric source and destination datatypes
+
+| `SCATADDCOL1D`, `SCATADD1D`
+| `src1 + src2`, where `src2` is the current destination element
+| Numeric contribution source; the second source and result use the destination datatype
+
+| `SCATMAXCOL1D`, `SCATMAX1D`
+| `max(src1, src2)`, where `src2` is the current destination element
+| Ordered numeric contribution source; the second source and result use the destination datatype
 
 | `ZERO1D`
 | Zero in the destination datatype
@@ -605,15 +900,15 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 
 | `SLL1D`
 | `src1 << src2`
-| Integer data and shift-amount datatypes
+| Integer data and shift-amount datatypes; the data element width is a power of two
 
 | `SRA1D`
 | Signed arithmetic right shift of `src1` by `src2`
-| Signed integer data datatype and integer shift-amount datatype
+| Signed integer data datatype with a power-of-two element width and integer shift-amount datatype
 
 | `SRL1D`
 | Unsigned logical right shift of `src1` by `src2`
-| Integer data and shift-amount datatypes
+| Integer data and shift-amount datatypes; the data element width is a power of two
 
 | `COS1D`, `SIN1D`, `TANH1D`
 | `cos(src1)`, `sin(src1)`, `tanh(src1)`, respectively
@@ -640,12 +935,242 @@ h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE>
 | Floating-point source and destination datatypes
 |===
 
-For `SLL1D`, `SRA1D`, and `SRL1D`, the caller supplies the already-masked
-unsigned shift amount defined by the corresponding instruction.  Floating-point
-results, including NaNs, infinities, signed zeros, overflow, underflow, and
-rounding, follow the destination datatype definition.
+For standard integer arithmetic operations, the mathematical result shown in
+the table is evaluated without intermediate truncation and then converted once
+to the destination integer datatype.  A destination with `Saturation=1`
+clamps an out-of-range result; a destination with `Saturation=0` retains the
+low destination-width bits.  Standard integer tuples for `HDIFF1D` and
+`MEAN1D` are unsupported until their non-integral rounding direction is
+specified.  Custom datatype tuples may define their own conversion rule.
 
-[#udb:doc:func:ame_xform_rm_to_impl]
+Floating-point `CMPGE1D` and `CMPLT1D` use ordered IEEE comparisons: a NaN
+operand makes the comparison false, and `-0` compares equal to `+0`.
+The unselected result of `SELGE1D` and `SEL1D` is the destination datatype's
+semantic zero, including its canonical zero sign.
+
+For `SLL1D`, `SRA1D`, and `SRL1D`, the caller supplies the already-masked
+unsigned shift amount defined by the corresponding instruction.  `ZERO1D`
+returns the datatype's semantic zero; instructions must not assume that its
+encoded representation is an all-zero bit pattern.  Floating-point results
+follow the rules below.
+
+[#norm:ame_fp_special_values]
+.Floating-point special values and accuracy
+[cols="2,4,4",options="header"]
+|===
+| Operation | Required special-value result | Finite-result accuracy
+
+| `MIN1D`, `REDUCEMINCOL1D`, `REDUCEMIN1D`
+| If either operand is a NaN, return the destination datatype's canonical quiet
+NaN.  Otherwise compare using the source datatype's numerical ordering.  A tie
+between `-0` and `+0` returns `-0`.
+| Exact selection of one operand.  Reduction instructions apply this binary
+operation in ascending source-element order.
+
+| `MAX1D`, `PREFIXMAXCOL1D`, `PREFIXMAX1D`, `REDUCEMAXCOL1D`, `REDUCEMAX1D`
+| If either operand is a NaN, return the destination datatype's canonical quiet
+NaN.  Otherwise compare using the source datatype's numerical ordering.  A tie
+between `-0` and `+0` returns `+0`.
+| Exact selection of one operand.  Prefix and reduction instructions apply this
+binary operation in ascending source-element order.
+
+| `SCATMAXCOL1D`, `SCATMAX1D`
+| If either operand is a NaN, return the destination datatype's canonical quiet
+NaN. Otherwise compare numerically after interpreting each operand in its own
+datatype. A tie between `-0` and `+0` returns `+0`.
+| Each selected destination is updated in ascending source-element order.
+
+| `ADD1D`
+| If either operand is a NaN, or if opposite-signed infinities are added, return
+the destination datatype's canonical quiet NaN. Otherwise an infinity plus a
+finite value, or two same-signed infinities, returns that infinity.
+| The sum is correctly rounded once according to the destination datatype's
+rounding mode.
+
+| `SUB1D`
+| If either operand is a NaN, or if same-signed infinities are subtracted,
+return the destination datatype's canonical quiet NaN. Otherwise subtraction
+of a finite value from an infinity, or an infinity from a finite value, returns
+the mathematically signed infinity.
+| The difference is correctly rounded once according to the destination
+datatype's rounding mode.
+
+| `ABS1D`
+| A NaN returns the destination datatype's canonical quiet NaN. Either signed
+zero returns `+0`, and either infinity returns `+infinity`.
+| Exact for every representable finite result.
+
+| `ABSDIFF1D`
+| A NaN, or subtraction of two same-signed infinities, returns the destination
+datatype's canonical quiet NaN. Any other infinite difference returns
+`+infinity`.
+| The absolute difference is correctly rounded once according to the
+destination datatype's rounding mode.
+
+| `MUL1D`, `NMUL1D`
+| A NaN, or multiplication of zero by an infinity, returns the destination
+datatype's canonical quiet NaN. Other infinite products follow the
+mathematical sign; `NMUL1D` then negates that sign.
+| The product is correctly rounded once according to the destination
+datatype's rounding mode.
+
+| `PREFIXADDCOL1D`, `PREFIXADD1D`, `REDUCEADDCOL1D`, `REDUCEADD1D`
+| If either operand is a NaN, or if opposite-signed infinities are added, return
+the destination datatype's canonical quiet NaN.  Otherwise an infinity plus a
+finite value, or two same-signed infinities, returns that infinity.
+| Each binary addition is correctly rounded according to the destination
+datatype's rounding mode.  Prefix and reduction instructions apply additions
+in ascending source-element order.
+
+| `SCATADDCOL1D`, `SCATADD1D`
+| The NaN and infinity results are the same as for `ADD1D`.
+| Every contribution is correctly rounded to the destination datatype before
+the next contribution to the same destination is applied; updates occur in
+ascending source-element order.
+
+| `SIN1D`, `COS1D`
+| A NaN or either infinity returns the destination datatype's canonical quiet
+NaN.  `sin(+/-0)` returns the same signed zero; `cos(+/-0)` returns `+1`.
+| Implementation-defined.  An implementation must document its maximum error,
+in ulp, for every supported operation and datatype tuple.
+
+| `TANH1D`
+| A NaN returns the destination datatype's canonical quiet NaN. `tanh(+/-0)`
+returns the same signed zero and `tanh(+/-infinity)` returns `+/-1`.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `EXP21D`
+| A NaN returns the destination datatype's canonical quiet NaN.
+`exp2(+infinity)` returns `+infinity`, `exp2(-infinity)` returns `+0`, and
+`exp2(+/-0)` returns `+1`.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `LOG21D`
+| A NaN, a negative finite value, or `-infinity` returns the destination
+datatype's canonical quiet NaN. `log2(+/-0)` returns `-infinity`, `log2(+infinity)` returns
+`+infinity`, and `log2(1)` returns `+0`.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `LDEXP1D`, `RDEXP1D`
+| A NaN data operand returns the destination datatype's canonical quiet NaN.
+A signed zero or signed infinity preserves its sign. Scaling overflow and
+underflow are handled by destination conversion.
+| The exact power-of-two-scaled result is rounded once according to the
+destination datatype's rounding mode.
+
+| `LOG2SUB1D`, `SUBLOG21D`
+| NaN inputs and invalid infinity combinations return the destination
+datatype's canonical quiet NaN. The `log2(abs(src1))` term follows the
+`LOG21D` rules above.
+| Implementation-defined. An implementation must document the maximum error
+and whether the compound expression uses an intermediate rounding.
+
+| `REC1D`
+| A NaN returns the destination datatype's canonical quiet NaN. `1/(+/-0)`
+returns the correspondingly signed infinity, and `1/(+/-infinity)` returns the
+correspondingly signed zero.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `RSQRT1D`
+| A NaN, `-infinity`, or a negative finite value other than `-0` returns the destination
+datatype's canonical quiet NaN. `rsqrt(+0)` returns `+infinity`, `rsqrt(-0)`
+returns `-infinity`, and `rsqrt(+infinity)` returns `+0`.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `SQRT1D`
+| A NaN, `-infinity`, or a negative finite value other than `-0` returns the destination
+datatype's canonical quiet NaN. `sqrt(+/-0)` preserves the signed zero and
+`sqrt(+infinity)` returns `+infinity`.
+| Correctly rounded according to the destination datatype's rounding mode.
+
+| `FRINTM1D`, `FRINTN1D`, `FRINTP1D`, `FRINTZ1D`
+| A NaN returns the destination datatype's canonical quiet NaN.  An infinity is
+unchanged and a zero preserves its sign.
+| Exact when the integral value is representable.  The operation-specific
+rounding direction overrides the destination datatype's rounding-mode field.
+|===
+
+For these operations, a signaling NaN is treated as a NaN and the result is
+quieted.  If a mathematical result is infinite but the destination datatype
+does not encode infinity, the result saturates to that datatype's signed
+minimum or maximum, as appropriate.  An operation/datatype tuple that cannot
+represent a required NaN result is unsupported.
+
+AME defines no floating-point exception flags.  Once `ame_op_supported` has
+accepted a tuple, the special cases above are normal data results: they neither
+set `amestatus.UN` nor raise an exception.  `amestatus.UN` reports only an
+unsupported operation/datatype tuple.
+
+
+[#ame:doc:func:ame_op3]
+=== `ame_op3` (builtin)
+Returns the result of a destination-as-source operation with two explicit
+source values and the pre-instruction destination value.  `current_value` is
+interpreted using `dest_dtype`.
+
+`ame_op3` is the three-value counterpart of `ame_op` and is the common semantic
+boundary for datatype interpretation, conversion, rounding, saturation,
+floating-point exceptional values, and custom datatype behavior.  It is called
+only for a tuple for which `ame_op_supported` returned true.  The low
+`sizeof(dest_dtype)` bits contain the result; higher bits are undefined.
+
+|===
+h| Return Type l| Bits<AME_MAX_DTYPE_SIZE>
+h| Arguments   l| AmeOperation op, Bits<32> src1_dtype, Bits<AME_MAX_DTYPE_SIZE> src1_value, Bits<32> src2_dtype, Bits<AME_MAX_DTYPE_SIZE> src2_value, Bits<AME_MAX_DTYPE_SIZE> current_value, Bits<32> dest_dtype
+|===
+
+.Destination-as-source operation semantics
+[cols="2,3,3",options="header"]
+|===
+| `AmeOperation` | Mathematical result before destination conversion | Required operand class
+
+| `MUXGE1D`
+| `src2` when the sign bit of `src1` is clear; otherwise `current`
+| A predicate datatype with a defined sign bit; identical `src2` and destination datatypes
+
+| `MUXLT1D`
+| `src2` when the sign bit of `src1` is set; otherwise `current`
+| A predicate datatype with a defined sign bit; identical `src2` and destination datatypes
+
+| `LDEXPACC1D`
+| `current + src1 * 2^src2`
+| Numeric data and destination datatypes; integer exponent datatype
+
+| `RDEXPACC1D`
+| `current + src1 * 2^(-src2)`
+| Numeric data and destination datatypes; integer exponent datatype
+
+| `MULACC1D`
+| `current + src1 * src2`
+| Supported numeric source and destination datatypes
+
+| `MULNACC1D`
+| `current - src1 * src2`
+| Supported numeric source and destination datatypes
+
+| `MULADD1D`
+| `src1 + src2 * current`
+| Supported numeric source and destination datatypes
+
+| `MULSUB1D`
+| `src1 - src2 * current`
+| Supported numeric source and destination datatypes
+|===
+
+For `MUXGE1D` and `MUXLT1D`, an unselected `current` value is preserved bit
+exactly in its low `sizeof(dest_dtype)` bits.  For every arithmetic operation
+above, the complete mathematical expression is evaluated without an
+intermediate destination conversion and is converted to `dest_dtype` once.
+Thus `MULADD1D` and `MULSUB1D` have fused multiply-add/subtract semantics.
+
+For floating-point arithmetic, any NaN input produces the destination
+datatype's canonical quiet NaN.  Invalid infinite forms, including zero times
+infinity and addition of opposite-signed infinities, also produce that NaN.
+Other infinities follow the mathematical expression.  A finite result is
+rounded once according to the destination datatype's rounding mode.  These
+results follow the same no-floating-point-exception-flags rule as `ame_op`.
+
+[#ame:doc:func:ame_xform_rm_to_impl]
 === `ame_xform_rm_to_impl` (builtin)
 Given a square in row-major format, return the implementation-dependent
 representation of the square.
@@ -653,11 +1178,11 @@ representation of the square.
 
 |===
 h| Return Type l| Bits<AME_MAX_SQUARE_SIZE>
-h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> raster_square, Bits<8> dtype
+h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> raster_square, Bits<32> dtype
 |===
 
 
-[#udb:doc:func:sqrt]
+[#ame:doc:func:sqrt]
 === `sqrt`
 Integer square root of power of 4
 
@@ -669,15 +1194,17 @@ h| Arguments   l| Bits<64> int_value
 
 [subs="specialchars,macros"]
 ----
+Bits<64> result = 1;
 for pass:[(]U32 i = 0; i < 64; i++) {
-  int_value = int_value / 4;
   if pass:[(]int_value <= 1) {
-    return i pass:[+] 1;
+    return result;
   }
+  int_value = int_value / 4;
+  result = result * 2;
 }
 ----
 
-[#udb:doc:func:min]
+[#ame:doc:func:min]
 === `min`
 Returns the smaller of a or b
 
@@ -692,7 +1219,7 @@ h| Arguments   l| Bits<64> a, Bits<64> b
 return a < b ? a : b;
 ----
 
-[#udb:doc:func:is_naturally_aligned]
+[#ame:doc:func:is_naturally_aligned]
 === `is_naturally_aligned`
 Checks if value is naturally aligned to N bits.
 
@@ -709,7 +1236,7 @@ XReg Mask = (N / 8) - 1;
 return (value & ~Mask) == value;
 ----
 
-[#udb:doc:func:assert]
+[#ame:doc:func:assert]
 === `assert` (builtin)
 Assert that a condition is true. Failure represents an error in the IDL model.
 
@@ -720,7 +1247,7 @@ h| Arguments   l| Boolean test, String message
 |===
 
 
-[#udb:doc:func:mpv]
+[#ame:doc:func:mpv]
 === `mpv`
 Returns the current value of CSR[mstatus].MPV (when MXLEN == 64) of CSR[mstatush].MPV (when MXLEN == 32)
 
@@ -732,14 +1259,14 @@ h| Arguments   l|
 
 [subs="specialchars,macros"]
 ----
-if pass:[(]<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H)) {
-  return (MXLEN == 32) ? CSR[<<udb:doc:csr:mstatush,mstatush>>].<<udb:doc:csr_field:mstatush:MPV,MPV>> : CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MPV,MPV>>;
+if pass:[(]<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H)) {
+  return (MXLEN == 32) ? CSR[<<ame:doc:csr:mstatush,mstatush>>].<<ame:doc:csr_field:mstatush:MPV,MPV>> : CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MPV,MPV>>;
 } else {
-  <<udb:doc:func:assert,assert>>pass:[(]false, "TODO");
+  <<ame:doc:func:assert,assert>>pass:[(]false, "TODO");
 }
 ----
 
-[#udb:doc:func:effective_ldst_mode]
+[#ame:doc:func:effective_ldst_mode]
 === `effective_ldst_mode`
 Returns the effective privilege mode for normal explicit loads and stores, taking into account
 the current actual privilege mode and modifications from `mstatus.MPRV`.
@@ -752,16 +1279,16 @@ h| Arguments   l|
 
 [subs="specialchars,macros"]
 ----
-if pass:[(]<<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::M) {
-  if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:U,U>> == 1 && CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MPRV,MPRV>> == 1) {
-    if pass:[(]CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MPP,MPP>> == 0b00) {
-      if pass:[(]<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) && CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1 && <<udb:doc:func:mpv,mpv>>pass:[(]) == 0b1) {
+if pass:[(]<<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::M) {
+  if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:U,U>> == 1 && CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MPRV,MPRV>> == 1) {
+    if pass:[(]CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MPP,MPP>> == 0b00) {
+      if pass:[(]<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) && CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:H,H>> == 1 && <<ame:doc:func:mpv,mpv>>pass:[(]) == 0b1) {
         return PrivilegeMode::VU;
       } else {
         return PrivilegeMode::U;
       }
-    } else if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:S,S>> == 1 && CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MPP,MPP>> == 0b01) {
-      if pass:[(]<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) && CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1 && <<udb:doc:func:mpv,mpv>>pass:[(]) == 0b1) {
+    } else if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:S,S>> == 1 && CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MPP,MPP>> == 0b01) {
+      if pass:[(]<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) && CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:H,H>> == 1 && <<ame:doc:func:mpv,mpv>>pass:[(]) == 0b1) {
         return PrivilegeMode::VS;
       } else {
         return PrivilegeMode::S;
@@ -769,10 +1296,10 @@ if pass:[(]<<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::M) {
     }
   }
 }
-return <<udb:doc:func:mode,mode>>pass:[(]);
+return <<ame:doc:func:mode,mode>>pass:[(]);
 ----
 
-[#udb:doc:func:cached_translation]
+[#ame:doc:func:cached_translation]
 === `cached_translation` (generated)
 Possibly returns a cached translation result matching +vaddr+.
 
@@ -786,7 +1313,7 @@ h| Arguments   l| XReg vaddr, MemoryOperation op
 |===
 
 
-[#udb:doc:func:current_translation_mode]
+[#ame:doc:func:current_translation_mode]
 === `current_translation_mode`
 Returns the current first-stage translation mode for an explicit load or store
 from +mode+ given the machine state (e.g., value of `satp` or `vsatp` csr).
@@ -801,21 +1328,21 @@ h| Arguments   l| PrivilegeMode mode
 
 [subs="specialchars,macros"]
 ----
-PrivilegeMode effective_mode = <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]);
+PrivilegeMode effective_mode = <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]);
 if pass:[(]effective_mode == PrivilegeMode::M) {
   return SatpMode::Bare;
 }
-if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1'b1) {
+if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:H,H>> == 1'b1) {
   if pass:[(]effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU) {
-    Bits<4> mode_val = CSR[<<udb:doc:csr:vsatp,vsatp>>].<<udb:doc:csr_field:vsatp:MODE,MODE>>;
+    Bits<4> mode_val = CSR[<<ame:doc:csr:vsatp,vsatp>>].<<ame:doc:csr_field:vsatp:MODE,MODE>>;
     if pass:[(]mode_val == $bits(SatpMode::Bare)) {
       return SatpMode::Bare;
     } else if pass:[(]mode_val == $bits(SatpMode::Sv32)) {
       if pass:[(]MXLEN == 64) {
-        if pass:[(](effective_mode == PrivilegeMode::VS) && (CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:VSXL,VSXL>> != $bits(XRegWidth::XLEN32))) {
+        if pass:[(](effective_mode == PrivilegeMode::VS) && (CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:VSXL,VSXL>> != $bits(XRegWidth::XLEN32))) {
           return SatpMode::Reserved;
         }
-        if pass:[(](effective_mode == PrivilegeMode::VU) && (CSR[<<udb:doc:csr:vsstatus,vsstatus>>].<<udb:doc:csr_field:vsstatus:UXL,UXL>> != $bits(XRegWidth::XLEN32))) {
+        if pass:[(](effective_mode == PrivilegeMode::VU) && (CSR[<<ame:doc:csr:vsstatus,vsstatus>>].<<ame:doc:csr_field:vsstatus:UXL,UXL>> != $bits(XRegWidth::XLEN32))) {
           return SatpMode::Reserved;
         }
       }
@@ -824,10 +1351,10 @@ if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1'b1
       }
       return SatpMode::Sv32;
     } else if pass:[(](MXLEN == 64) && (mode_val == $bits(SatpMode::Sv39))) {
-      if pass:[(]effective_mode == PrivilegeMode::VS && CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:VSXL,VSXL>> != $bits(XRegWidth::XLEN64)) {
+      if pass:[(]effective_mode == PrivilegeMode::VS && CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:VSXL,VSXL>> != $bits(XRegWidth::XLEN64)) {
         return SatpMode::Reserved;
       }
-      if pass:[(]effective_mode == PrivilegeMode::VU && CSR[<<udb:doc:csr:vsstatus,vsstatus>>].<<udb:doc:csr_field:vsstatus:UXL,UXL>> != $bits(XRegWidth::XLEN64)) {
+      if pass:[(]effective_mode == PrivilegeMode::VU && CSR[<<ame:doc:csr:vsstatus,vsstatus>>].<<ame:doc:csr_field:vsstatus:UXL,UXL>> != $bits(XRegWidth::XLEN64)) {
         return SatpMode::Reserved;
       }
       if pass:[(]!SV39_VSMODE_TRANSLATION) {
@@ -835,10 +1362,10 @@ if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1'b1
       }
       return SatpMode::Sv39;
     } else if pass:[(](MXLEN == 64) && (mode_val == $bits(SatpMode::Sv48))) {
-      if pass:[(]effective_mode == PrivilegeMode::VS && CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:VSXL,VSXL>> != $bits(XRegWidth::XLEN64)) {
+      if pass:[(]effective_mode == PrivilegeMode::VS && CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:VSXL,VSXL>> != $bits(XRegWidth::XLEN64)) {
         return SatpMode::Reserved;
       }
-      if pass:[(]effective_mode == PrivilegeMode::VU && CSR[<<udb:doc:csr:vsstatus,vsstatus>>].<<udb:doc:csr_field:vsstatus:UXL,UXL>> != $bits(XRegWidth::XLEN64)) {
+      if pass:[(]effective_mode == PrivilegeMode::VU && CSR[<<ame:doc:csr:vsstatus,vsstatus>>].<<ame:doc:csr_field:vsstatus:UXL,UXL>> != $bits(XRegWidth::XLEN64)) {
         return SatpMode::Reserved;
       }
       if pass:[(]!SV48_VSMODE_TRANSLATION) {
@@ -846,10 +1373,10 @@ if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1'b1
       }
       return SatpMode::Sv48;
     } else if pass:[(](MXLEN == 64) && (mode_val == $bits(SatpMode::Sv57))) {
-      if pass:[(]effective_mode == PrivilegeMode::VS && CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:VSXL,VSXL>> != $bits(XRegWidth::XLEN64)) {
+      if pass:[(]effective_mode == PrivilegeMode::VS && CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:VSXL,VSXL>> != $bits(XRegWidth::XLEN64)) {
         return SatpMode::Reserved;
       }
-      if pass:[(]effective_mode == PrivilegeMode::VU && CSR[<<udb:doc:csr:vsstatus,vsstatus>>].<<udb:doc:csr_field:vsstatus:UXL,UXL>> != $bits(XRegWidth::XLEN64)) {
+      if pass:[(]effective_mode == PrivilegeMode::VU && CSR[<<ame:doc:csr:vsstatus,vsstatus>>].<<ame:doc:csr_field:vsstatus:UXL,UXL>> != $bits(XRegWidth::XLEN64)) {
         return SatpMode::Reserved;
       }
       if pass:[(]!SV57_VSMODE_TRANSLATION) {
@@ -862,54 +1389,54 @@ if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1'b1
   } else {
     return SatpMode::Reserved;
   }
-} else if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:S,S>> == 1'b1) {
-  <<udb:doc:func:assert,assert>>pass:[(]effective_mode == PrivilegeMode::S || effective_mode == PrivilegeMode::U, "unexpected priv mode");
-  Bits<4> mode_val = CSR[<<udb:doc:csr:satp,satp>>].<<udb:doc:csr_field:satp:MODE,MODE>>;
+} else if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:S,S>> == 1'b1) {
+  <<ame:doc:func:assert,assert>>pass:[(]effective_mode == PrivilegeMode::S || effective_mode == PrivilegeMode::U, "unexpected priv mode");
+  Bits<4> mode_val = CSR[<<ame:doc:csr:satp,satp>>].<<ame:doc:csr_field:satp:MODE,MODE>>;
   if pass:[(]mode_val == $bits(SatpMode::Bare)) {
     return SatpMode::Bare;
   } else if pass:[(]mode_val == $bits(SatpMode::Sv32)) {
     if pass:[(]MXLEN == 64) {
-      if pass:[(]effective_mode == PrivilegeMode::S && CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:SXL,SXL>> != $bits(XRegWidth::XLEN32)) {
+      if pass:[(]effective_mode == PrivilegeMode::S && CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:SXL,SXL>> != $bits(XRegWidth::XLEN32)) {
         return SatpMode::Reserved;
       }
-      if pass:[(]effective_mode == PrivilegeMode::U && CSR[<<udb:doc:csr:sstatus,sstatus>>].<<udb:doc:csr_field:sstatus:UXL,UXL>> != $bits(XRegWidth::XLEN32)) {
+      if pass:[(]effective_mode == PrivilegeMode::U && CSR[<<ame:doc:csr:sstatus,sstatus>>].<<ame:doc:csr_field:sstatus:UXL,UXL>> != $bits(XRegWidth::XLEN32)) {
         return SatpMode::Reserved;
       }
     }
-    if pass:[(]!<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Sv32)) {
+    if pass:[(]!<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Sv32)) {
       return SatpMode::Reserved;
     }
     return SatpMode::Sv32;
   } else if pass:[(](MXLEN == 64) && (mode_val == $bits(SatpMode::Sv39))) {
-    if pass:[(]effective_mode == PrivilegeMode::S && CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:SXL,SXL>> != $bits(XRegWidth::XLEN64)) {
+    if pass:[(]effective_mode == PrivilegeMode::S && CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:SXL,SXL>> != $bits(XRegWidth::XLEN64)) {
       return SatpMode::Reserved;
     }
-    if pass:[(]effective_mode == PrivilegeMode::U && CSR[<<udb:doc:csr:sstatus,sstatus>>].<<udb:doc:csr_field:sstatus:UXL,UXL>> != $bits(XRegWidth::XLEN64)) {
+    if pass:[(]effective_mode == PrivilegeMode::U && CSR[<<ame:doc:csr:sstatus,sstatus>>].<<ame:doc:csr_field:sstatus:UXL,UXL>> != $bits(XRegWidth::XLEN64)) {
       return SatpMode::Reserved;
     }
-    if pass:[(]!<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Sv39)) {
+    if pass:[(]!<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Sv39)) {
       return SatpMode::Reserved;
     }
     return SatpMode::Sv39;
   } else if pass:[(](MXLEN == 64) && (mode_val == $bits(SatpMode::Sv48))) {
-    if pass:[(]effective_mode == PrivilegeMode::S && CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:SXL,SXL>> != $bits(XRegWidth::XLEN64)) {
+    if pass:[(]effective_mode == PrivilegeMode::S && CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:SXL,SXL>> != $bits(XRegWidth::XLEN64)) {
       return SatpMode::Reserved;
     }
-    if pass:[(]effective_mode == PrivilegeMode::U && CSR[<<udb:doc:csr:sstatus,sstatus>>].<<udb:doc:csr_field:sstatus:UXL,UXL>> != $bits(XRegWidth::XLEN64)) {
+    if pass:[(]effective_mode == PrivilegeMode::U && CSR[<<ame:doc:csr:sstatus,sstatus>>].<<ame:doc:csr_field:sstatus:UXL,UXL>> != $bits(XRegWidth::XLEN64)) {
       return SatpMode::Reserved;
     }
-    if pass:[(]!<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Sv48)) {
+    if pass:[(]!<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Sv48)) {
       return SatpMode::Reserved;
     }
     return SatpMode::Sv48;
   } else if pass:[(](MXLEN == 64) && (mode_val == $bits(SatpMode::Sv57))) {
-    if pass:[(]effective_mode == PrivilegeMode::S && CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:SXL,SXL>> != $bits(XRegWidth::XLEN64)) {
+    if pass:[(]effective_mode == PrivilegeMode::S && CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:SXL,SXL>> != $bits(XRegWidth::XLEN64)) {
       return SatpMode::Reserved;
     }
-    if pass:[(]effective_mode == PrivilegeMode::U && CSR[<<udb:doc:csr:sstatus,sstatus>>].<<udb:doc:csr_field:sstatus:UXL,UXL>> != $bits(XRegWidth::XLEN64)) {
+    if pass:[(]effective_mode == PrivilegeMode::U && CSR[<<ame:doc:csr:sstatus,sstatus>>].<<ame:doc:csr_field:sstatus:UXL,UXL>> != $bits(XRegWidth::XLEN64)) {
       return SatpMode::Reserved;
     }
-    if pass:[(]!<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Sv57)) {
+    if pass:[(]!<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Sv57)) {
       return SatpMode::Reserved;
     }
     return SatpMode::Sv57;
@@ -921,7 +1448,7 @@ if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1'b1
 }
 ----
 
-[#udb:doc:func:xlen]
+[#ame:doc:func:xlen]
 === `xlen`
 Returns the effective XLEN for the current privilege mode.
 
@@ -936,53 +1463,53 @@ h| Arguments   l|
 if pass:[(]MXLEN == 32) {
   return 32;
 } else {
-  if pass:[(]<<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::M) {
-    if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:MXL,MXL>> == $bits(XRegWidth::XLEN32)) {
+  if pass:[(]<<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::M) {
+    if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:MXL,MXL>> == $bits(XRegWidth::XLEN32)) {
       return 32;
-    } else if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:MXL,MXL>> == $bits(XRegWidth::XLEN64)) {
+    } else if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:MXL,MXL>> == $bits(XRegWidth::XLEN64)) {
       return 64;
     } else {
-      <<udb:doc:func:unreachable,unreachable>>pass:[(]);
+      <<ame:doc:func:unreachable,unreachable>>pass:[(]);
     }
-  } else if pass:[(]<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::S) && <<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::S) {
-    if pass:[(]CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:SXL,SXL>> == $bits(XRegWidth::XLEN32)) {
+  } else if pass:[(]<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::S) && <<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::S) {
+    if pass:[(]CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:SXL,SXL>> == $bits(XRegWidth::XLEN32)) {
       return 32;
-    } else if pass:[(]CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:SXL,SXL>> == $bits(XRegWidth::XLEN64)) {
+    } else if pass:[(]CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:SXL,SXL>> == $bits(XRegWidth::XLEN64)) {
       return 64;
     } else {
-      <<udb:doc:func:unreachable,unreachable>>pass:[(]);
+      <<ame:doc:func:unreachable,unreachable>>pass:[(]);
     }
-  } else if pass:[(]<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::U) && <<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::U) {
-    if pass:[(]CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:UXL,UXL>> == $bits(XRegWidth::XLEN32)) {
+  } else if pass:[(]<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::U) && <<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::U) {
+    if pass:[(]CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:UXL,UXL>> == $bits(XRegWidth::XLEN32)) {
       return 32;
-    } else if pass:[(]CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:UXL,UXL>> == $bits(XRegWidth::XLEN64)) {
+    } else if pass:[(]CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:UXL,UXL>> == $bits(XRegWidth::XLEN64)) {
       return 64;
     } else {
-      <<udb:doc:func:unreachable,unreachable>>pass:[(]);
+      <<ame:doc:func:unreachable,unreachable>>pass:[(]);
     }
-  } else if pass:[(]<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) && <<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::VS) {
-    if pass:[(]CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:VSXL,VSXL>> == $bits(XRegWidth::XLEN32)) {
+  } else if pass:[(]<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) && <<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::VS) {
+    if pass:[(]CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:VSXL,VSXL>> == $bits(XRegWidth::XLEN32)) {
       return 32;
-    } else if pass:[(]CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:VSXL,VSXL>> == $bits(XRegWidth::XLEN64)) {
+    } else if pass:[(]CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:VSXL,VSXL>> == $bits(XRegWidth::XLEN64)) {
       return 64;
     } else {
-      <<udb:doc:func:unreachable,unreachable>>pass:[(]);
+      <<ame:doc:func:unreachable,unreachable>>pass:[(]);
     }
-  } else if pass:[(]<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) && <<udb:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::VU) {
-    if pass:[(]CSR[<<udb:doc:csr:vsstatus,vsstatus>>].<<udb:doc:csr_field:vsstatus:UXL,UXL>> == $bits(XRegWidth::XLEN32)) {
+  } else if pass:[(]<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) && <<ame:doc:func:mode,mode>>pass:[(]) == PrivilegeMode::VU) {
+    if pass:[(]CSR[<<ame:doc:csr:vsstatus,vsstatus>>].<<ame:doc:csr_field:vsstatus:UXL,UXL>> == $bits(XRegWidth::XLEN32)) {
       return 32;
-    } else if pass:[(]CSR[<<udb:doc:csr:vsstatus,vsstatus>>].<<udb:doc:csr_field:vsstatus:UXL,UXL>> == $bits(XRegWidth::XLEN64)) {
+    } else if pass:[(]CSR[<<ame:doc:csr:vsstatus,vsstatus>>].<<ame:doc:csr_field:vsstatus:UXL,UXL>> == $bits(XRegWidth::XLEN64)) {
       return 64;
     } else {
-      <<udb:doc:func:unreachable,unreachable>>pass:[(]);
+      <<ame:doc:func:unreachable,unreachable>>pass:[(]);
     }
   } else {
-    <<udb:doc:func:unreachable,unreachable>>pass:[(]);
+    <<ame:doc:func:unreachable,unreachable>>pass:[(]);
   }
 }
 ----
 
-[#udb:doc:func:tinst_value_for_guest_page_fault]
+[#ame:doc:func:tinst_value_for_guest_page_fault]
 === `tinst_value_for_guest_page_fault`
 Returns the value of htinst/mtinst for a Guest Page Fault
 
@@ -999,50 +1526,50 @@ if pass:[(]for_final_vs_pte) {
     if pass:[(]TINST_VALUE_ON_FINAL_INSTRUCTION_GUEST_PAGE_FAULT == "always zero") {
       return 0;
     } else {
-      <<udb:doc:func:assert,assert>>pass:[(]TINST_VALUE_ON_FINAL_INSTRUCTION_GUEST_PAGE_FAULT == "always pseudoinstruction", "Instruction guest page faults can only report zero/pseudo instruction in tval");
+      <<ame:doc:func:assert,assert>>pass:[(]TINST_VALUE_ON_FINAL_INSTRUCTION_GUEST_PAGE_FAULT == "always pseudoinstruction", "Instruction guest page faults can only report zero/pseudo instruction in tval");
       return 0x00002000;
     }
   } else if pass:[(]op == MemoryOperation::Read) {
     if pass:[(]TINST_VALUE_ON_FINAL_LOAD_GUEST_PAGE_FAULT == "always zero") {
       return 0;
     } else if pass:[(]TINST_VALUE_ON_FINAL_LOAD_GUEST_PAGE_FAULT == "always pseudoinstruction") {
-      if pass:[(]($array_size(VSXLEN) == 1 && VSXLEN[0] == 32) || ((MXLEN == 64) && (CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:VSXL,VSXL>> == $bits(XRegWidth::XLEN32)))) {
+      if pass:[(]($array_size(VSXLEN) == 1 && VSXLEN[0] == 32) || ((MXLEN == 64) && (CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:VSXL,VSXL>> == $bits(XRegWidth::XLEN32)))) {
         return 0x00002000;
       } else {
         return 0x00003000;
       }
     } else if pass:[(]TINST_VALUE_ON_FINAL_LOAD_GUEST_PAGE_FAULT == "always transformed standard instruction") {
-      return <<udb:doc:func:tinst_transform,tinst_transform>>pass:[(]encoding, 0);
+      return <<ame:doc:func:tinst_transform,tinst_transform>>pass:[(]encoding, 0);
     } else {
-      <<udb:doc:func:unpredictable,unpredictable>>pass:[(]"Custom value written into htinst/mtinst");
+      <<ame:doc:func:unpredictable,unpredictable>>pass:[(]"Custom value written into htinst/mtinst");
     }
   } else if pass:[(]op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite) {
     if pass:[(]TINST_VALUE_ON_FINAL_STORE_AMO_GUEST_PAGE_FAULT == "always zero") {
       return 0;
     } else if pass:[(]TINST_VALUE_ON_FINAL_STORE_AMO_GUEST_PAGE_FAULT == "always pseudoinstruction") {
-      if pass:[(]($array_size(VSXLEN) == 1 && VSXLEN[0] == 32) || ((MXLEN == 64) && (CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:VSXL,VSXL>> == $bits(XRegWidth::XLEN32)))) {
+      if pass:[(]($array_size(VSXLEN) == 1 && VSXLEN[0] == 32) || ((MXLEN == 64) && (CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:VSXL,VSXL>> == $bits(XRegWidth::XLEN32)))) {
         return 0x00002020;
       } else {
         return 0x00003020;
       }
     } else if pass:[(]TINST_VALUE_ON_FINAL_STORE_AMO_GUEST_PAGE_FAULT == "always transformed standard instruction") {
-      return <<udb:doc:func:tinst_transform,tinst_transform>>pass:[(]encoding, 0);
+      return <<ame:doc:func:tinst_transform,tinst_transform>>pass:[(]encoding, 0);
     } else {
-      <<udb:doc:func:unpredictable,unpredictable>>pass:[(]"Custom value written into htinst/mtinst");
+      <<ame:doc:func:unpredictable,unpredictable>>pass:[(]"Custom value written into htinst/mtinst");
     }
   }
 } else {
   if pass:[(]REPORT_GPA_IN_TVAL_ON_INTERMEDIATE_GUEST_PAGE_FAULT) {
-    if pass:[(]($array_size(VSXLEN) == 1 && VSXLEN[0] == 32) || ((MXLEN == 64) && (CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:VSXL,VSXL>> == $bits(XRegWidth::XLEN32)))) {
+    if pass:[(]($array_size(VSXLEN) == 1 && VSXLEN[0] == 32) || ((MXLEN == 64) && (CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:VSXL,VSXL>> == $bits(XRegWidth::XLEN32)))) {
       return 0x00002000;
-    } else if pass:[(]($array_size(VSXLEN) == 1 && VSXLEN[0] == 64) || ((MXLEN == 64) && (CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:VSXL,VSXL>> == $bits(XRegWidth::XLEN64)))) {
+    } else if pass:[(]($array_size(VSXLEN) == 1 && VSXLEN[0] == 64) || ((MXLEN == 64) && (CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:VSXL,VSXL>> == $bits(XRegWidth::XLEN64)))) {
       return 0x00003000;
     }
   }
 }
 ----
 
-[#udb:doc:func:raise_guest_page_fault]
+[#ame:doc:func:raise_guest_page_fault]
 === `raise_guest_page_fault`
 Raise a guest page fault exception.
 
@@ -1063,41 +1590,41 @@ if pass:[(]op == MemoryOperation::Read) {
   code = ExceptionCode::StoreAmoGuestPageFault;
   write_gpa_in_tval = REPORT_GPA_IN_TVAL_ON_STORE_AMO_GUEST_PAGE_FAULT;
 } else {
-  <<udb:doc:func:assert,assert>>pass:[(]op == MemoryOperation::Fetch, "unexpected memory operation");
+  <<ame:doc:func:assert,assert>>pass:[(]op == MemoryOperation::Fetch, "unexpected memory operation");
   code = ExceptionCode::InstructionGuestPageFault;
   write_gpa_in_tval = REPORT_GPA_IN_TVAL_ON_INSTRUCTION_GUEST_PAGE_FAULT;
 }
-PrivilegeMode handling_mode = <<udb:doc:func:exception_handling_mode,exception_handling_mode>>pass:[(]code);
+PrivilegeMode handling_mode = <<ame:doc:func:exception_handling_mode,exception_handling_mode>>pass:[(]code);
 if pass:[(]handling_mode == PrivilegeMode::S) {
-  CSR[<<udb:doc:csr:htval,htval>>].<<udb:doc:csr_field:htval:VALUE,VALUE>> = write_gpa_in_tval ? (gpa >> 2) : 0;
-  CSR[<<udb:doc:csr:htinst,htinst>>].<<udb:doc:csr_field:htinst:VALUE,VALUE>> = tinst_value;
-  CSR[<<udb:doc:csr:sepc,sepc>>].<<udb:doc:csr_field:sepc:PC,PC>> = $pc;
-  if pass:[(]!<<udb:doc:func:stval_readonly?,stval_readonly?>>pass:[(])) {
-    CSR[<<udb:doc:csr:stval,stval>>].<<udb:doc:csr_field:stval:VALUE,VALUE>> = <<udb:doc:func:stval_for,stval_for>>pass:[(]code, gva);
+  CSR[<<ame:doc:csr:htval,htval>>].<<ame:doc:csr_field:htval:VALUE,VALUE>> = write_gpa_in_tval ? (gpa >> 2) : 0;
+  CSR[<<ame:doc:csr:htinst,htinst>>].<<ame:doc:csr_field:htinst:VALUE,VALUE>> = tinst_value;
+  CSR[<<ame:doc:csr:sepc,sepc>>].<<ame:doc:csr_field:sepc:PC,PC>> = $pc;
+  if pass:[(]!<<ame:doc:func:stval_readonly?,stval_readonly?>>pass:[(])) {
+    CSR[<<ame:doc:csr:stval,stval>>].<<ame:doc:csr_field:stval:VALUE,VALUE>> = <<ame:doc:func:stval_for,stval_for>>pass:[(]code, gva);
   }
-  $pc = {CSR[<<udb:doc:csr:stvec,stvec>>].<<udb:doc:csr_field:stvec:BASE,BASE>>, 2'b00};
-  CSR[<<udb:doc:csr:scause,scause>>].<<udb:doc:csr_field:scause:INT,INT>> = 1'b0;
-  CSR[<<udb:doc:csr:scause,scause>>].<<udb:doc:csr_field:scause:CODE,CODE>> = $bits(code);
-  CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:GVA,GVA>> = 1;
-  CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:SPV,SPV>> = 1;
-  CSR[<<udb:doc:csr:hstatus,hstatus>>].<<udb:doc:csr_field:hstatus:SPVP,SPVP>> = $bits(from_mode)[0];
-  CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:SPP,SPP>> = $bits(from_mode)[0];
+  $pc = {CSR[<<ame:doc:csr:stvec,stvec>>].<<ame:doc:csr_field:stvec:BASE,BASE>>, 2'b00};
+  CSR[<<ame:doc:csr:scause,scause>>].<<ame:doc:csr_field:scause:INT,INT>> = 1'b0;
+  CSR[<<ame:doc:csr:scause,scause>>].<<ame:doc:csr_field:scause:CODE,CODE>> = $bits(code);
+  CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:GVA,GVA>> = 1;
+  CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:SPV,SPV>> = 1;
+  CSR[<<ame:doc:csr:hstatus,hstatus>>].<<ame:doc:csr_field:hstatus:SPVP,SPVP>> = $bits(from_mode)[0];
+  CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:SPP,SPP>> = $bits(from_mode)[0];
 } else {
-  <<udb:doc:func:assert,assert>>pass:[(]handling_mode == PrivilegeMode::M, "unexpected privilege mode");
-  CSR[<<udb:doc:csr:mtval2,mtval2>>].<<udb:doc:csr_field:mtval2:VALUE,VALUE>> = write_gpa_in_tval ? (gpa >> 2) : 0;
-  CSR[<<udb:doc:csr:mtinst,mtinst>>].<<udb:doc:csr_field:mtinst:VALUE,VALUE>> = tinst_value;
-  CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MPP,MPP>> = $bits(from_mode)[1:0];
+  <<ame:doc:func:assert,assert>>pass:[(]handling_mode == PrivilegeMode::M, "unexpected privilege mode");
+  CSR[<<ame:doc:csr:mtval2,mtval2>>].<<ame:doc:csr_field:mtval2:VALUE,VALUE>> = write_gpa_in_tval ? (gpa >> 2) : 0;
+  CSR[<<ame:doc:csr:mtinst,mtinst>>].<<ame:doc:csr_field:mtinst:VALUE,VALUE>> = tinst_value;
+  CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MPP,MPP>> = $bits(from_mode)[1:0];
   if pass:[(]MXLEN == 64) {
-    CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MPV,MPV>> = 1;
+    CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MPV,MPV>> = 1;
   } else {
-    CSR[<<udb:doc:csr:mstatush,mstatush>>].<<udb:doc:csr_field:mstatush:MPV,MPV>> = 1;
+    CSR[<<ame:doc:csr:mstatush,mstatush>>].<<ame:doc:csr_field:mstatush:MPV,MPV>> = 1;
   }
 }
-<<udb:doc:func:set_mode,set_mode>>pass:[(]handling_mode);
-<<udb:doc:func:abort_current_instruction,abort_current_instruction>>pass:[(]);
+<<ame:doc:func:set_mode,set_mode>>pass:[(]handling_mode);
+<<ame:doc:func:abort_current_instruction,abort_current_instruction>>pass:[(]);
 ----
 
-[#udb:doc:func:pma_applies?]
+[#ame:doc:func:pma_applies?]
 === `pma_applies?` (builtin)
 Checks if _attr_ is applied to the entire physical address region
 between [paddr, paddr + len) based on static PMA attributes.
@@ -1109,7 +1636,7 @@ h| Arguments   l| PmaAttribute          attr, Bits<PHYS_ADDR_WIDTH> paddr, U32  
 |===
 
 
-[#udb:doc:func:direct_csr_lookup]
+[#ame:doc:func:direct_csr_lookup]
 === `direct_csr_lookup` (generated)
 Return CSR info for a CSR with direct address +csr_addr+.
 
@@ -1122,7 +1649,7 @@ h| Arguments   l| Bits<12> csr_addr
 |===
 
 
-[#udb:doc:func:csr_hw_read]
+[#ame:doc:func:csr_hw_read]
 === `csr_hw_read` (generated)
 Returns the raw value of csr
 
@@ -1133,7 +1660,7 @@ h| Arguments   l| Csr csr
 |===
 
 
-[#udb:doc:func:csr_sw_read]
+[#ame:doc:func:csr_sw_read]
 === `csr_sw_read` (generated)
 Returns the result of CSR[csr].sw_read(); i.e., the software view of the register
 
@@ -1144,7 +1671,7 @@ h| Arguments   l| Csr csr
 |===
 
 
-[#udb:doc:func:pmp_match_64]
+[#ame:doc:func:pmp_match_64]
 === `pmp_match_64`
 Given a physical address, see if any PMP entry matches.
 
@@ -1164,19 +1691,19 @@ Bits<12> pmpaddr0_addr = 0x3b0;
 for pass:[(]U32 i = 0; i < NUM_PMP_ENTRIES; i++) {
   Bits<12> pmpcfg_idx = pmpcfg0_addr pass:[+] (i / 8) * 2;
   Bits<6> shamt = (i % 8) * 8;
-  Csr pmpcfg_csr = <<udb:doc:func:direct_csr_lookup,direct_csr_lookup>>pass:[(]pmpcfg_idx);
-  PmpCfg cfg = (<<udb:doc:func:csr_hw_read,csr_hw_read>>pass:[(]pmpcfg_csr) >> shamt)[7:0];
+  Csr pmpcfg_csr = <<ame:doc:func:direct_csr_lookup,direct_csr_lookup>>pass:[(]pmpcfg_idx);
+  PmpCfg cfg = (<<ame:doc:func:csr_hw_read,csr_hw_read>>pass:[(]pmpcfg_csr) >> shamt)[7:0];
   Bits<12> pmpaddr_idx = pmpaddr0_addr pass:[+] i;
-  Csr pmpaddr_csr = <<udb:doc:func:direct_csr_lookup,direct_csr_lookup>>pass:[(]pmpaddr_idx);
-  Bits<64> pmpaddr_csr_value = <<udb:doc:func:csr_sw_read,csr_sw_read>>pass:[(]pmpaddr_csr);
+  Csr pmpaddr_csr = <<ame:doc:func:direct_csr_lookup,direct_csr_lookup>>pass:[(]pmpaddr_idx);
+  Bits<64> pmpaddr_csr_value = <<ame:doc:func:csr_sw_read,csr_sw_read>>pass:[(]pmpaddr_csr);
   Bits<PHYS_ADDR_WIDTH> range_base = 0;
   Bits<PHYS_ADDR_WIDTH> range_limit = 0;
   if pass:[(]cfg.A == $bits(PmpCfg_A::TOR)) {
     if pass:[(]i == 0) {
       range_base = 0;
     } else {
-      Csr tor_pmpaddr_csr = <<udb:doc:func:direct_csr_lookup,direct_csr_lookup>>pass:[(]pmpaddr_idx - 1);
-      range_base = (<<udb:doc:func:csr_sw_read,csr_sw_read>>pass:[(]tor_pmpaddr_csr))[PHYS_ADDR_WIDTH - 1:0];
+      Csr tor_pmpaddr_csr = <<ame:doc:func:direct_csr_lookup,direct_csr_lookup>>pass:[(]pmpaddr_idx - 1);
+      range_base = (<<ame:doc:func:csr_sw_read,csr_sw_read>>pass:[(]tor_pmpaddr_csr))[PHYS_ADDR_WIDTH - 1:0];
     }
     range_limit = (pmpaddr_csr_value)[PHYS_ADDR_WIDTH - 1:0] - 1;
   } else if pass:[(]cfg.A == $bits(PmpCfg_A::NAPOT)) {
@@ -1197,7 +1724,7 @@ for pass:[(]U32 i = 0; i < NUM_PMP_ENTRIES; i++) {
 return PmpMatchResult::NoMatch, -;
 ----
 
-[#udb:doc:func:pmp_match_32]
+[#ame:doc:func:pmp_match_32]
 === `pmp_match_32`
 Given a physical address, see if any PMP entry matches.
 
@@ -1217,19 +1744,19 @@ Bits<12> pmpaddr0_addr = 0x3b0;
 for pass:[(]U32 i = 0; i < NUM_PMP_ENTRIES; i++) {
   Bits<12> pmpcfg_idx = pmpcfg0_addr pass:[+] (i / 4);
   Bits<6> shamt = (i % 4) * 8;
-  Csr pmpcfg_csr = <<udb:doc:func:direct_csr_lookup,direct_csr_lookup>>pass:[(]pmpcfg_idx);
-  PmpCfg cfg = (<<udb:doc:func:csr_hw_read,csr_hw_read>>pass:[(]pmpcfg_csr) >> shamt)[7:0];
+  Csr pmpcfg_csr = <<ame:doc:func:direct_csr_lookup,direct_csr_lookup>>pass:[(]pmpcfg_idx);
+  PmpCfg cfg = (<<ame:doc:func:csr_hw_read,csr_hw_read>>pass:[(]pmpcfg_csr) >> shamt)[7:0];
   Bits<12> pmpaddr_idx = pmpaddr0_addr pass:[+] i;
-  Csr pmpaddr_csr = <<udb:doc:func:direct_csr_lookup,direct_csr_lookup>>pass:[(]pmpaddr_idx);
-  Bits<32> pmpaddr_csr_value = <<udb:doc:func:csr_sw_read,csr_sw_read>>pass:[(]pmpaddr_csr);
+  Csr pmpaddr_csr = <<ame:doc:func:direct_csr_lookup,direct_csr_lookup>>pass:[(]pmpaddr_idx);
+  Bits<32> pmpaddr_csr_value = <<ame:doc:func:csr_sw_read,csr_sw_read>>pass:[(]pmpaddr_csr);
   Bits<PHYS_ADDR_WIDTH> range_base = 0;
   Bits<PHYS_ADDR_WIDTH> range_limit = 0;
   if pass:[(]cfg.A == $bits(PmpCfg_A::TOR)) {
     if pass:[(]i == 0) {
       range_base = 0;
     } else {
-      Csr tor_pmpaddr_csr = <<udb:doc:func:direct_csr_lookup,direct_csr_lookup>>pass:[(]pmpaddr_idx - 1);
-      range_base = <<udb:doc:func:csr_sw_read,csr_sw_read>>pass:[(]tor_pmpaddr_csr)[PHYS_ADDR_WIDTH - 1:0];
+      Csr tor_pmpaddr_csr = <<ame:doc:func:direct_csr_lookup,direct_csr_lookup>>pass:[(]pmpaddr_idx - 1);
+      range_base = <<ame:doc:func:csr_sw_read,csr_sw_read>>pass:[(]tor_pmpaddr_csr)[PHYS_ADDR_WIDTH - 1:0];
     }
     range_limit = (pmpaddr_csr_value)[PHYS_ADDR_WIDTH - 1:0] - 1;
   } else if pass:[(]cfg.A == $bits(PmpCfg_A::NAPOT)) {
@@ -1250,7 +1777,7 @@ for pass:[(]U32 i = 0; i < NUM_PMP_ENTRIES; i++) {
 return PmpMatchResult::NoMatch, -;
 ----
 
-[#udb:doc:func:pmp_match]
+[#ame:doc:func:pmp_match]
 === `pmp_match`
 Given a physical address, see if any PMP entry matches.
 
@@ -1266,13 +1793,13 @@ h| Arguments   l| Bits<PHYS_ADDR_WIDTH> paddr, U32 access_size
 [subs="specialchars,macros"]
 ----
 if pass:[(]MXLEN == 64) {
-  return <<udb:doc:func:pmp_match_64,pmp_match_64>>pass:[(]paddr, access_size);
+  return <<ame:doc:func:pmp_match_64,pmp_match_64>>pass:[(]paddr, access_size);
 } else {
-  return <<udb:doc:func:pmp_match_32,pmp_match_32>>pass:[(]paddr, access_size);
+  return <<ame:doc:func:pmp_match_32,pmp_match_32>>pass:[(]paddr, access_size);
 }
 ----
 
-[#udb:doc:func:pmp_check]
+[#ame:doc:func:pmp_check]
 === `pmp_check`
 Given a physical address and operation type, return whether or not the access is allowed by PMP.
 
@@ -1284,10 +1811,10 @@ h| Arguments   l| Bits<PHYS_ADDR_WIDTH> paddr, U32 access_size, MemoryOperation 
 
 [subs="specialchars,macros"]
 ----
-PrivilegeMode mode = <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]);
+PrivilegeMode mode = <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]);
 PmpMatchResult match_result;
 PmpCfg cfg;
-(match_result, cfg = <<udb:doc:func:pmp_match,pmp_match>>pass:[(]paddr, access_size));
+(match_result, cfg = <<ame:doc:func:pmp_match,pmp_match>>pass:[(]paddr, access_size));
 if pass:[(]match_result == PmpMatchResult::FullMatch) {
   if pass:[(]mode == PrivilegeMode::M && (cfg.L == 0)) {
     return true;
@@ -1306,13 +1833,13 @@ if pass:[(]match_result == PmpMatchResult::FullMatch) {
     return false;
   }
 } else {
-  <<udb:doc:func:assert,assert>>pass:[(]match_result == PmpMatchResult::PartialMatch, "PMP matching logic error");
+  <<ame:doc:func:assert,assert>>pass:[(]match_result == PmpMatchResult::PartialMatch, "PMP matching logic error");
   return false;
 }
 return true;
 ----
 
-[#udb:doc:func:access_check]
+[#ame:doc:func:access_check]
 === `access_check`
 Checks if the physical address paddr is able to access memory, and raises
 the appropriate exception if not.
@@ -1326,16 +1853,16 @@ h| Arguments   l| Bits<PHYS_ADDR_WIDTH> paddr, U32 access_size, XReg vaddr, Memo
 [subs="specialchars,macros"]
 ----
 if pass:[(]paddr > ((1 pass:[`]<< PHYS_ADDR_WIDTH) - access_size)) {
-  <<udb:doc:func:raise,raise>>pass:[(]fault_type, from_mode, vaddr);
+  <<ame:doc:func:raise,raise>>pass:[(]fault_type, from_mode, vaddr);
 }
 if pass:[(]NUM_PMP_ENTRIES > 0) {
-  if pass:[(]!<<udb:doc:func:pmp_check,pmp_check>>pass:[(]paddr[PHYS_ADDR_WIDTH - 1:0], access_size, type)) {
-    <<udb:doc:func:raise,raise>>pass:[(]fault_type, from_mode, vaddr);
+  if pass:[(]!<<ame:doc:func:pmp_check,pmp_check>>pass:[(]paddr[PHYS_ADDR_WIDTH - 1:0], access_size, type)) {
+    <<ame:doc:func:raise,raise>>pass:[(]fault_type, from_mode, vaddr);
   }
 }
 ----
 
-[#udb:doc:func:read_physical_memory_32]
+[#ame:doc:func:read_physical_memory_32]
 === `read_physical_memory_32` (builtin)
 Read four bytes from physical memory.
 
@@ -1346,7 +1873,7 @@ h| Arguments   l| XReg paddr
 |===
 
 
-[#udb:doc:func:read_physical_memory]
+[#ame:doc:func:read_physical_memory]
 === `read_physical_memory`
 Read from physical memory.
 
@@ -1359,19 +1886,19 @@ h| Arguments   l| U32 len, XReg paddr
 [subs="specialchars,macros"]
 ----
 if pass:[(]len == 8) {
-  return <<udb:doc:func:read_physical_memory_8,read_physical_memory_8>>pass:[(]paddr);
+  return <<ame:doc:func:read_physical_memory_8,read_physical_memory_8>>pass:[(]paddr);
 } else if pass:[(]len == 16) {
-  return <<udb:doc:func:read_physical_memory_16,read_physical_memory_16>>pass:[(]paddr);
+  return <<ame:doc:func:read_physical_memory_16,read_physical_memory_16>>pass:[(]paddr);
 } else if pass:[(]len == 32) {
-  return <<udb:doc:func:read_physical_memory_32,read_physical_memory_32>>pass:[(]paddr);
+  return <<ame:doc:func:read_physical_memory_32,read_physical_memory_32>>pass:[(]paddr);
 } else if pass:[(]len == 64) {
-  return <<udb:doc:func:read_physical_memory_64,read_physical_memory_64>>pass:[(]paddr);
+  return <<ame:doc:func:read_physical_memory_64,read_physical_memory_64>>pass:[(]paddr);
 } else {
-  <<udb:doc:func:assert,assert>>pass:[(]false, "Invalid len");
+  <<ame:doc:func:assert,assert>>pass:[(]false, "Invalid len");
 }
 ----
 
-[#udb:doc:func:atomic_check_then_write_32]
+[#ame:doc:func:atomic_check_then_write_32]
 === `atomic_check_then_write_32` (builtin)
 Atomically:
 
@@ -1393,7 +1920,7 @@ h| Arguments   l| Bits<PHYS_ADDR_WIDTH> paddr, Bits<32>              compare_val
 |===
 
 
-[#udb:doc:func:gstage_page_walk]
+[#ame:doc:func:gstage_page_walk]
 === `gstage_page_walk`
 Translate guest physical address to physical address through a page walk.
 
@@ -1419,77 +1946,77 @@ TranslationResult result;
 U32 VPN_SIZE = (LEVELS == 2) ? 10 : 9;
 ExceptionCode access_fault_code = op == MemoryOperation::Read ? ExceptionCode::LoadAccessFault : (op == MemoryOperation::Fetch ? ExceptionCode::InstructionAccessFault : ExceptionCode::StoreAmoAccessFault);
 ExceptionCode page_fault_code = op == MemoryOperation::Read ? ExceptionCode::LoadGuestPageFault : (op == MemoryOperation::Fetch ? ExceptionCode::InstructionGuestPageFault : ExceptionCode::StoreAmoGuestPageFault);
-Boolean mxr = for_final_vs_pte && (CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MXR,MXR>> == 1);
-Boolean pbmte = <<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svpbmt) && CSR[<<udb:doc:csr:menvcfg,menvcfg>>].<<udb:doc:csr_field:menvcfg:PBMTE,PBMTE>> == 1;
-Boolean adue = <<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svadu) && CSR[<<udb:doc:csr:menvcfg,menvcfg>>].<<udb:doc:csr_field:menvcfg:ADUE,ADUE>> == 1;
-Bits<32> tinst = <<udb:doc:func:tinst_value_for_guest_page_fault,tinst_value_for_guest_page_fault>>pass:[(]op, encoding, for_final_vs_pte);
+Boolean mxr = for_final_vs_pte && (CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MXR,MXR>> == 1);
+Boolean pbmte = <<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svpbmt) && CSR[<<ame:doc:csr:menvcfg,menvcfg>>].<<ame:doc:csr_field:menvcfg:PBMTE,PBMTE>> == 1;
+Boolean adue = <<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svadu) && CSR[<<ame:doc:csr:menvcfg,menvcfg>>].<<ame:doc:csr_field:menvcfg:ADUE,ADUE>> == 1;
+Bits<32> tinst = <<ame:doc:func:tinst_value_for_guest_page_fault,tinst_value_for_guest_page_fault>>pass:[(]op, encoding, for_final_vs_pte);
 U32 max_gpa_width = LEVELS * VPN_SIZE pass:[+] 2 pass:[+] 12;
 if pass:[(]gpaddr >> max_gpa_width != 0) {
-  <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+  <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
 }
-ppn = CSR[<<udb:doc:csr:hgatp,hgatp>>].<<udb:doc:csr_field:hgatp:PPN,PPN>>;
+ppn = CSR[<<ame:doc:csr:hgatp,hgatp>>].<<ame:doc:csr_field:hgatp:PPN,PPN>>;
 for pass:[(]U32 i = (LEVELS - 1); i >= 0; i--) {
   U32 this_vpn_size = (i == (LEVELS - 1)) ? VPN_SIZE pass:[+] 2 : VPN_SIZE;
   U32 vpn = (gpaddr >> (12 pass:[+] VPN_SIZE * i)) & ((1 << this_vpn_size) - 1);
   Bits<PA_SIZE> pte_paddr = (ppn << 12) pass:[+] (vpn * (PTESIZE / 8));
-  if pass:[(]!<<udb:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::HardwarePageTableRead, pte_paddr, PTESIZE)) {
-    <<udb:doc:func:raise,raise>>pass:[(]access_fault_code, PrivilegeMode::U, vaddr);
+  if pass:[(]!<<ame:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::HardwarePageTableRead, pte_paddr, PTESIZE)) {
+    <<ame:doc:func:raise,raise>>pass:[(]access_fault_code, PrivilegeMode::U, vaddr);
   }
-  <<udb:doc:func:access_check,access_check>>pass:[(]pte_paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code, effective_mode);
-  XReg pte = <<udb:doc:func:read_physical_memory,read_physical_memory>>pass:[(]PTESIZE, pte_paddr);
+  <<ame:doc:func:access_check,access_check>>pass:[(]pte_paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code, effective_mode);
+  XReg pte = <<ame:doc:func:read_physical_memory,read_physical_memory>>pass:[(]PTESIZE, pte_paddr);
   PteFlags pte_flags = pte[9:0];
-  if pass:[(]<<udb:doc:func:xlen,xlen>>pass:[(]) == 64) {
+  if pass:[(]<<ame:doc:func:xlen,xlen>>pass:[(]) == 64) {
     if pass:[(](VA_SIZE != 32) && (pte[58:54] != 0)) {
-      <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+      <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
     }
-    if pass:[(]!<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svrsw60t59b)) {
+    if pass:[(]!<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svrsw60t59b)) {
       if pass:[(](PTESIZE >= 64) && pte[60:59] != 0) {
-        <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+        <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
       }
     }
-    if pass:[(]!<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svnapot)) {
+    if pass:[(]!<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svnapot)) {
       if pass:[(](PTESIZE >= 64) && pte[63] != 0) {
-        <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+        <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
       }
     }
     if pass:[(](PTESIZE >= 64) && !pbmte && (pte[62:61] != 0)) {
-      <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+      <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
     }
     if pass:[(](PTESIZE >= 64) && pbmte && (pte[62:61] == 3)) {
-      <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+      <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
     }
   }
   if pass:[(]pte_flags.V == 0) {
-    <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+    <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
   }
   if pass:[(]pte_flags.R == 0 && pte_flags.W == 1) {
-    <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+    <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
   }
   if pass:[(]pte_flags.R == 1 || pte_flags.X == 1) {
     if pass:[(]pte_flags.U == 0) {
-      <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+      <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
     }
     if pass:[(]((op == MemoryOperation::Write) || (op == MemoryOperation::ReadModifyWrite)) && (pte_flags.W == 0)) {
-      <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+      <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
     } else if pass:[(](op == MemoryOperation::Fetch) && (pte_flags.X == 0)) {
-      <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+      <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
     } else if pass:[(](op == MemoryOperation::Read) || (op == MemoryOperation::ReadModifyWrite)) {
       if pass:[(]((!mxr) && (pte_flags.R == 0)) || ((mxr) && (pte_flags.X == 0 && pte_flags.R == 0))) {
-        <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+        <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
       }
     }
     if pass:[(](i > 0) && (pte[(i - 1) * VPN_SIZE:0] != 0)) {
-      <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+      <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
     }
     if pass:[(](pte_flags.A == 0) || ((pte_flags.D == 0) && ((op == MemoryOperation::Write) || (op == MemoryOperation::ReadModifyWrite)))) {
       if pass:[(]adue) {
-        if pass:[(]!<<udb:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::RsrvEventual, pte_paddr, PTESIZE)) {
-          <<udb:doc:func:raise,raise>>pass:[(]access_fault_code, PrivilegeMode::U, vaddr);
+        if pass:[(]!<<ame:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::RsrvEventual, pte_paddr, PTESIZE)) {
+          <<ame:doc:func:raise,raise>>pass:[(]access_fault_code, PrivilegeMode::U, vaddr);
         }
-        if pass:[(]!<<udb:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::HardwarePageTableWrite, pte_paddr, PTESIZE)) {
-          <<udb:doc:func:raise,raise>>pass:[(]access_fault_code, PrivilegeMode::U, vaddr);
+        if pass:[(]!<<ame:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::HardwarePageTableWrite, pte_paddr, PTESIZE)) {
+          <<ame:doc:func:raise,raise>>pass:[(]access_fault_code, PrivilegeMode::U, vaddr);
         }
-        <<udb:doc:func:access_check,access_check>>pass:[(]pte_paddr, PTESIZE, vaddr, MemoryOperation::Write, access_fault_code, effective_mode);
+        <<ame:doc:func:access_check,access_check>>pass:[(]pte_paddr, PTESIZE, vaddr, MemoryOperation::Write, access_fault_code, effective_mode);
         Boolean success;
         Bits<PTESIZE> updated_pte;
         if pass:[(]pte_flags.D == 0 && (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite)) {
@@ -1498,39 +2025,39 @@ for pass:[(]U32 i = (LEVELS - 1); i >= 0; i--) {
           updated_pte = pte | 0b01000000;
         }
         if pass:[(]PTESIZE == 32) {
-          success = <<udb:doc:func:atomic_check_then_write_32,atomic_check_then_write_32>>pass:[(]pte_paddr, pte, updated_pte);
+          success = <<ame:doc:func:atomic_check_then_write_32,atomic_check_then_write_32>>pass:[(]pte_paddr, pte, updated_pte);
         } else if pass:[(]PTESIZE == 64) {
-          success = <<udb:doc:func:atomic_check_then_write_64,atomic_check_then_write_64>>pass:[(]pte_paddr, pte, updated_pte);
+          success = <<ame:doc:func:atomic_check_then_write_64,atomic_check_then_write_64>>pass:[(]pte_paddr, pte, updated_pte);
         } else {
-          <<udb:doc:func:assert,assert>>pass:[(]false, "Unexpected PTESIZE");
+          <<ame:doc:func:assert,assert>>pass:[(]false, "Unexpected PTESIZE");
         }
         if pass:[(]!success) {
           i = i pass:[+] 1;
         } else {
           result.paddr = pte_paddr;
-          if pass:[(](<<udb:doc:func:xlen,xlen>>pass:[(]) == 64) && (PTESIZE >= 64)) {
+          if pass:[(](<<ame:doc:func:xlen,xlen>>pass:[(]) == 64) && (PTESIZE >= 64)) {
             result.pbmt = $enum(Pbmt, pte[62:61]);
           }
           result.pte_flags = pte_flags;
           return result;
         }
       } else {
-        <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+        <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
       }
     }
   } else {
     if pass:[(]i == 0) {
-      <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+      <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
     }
     if pass:[(]pte_flags.D == 1 || pte_flags.A == 1 || pte_flags.U == 1) {
-      <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+      <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
     }
-    if pass:[(]<<udb:doc:func:xlen,xlen>>pass:[(]) == 64) {
+    if pass:[(]<<ame:doc:func:xlen,xlen>>pass:[(]) == 64) {
       if pass:[(](VA_SIZE != 32) && (pte[62:61] != 0)) {
-        <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+        <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
       }
       if pass:[(](VA_SIZE != 32) && pte[63] != 0) {
-        <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
+        <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, tinst, effective_mode);
       }
     }
     ppn = pte[PA_SIZE - 3:10] << 12;
@@ -1538,7 +2065,7 @@ for pass:[(]U32 i = (LEVELS - 1); i >= 0; i--) {
 }
 ----
 
-[#udb:doc:func:read_physical_memory_64]
+[#ame:doc:func:read_physical_memory_64]
 === `read_physical_memory_64` (builtin)
 Read eight bytes from physical memory.
 
@@ -1549,7 +2076,7 @@ h| Arguments   l| XReg paddr
 |===
 
 
-[#udb:doc:func:atomic_check_then_write_64]
+[#ame:doc:func:atomic_check_then_write_64]
 === `atomic_check_then_write_64` (builtin)
 Atomically:
 
@@ -1570,7 +2097,7 @@ h| Arguments   l| Bits<PHYS_ADDR_WIDTH> paddr, Bits<64>              compare_val
 |===
 
 
-[#udb:doc:func:tinst_transform]
+[#ame:doc:func:tinst_transform]
 === `tinst_transform`
 Returns the standard transformation of an encoding for htinst/mtinst
 
@@ -1592,14 +2119,14 @@ if pass:[(]encoding[1:0] == 0b11) {
   } else if pass:[(]encoding[6:2] == 5'b00011) {
     return {encoding[31:20], addr_offset, encoding[14:0]};
   } else {
-    <<udb:doc:func:assert,assert>>pass:[(]false, "Bad transform");
+    <<ame:doc:func:assert,assert>>pass:[(]false, "Bad transform");
   }
 } else {
-  <<udb:doc:func:assert,assert>>pass:[(]false, "TODO: compressed instruction");
+  <<ame:doc:func:assert,assert>>pass:[(]false, "TODO: compressed instruction");
 }
 ----
 
-[#udb:doc:func:translate_gstage]
+[#ame:doc:func:translate_gstage]
 === `translate_gstage`
 Translates a guest physical address to a physical address.
 
@@ -1612,35 +2139,35 @@ h| Arguments   l| XReg gpaddr, XReg vaddr, MemoryOperation op, PrivilegeMode eff
 [subs="specialchars,macros"]
 ----
 TranslationResult result;
-if pass:[(]!<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) || effective_mode == PrivilegeMode::S || effective_mode == PrivilegeMode::U) {
+if pass:[(]!<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::H) || effective_mode == PrivilegeMode::S || effective_mode == PrivilegeMode::U) {
   result.paddr = gpaddr;
   return result;
 }
-Boolean mxr = CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MXR,MXR>> == 1;
-if pass:[(]GSTAGE_MODE_BARE && CSR[<<udb:doc:csr:hgatp,hgatp>>].<<udb:doc:csr_field:hgatp:MODE,MODE>> == $bits(HgatpMode::Bare)) {
+Boolean mxr = CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MXR,MXR>> == 1;
+if pass:[(]GSTAGE_MODE_BARE && CSR[<<ame:doc:csr:hgatp,hgatp>>].<<ame:doc:csr_field:hgatp:MODE,MODE>> == $bits(HgatpMode::Bare)) {
   result.paddr = gpaddr;
   return result;
-} else if pass:[(]SV32X4_TRANSLATION && CSR[<<udb:doc:csr:hgatp,hgatp>>].<<udb:doc:csr_field:hgatp:MODE,MODE>> == $bits(HgatpMode::Sv32x4)) {
-  return <<udb:doc:func:gstage_page_walk,gstage_page_walk>>pass:[(]32, 34, 32, 2, gpaddr, vaddr, op, effective_mode, false, encoding);
-} else if pass:[(]SV39X4_TRANSLATION && CSR[<<udb:doc:csr:hgatp,hgatp>>].<<udb:doc:csr_field:hgatp:MODE,MODE>> == $bits(HgatpMode::Sv39x4)) {
-  return <<udb:doc:func:gstage_page_walk,gstage_page_walk>>pass:[(]39, 56, 64, 3, gpaddr, vaddr, op, effective_mode, false, encoding);
-} else if pass:[(]SV48X4_TRANSLATION && CSR[<<udb:doc:csr:hgatp,hgatp>>].<<udb:doc:csr_field:hgatp:MODE,MODE>> == $bits(HgatpMode::Sv48x4)) {
-  return <<udb:doc:func:gstage_page_walk,gstage_page_walk>>pass:[(]48, 56, 64, 4, gpaddr, vaddr, op, effective_mode, false, encoding);
-} else if pass:[(]SV57X4_TRANSLATION && CSR[<<udb:doc:csr:hgatp,hgatp>>].<<udb:doc:csr_field:hgatp:MODE,MODE>> == $bits(HgatpMode::Sv57x4)) {
-  return <<udb:doc:func:gstage_page_walk,gstage_page_walk>>pass:[(]57, 56, 64, 5, gpaddr, vaddr, op, effective_mode, false, encoding);
+} else if pass:[(]SV32X4_TRANSLATION && CSR[<<ame:doc:csr:hgatp,hgatp>>].<<ame:doc:csr_field:hgatp:MODE,MODE>> == $bits(HgatpMode::Sv32x4)) {
+  return <<ame:doc:func:gstage_page_walk,gstage_page_walk>>pass:[(]32, 34, 32, 2, gpaddr, vaddr, op, effective_mode, false, encoding);
+} else if pass:[(]SV39X4_TRANSLATION && CSR[<<ame:doc:csr:hgatp,hgatp>>].<<ame:doc:csr_field:hgatp:MODE,MODE>> == $bits(HgatpMode::Sv39x4)) {
+  return <<ame:doc:func:gstage_page_walk,gstage_page_walk>>pass:[(]39, 56, 64, 3, gpaddr, vaddr, op, effective_mode, false, encoding);
+} else if pass:[(]SV48X4_TRANSLATION && CSR[<<ame:doc:csr:hgatp,hgatp>>].<<ame:doc:csr_field:hgatp:MODE,MODE>> == $bits(HgatpMode::Sv48x4)) {
+  return <<ame:doc:func:gstage_page_walk,gstage_page_walk>>pass:[(]48, 56, 64, 4, gpaddr, vaddr, op, effective_mode, false, encoding);
+} else if pass:[(]SV57X4_TRANSLATION && CSR[<<ame:doc:csr:hgatp,hgatp>>].<<ame:doc:csr_field:hgatp:MODE,MODE>> == $bits(HgatpMode::Sv57x4)) {
+  return <<ame:doc:func:gstage_page_walk,gstage_page_walk>>pass:[(]57, 56, 64, 5, gpaddr, vaddr, op, effective_mode, false, encoding);
 } else {
   if pass:[(]op == MemoryOperation::Read) {
-    <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, <<udb:doc:func:tinst_value_for_guest_page_fault,tinst_value_for_guest_page_fault>>pass:[(]op, encoding, true), effective_mode);
+    <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, <<ame:doc:func:tinst_value_for_guest_page_fault,tinst_value_for_guest_page_fault>>pass:[(]op, encoding, true), effective_mode);
   } else if pass:[(]op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite) {
-    <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, <<udb:doc:func:tinst_value_for_guest_page_fault,tinst_value_for_guest_page_fault>>pass:[(]op, encoding, true), effective_mode);
+    <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, <<ame:doc:func:tinst_value_for_guest_page_fault,tinst_value_for_guest_page_fault>>pass:[(]op, encoding, true), effective_mode);
   } else {
-    <<udb:doc:func:assert,assert>>pass:[(]op == MemoryOperation::Fetch, "unexpected memory op");
-    <<udb:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, <<udb:doc:func:tinst_value_for_guest_page_fault,tinst_value_for_guest_page_fault>>pass:[(]op, encoding, true), effective_mode);
+    <<ame:doc:func:assert,assert>>pass:[(]op == MemoryOperation::Fetch, "unexpected memory op");
+    <<ame:doc:func:raise_guest_page_fault,raise_guest_page_fault>>pass:[(]op, gpaddr, vaddr, <<ame:doc:func:tinst_value_for_guest_page_fault,tinst_value_for_guest_page_fault>>pass:[(]op, encoding, true), effective_mode);
   }
 }
 ----
 
-[#udb:doc:func:stage1_page_walk]
+[#ame:doc:func:stage1_page_walk]
 === `stage1_page_walk`
 Translate virtual address to physical address through a page walk.
 
@@ -1668,78 +2195,78 @@ ExceptionCode access_fault_code = op == MemoryOperation::Read ? ExceptionCode::L
 ExceptionCode page_fault_code = op == MemoryOperation::Read ? ExceptionCode::LoadPageFault : (op == MemoryOperation::Fetch ? ExceptionCode::InstructionPageFault : ExceptionCode::StoreAmoPageFault);
 Boolean sse = false;
 Boolean adue;
-if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1 && (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
-  adue = <<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svadu) && CSR[<<udb:doc:csr:henvcfg,henvcfg>>].<<udb:doc:csr_field:henvcfg:ADUE,ADUE>> == 1;
+if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:H,H>> == 1 && (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
+  adue = <<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svadu) && CSR[<<ame:doc:csr:henvcfg,henvcfg>>].<<ame:doc:csr_field:henvcfg:ADUE,ADUE>> == 1;
 } else {
-  adue = <<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svadu) && CSR[<<udb:doc:csr:menvcfg,menvcfg>>].<<udb:doc:csr_field:menvcfg:ADUE,ADUE>> == 1;
+  adue = <<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svadu) && CSR[<<ame:doc:csr:menvcfg,menvcfg>>].<<ame:doc:csr_field:menvcfg:ADUE,ADUE>> == 1;
 }
 Boolean pbmte;
-if pass:[(](<<udb:doc:func:xlen,xlen>>pass:[(]) == 32) || VA_SIZE == 32) {
+if pass:[(](<<ame:doc:func:xlen,xlen>>pass:[(]) == 32) || VA_SIZE == 32) {
   pbmte = false;
 } else {
-  if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1 && (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
-    pbmte = <<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svpbmt) && CSR[<<udb:doc:csr:henvcfg,henvcfg>>].<<udb:doc:csr_field:henvcfg:PBMTE,PBMTE>> == 1;
+  if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:H,H>> == 1 && (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
+    pbmte = <<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svpbmt) && CSR[<<ame:doc:csr:henvcfg,henvcfg>>].<<ame:doc:csr_field:henvcfg:PBMTE,PBMTE>> == 1;
   } else {
-    pbmte = <<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svpbmt) && CSR[<<udb:doc:csr:menvcfg,menvcfg>>].<<udb:doc:csr_field:menvcfg:PBMTE,PBMTE>> == 1;
+    pbmte = <<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svpbmt) && CSR[<<ame:doc:csr:menvcfg,menvcfg>>].<<ame:doc:csr_field:menvcfg:PBMTE,PBMTE>> == 1;
   }
 }
 Boolean mxr;
-if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1 && (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
-  mxr = (CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MXR,MXR>> == 1) || (CSR[<<udb:doc:csr:vsstatus,vsstatus>>].<<udb:doc:csr_field:vsstatus:MXR,MXR>> == 1);
-  ppn = CSR[<<udb:doc:csr:vsatp,vsatp>>].<<udb:doc:csr_field:vsatp:PPN,PPN>>;
+if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:H,H>> == 1 && (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
+  mxr = (CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MXR,MXR>> == 1) || (CSR[<<ame:doc:csr:vsstatus,vsstatus>>].<<ame:doc:csr_field:vsstatus:MXR,MXR>> == 1);
+  ppn = CSR[<<ame:doc:csr:vsatp,vsatp>>].<<ame:doc:csr_field:vsatp:PPN,PPN>>;
 } else {
-  mxr = CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:MXR,MXR>> == 1;
-  ppn = CSR[<<udb:doc:csr:satp,satp>>].<<udb:doc:csr_field:satp:PPN,PPN>>;
+  mxr = CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:MXR,MXR>> == 1;
+  ppn = CSR[<<ame:doc:csr:satp,satp>>].<<ame:doc:csr_field:satp:PPN,PPN>>;
 }
 Boolean sum;
-if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1 && (effective_mode == PrivilegeMode::VS)) {
-  sum = CSR[<<udb:doc:csr:vsstatus,vsstatus>>].<<udb:doc:csr_field:vsstatus:SUM,SUM>> == 1;
+if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:H,H>> == 1 && (effective_mode == PrivilegeMode::VS)) {
+  sum = CSR[<<ame:doc:csr:vsstatus,vsstatus>>].<<ame:doc:csr_field:vsstatus:SUM,SUM>> == 1;
 } else {
-  sum = CSR[<<udb:doc:csr:mstatus,mstatus>>].<<udb:doc:csr_field:mstatus:SUM,SUM>> == 1;
+  sum = CSR[<<ame:doc:csr:mstatus,mstatus>>].<<ame:doc:csr_field:mstatus:SUM,SUM>> == 1;
 }
-if pass:[(](VA_SIZE < <<udb:doc:func:xlen,xlen>>pass:[(])) && (vaddr[<<udb:doc:func:xlen,xlen>>pass:[(]) - 1:VA_SIZE] != {<<udb:doc:func:xlen,xlen>>pass:[(]) - VA_SIZE{vaddr[VA_SIZE - 1]}})) {
-  <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+if pass:[(](VA_SIZE < <<ame:doc:func:xlen,xlen>>pass:[(])) && (vaddr[<<ame:doc:func:xlen,xlen>>pass:[(]) - 1:VA_SIZE] != {<<ame:doc:func:xlen,xlen>>pass:[(]) - VA_SIZE{vaddr[VA_SIZE - 1]}})) {
+  <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
 }
 for pass:[(]U32 I = (LEVELS - 1); I >= 0; I--) {
   U32 vpn = (vaddr >> (12 pass:[+] VPN_SIZE * I)) & ((1 pass:[`]<< VPN_SIZE) - 1);
   Bits<PA_SIZE> pte_gpaddr = (ppn << 12) pass:[+] (vpn * (PTESIZE / 8));
-  TranslationResult pte_phys = <<udb:doc:func:translate_gstage,translate_gstage>>pass:[(]pte_gpaddr, vaddr, MemoryOperation::Read, effective_mode, encoding);
-  if pass:[(]!<<udb:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::HardwarePageTableRead, pte_phys.paddr, PTESIZE)) {
-    <<udb:doc:func:raise,raise>>pass:[(]access_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+  TranslationResult pte_phys = <<ame:doc:func:translate_gstage,translate_gstage>>pass:[(]pte_gpaddr, vaddr, MemoryOperation::Read, effective_mode, encoding);
+  if pass:[(]!<<ame:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::HardwarePageTableRead, pte_phys.paddr, PTESIZE)) {
+    <<ame:doc:func:raise,raise>>pass:[(]access_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
   }
-  <<udb:doc:func:access_check,access_check>>pass:[(]pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code, effective_mode);
-  XReg pte = <<udb:doc:func:read_physical_memory,read_physical_memory>>pass:[(]PTESIZE, pte_phys.paddr);
+  <<ame:doc:func:access_check,access_check>>pass:[(]pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code, effective_mode);
+  XReg pte = <<ame:doc:func:read_physical_memory,read_physical_memory>>pass:[(]PTESIZE, pte_phys.paddr);
   PteFlags pte_flags = pte[9:0];
   Boolean ss_page = (pte_flags.R == 0) && (pte_flags.W == 1) && (pte_flags.X == 0);
-  if pass:[(](<<udb:doc:func:xlen,xlen>>pass:[(]) == 64) && (VA_SIZE != 32) && (pte[58:54] != 0)) {
-    <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+  if pass:[(](<<ame:doc:func:xlen,xlen>>pass:[(]) == 64) && (VA_SIZE != 32) && (pte[58:54] != 0)) {
+    <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
   }
   if pass:[(]pte_flags.V == 0) {
-    <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+    <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
   }
   if pass:[(]!sse) {
     if pass:[(](pte_flags.R == 0) && (pte_flags.W == 1)) {
-      <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+      <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
     }
   }
-  if pass:[(]<<udb:doc:func:xlen,xlen>>pass:[(]) == 64) {
+  if pass:[(]<<ame:doc:func:xlen,xlen>>pass:[(]) == 64) {
     if pass:[(]pbmte) {
       if pass:[(]pte[62:61] == 3) {
-        <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+        <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
       }
     } else {
       if pass:[(](PTESIZE >= 64) && (pte[62:61] != 0)) {
-        <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+        <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
       }
     }
-    if pass:[(]!<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svrsw60t59b)) {
+    if pass:[(]!<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svrsw60t59b)) {
       if pass:[(](PTESIZE >= 64) && pte[60:59] != 0) {
-        <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+        <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
       }
     }
-    if pass:[(]!<<udb:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svnapot)) {
+    if pass:[(]!<<ame:doc:func:implemented?,implemented?>>pass:[(]ExtensionName::Svnapot)) {
       if pass:[(](PTESIZE >= 64) && (pte[63] != 0)) {
-        <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+        <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
       }
     }
   }
@@ -1748,36 +2275,36 @@ for pass:[(]U32 I = (LEVELS - 1); I >= 0; I--) {
     Bits<PA_SIZE> offset = vaddr[I * VPN_SIZE pass:[+] 11:0];
     if pass:[(]op == MemoryOperation::Read || op == MemoryOperation::ReadModifyWrite) {
       if pass:[(]((!mxr) && (pte_flags.R == 0)) || ((mxr) && (pte_flags.X == 0 && pte_flags.R == 0))) {
-        <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+        <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
       }
       if pass:[(]effective_mode == PrivilegeMode::U && pte_flags.U == 0) {
-        <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
-      } else if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:H,H>> == 1 && effective_mode == PrivilegeMode::VU && pte_flags.U == 0) {
-        <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+        <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
+      } else if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:H,H>> == 1 && effective_mode == PrivilegeMode::VU && pte_flags.U == 0) {
+        <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
       } else if pass:[(]effective_mode == PrivilegeMode::S && pte_flags.U == 1 && !sum) {
-        <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+        <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
       } else if pass:[(]effective_mode == PrivilegeMode::VS && pte_flags.U == 1 && !sum) {
-        <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+        <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
       }
     }
     if pass:[(]((op == MemoryOperation::Write) || (op == MemoryOperation::ReadModifyWrite)) && (pte_flags.W == 0)) {
-      <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+      <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
     } else if pass:[(](op == MemoryOperation::Fetch) && (pte_flags.X == 0)) {
-      <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+      <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
     } else if pass:[(](op == MemoryOperation::Fetch) && ss_page) {
-      <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+      <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
     }
-    <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr) if (((I > 0) && (pte[I * VPN_SIZE pass:[+] 10:10] != 0)));
+    <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr) if (((I > 0) && (pte[I * VPN_SIZE pass:[+] 10:10] != 0)));
     if pass:[(](pte_flags.A == 0) || ((pte_flags.D == 0) && ((op == MemoryOperation::Write) || (op == MemoryOperation::ReadModifyWrite)))) {
       if pass:[(]adue) {
-        TranslationResult pte_phys = <<udb:doc:func:translate_gstage,translate_gstage>>pass:[(]pte_gpaddr, vaddr, MemoryOperation::Write, effective_mode, encoding);
-        if pass:[(]!<<udb:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::RsrvEventual, pte_phys.paddr, PTESIZE)) {
-          <<udb:doc:func:raise,raise>>pass:[(]access_fault_code, effective_mode, vaddr);
+        TranslationResult pte_phys = <<ame:doc:func:translate_gstage,translate_gstage>>pass:[(]pte_gpaddr, vaddr, MemoryOperation::Write, effective_mode, encoding);
+        if pass:[(]!<<ame:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::RsrvEventual, pte_phys.paddr, PTESIZE)) {
+          <<ame:doc:func:raise,raise>>pass:[(]access_fault_code, effective_mode, vaddr);
         }
-        if pass:[(]!<<udb:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::HardwarePageTableWrite, pte_phys.paddr, PTESIZE)) {
-          <<udb:doc:func:raise,raise>>pass:[(]access_fault_code, effective_mode, vaddr);
+        if pass:[(]!<<ame:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::HardwarePageTableWrite, pte_phys.paddr, PTESIZE)) {
+          <<ame:doc:func:raise,raise>>pass:[(]access_fault_code, effective_mode, vaddr);
         }
-        <<udb:doc:func:access_check,access_check>>pass:[(]pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Write, access_fault_code, effective_mode);
+        <<ame:doc:func:access_check,access_check>>pass:[(]pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Write, access_fault_code, effective_mode);
         Boolean success;
         Bits<PTESIZE> updated_pte;
         if pass:[(]pte_flags.D == 0 && (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite)) {
@@ -1786,53 +2313,53 @@ for pass:[(]U32 I = (LEVELS - 1); I >= 0; I--) {
           updated_pte = pte | 0b01000000;
         }
         if pass:[(]PTESIZE == 32) {
-          success = <<udb:doc:func:atomic_check_then_write_32,atomic_check_then_write_32>>pass:[(]pte_phys.paddr, pte, updated_pte);
+          success = <<ame:doc:func:atomic_check_then_write_32,atomic_check_then_write_32>>pass:[(]pte_phys.paddr, pte, updated_pte);
         } else if pass:[(]PTESIZE == 64) {
-          success = <<udb:doc:func:atomic_check_then_write_64,atomic_check_then_write_64>>pass:[(]pte_phys.paddr, pte, updated_pte);
+          success = <<ame:doc:func:atomic_check_then_write_64,atomic_check_then_write_64>>pass:[(]pte_phys.paddr, pte, updated_pte);
         } else {
-          <<udb:doc:func:assert,assert>>pass:[(]false, "Unexpected PTESIZE");
+          <<ame:doc:func:assert,assert>>pass:[(]false, "Unexpected PTESIZE");
         }
         if pass:[(]!success) {
           I = I pass:[+] 1;
         } else {
-          TranslationResult pte_phys = <<udb:doc:func:translate_gstage,translate_gstage>>pass:[(]paddr_base pass:[+] offset, vaddr, op, effective_mode, encoding);
+          TranslationResult pte_phys = <<ame:doc:func:translate_gstage,translate_gstage>>pass:[(]paddr_base pass:[+] offset, vaddr, op, effective_mode, encoding);
           result.paddr = pte_phys.paddr;
-          if pass:[(]<<udb:doc:func:xlen,xlen>>pass:[(]) == 64) {
+          if pass:[(]<<ame:doc:func:xlen,xlen>>pass:[(]) == 64) {
             result.pbmt = pte_phys.pbmt == Pbmt::PMA ? $enum(Pbmt, pte[62:61]) : pte_phys.pbmt;
           }
           result.pte_flags = pte_flags;
           return result;
         }
       } else {
-        <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+        <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
       }
     }
-    TranslationResult pte_phys = <<udb:doc:func:translate_gstage,translate_gstage>>pass:[(]paddr_base pass:[+] offset, vaddr, op, effective_mode, encoding);
+    TranslationResult pte_phys = <<ame:doc:func:translate_gstage,translate_gstage>>pass:[(]paddr_base pass:[+] offset, vaddr, op, effective_mode, encoding);
     result.paddr = pte_phys.paddr;
-    if pass:[(]<<udb:doc:func:xlen,xlen>>pass:[(]) == 64 && PTESIZE >= 64) {
+    if pass:[(]<<ame:doc:func:xlen,xlen>>pass:[(]) == 64 && PTESIZE >= 64) {
       result.pbmt = pte_phys.pbmt == Pbmt::PMA ? $enum(Pbmt, pte[62:61]) : pte_phys.pbmt;
     }
     result.pte_flags = pte_flags;
     return result;
   } else {
     if pass:[(]I == 0) {
-      <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+      <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
     }
     if pass:[(]pte_flags.D == 1 || pte_flags.A == 1 || pte_flags.U == 1) {
-      <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+      <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
     }
-    if pass:[(](<<udb:doc:func:xlen,xlen>>pass:[(]) == 64) && (VA_SIZE != 32) && (pte[62:61] != 0)) {
-      <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+    if pass:[(](<<ame:doc:func:xlen,xlen>>pass:[(]) == 64) && (VA_SIZE != 32) && (pte[62:61] != 0)) {
+      <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
     }
-    if pass:[(](<<udb:doc:func:xlen,xlen>>pass:[(]) == 64) && (VA_SIZE != 32) && pte[63] != 0) {
-      <<udb:doc:func:raise,raise>>pass:[(]page_fault_code, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+    if pass:[(](<<ame:doc:func:xlen,xlen>>pass:[(]) == 64) && (VA_SIZE != 32) && pte[63] != 0) {
+      <<ame:doc:func:raise,raise>>pass:[(]page_fault_code, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
     }
     ppn = pte[PA_SIZE - 3:10];
   }
 }
 ----
 
-[#udb:doc:func:maybe_cache_translation]
+[#ame:doc:func:maybe_cache_translation]
 === `maybe_cache_translation` (generated)
 Given a translation result, potentially cache the result for later use. This function models
 a TLB fill operation. A valid implementation does nothing.
@@ -1844,7 +2371,7 @@ h| Arguments   l| XReg vaddr, MemoryOperation op, TranslationResult result
 |===
 
 
-[#udb:doc:func:translate]
+[#ame:doc:func:translate]
 === `translate`
 Translate a virtual address for operation type +op+ that appears to execute at
 +effective_mode+.
@@ -1866,7 +2393,7 @@ h| Arguments   l| XReg vaddr, MemoryOperation op, PrivilegeMode effective_mode, 
 ----
 Boolean cached_translation_valid;
 CachedTranslationResult cached_translation_result;
-cached_translation_result = <<udb:doc:func:cached_translation,cached_translation>>pass:[(]vaddr, op);
+cached_translation_result = <<ame:doc:func:cached_translation,cached_translation>>pass:[(]vaddr, op);
 if pass:[(]cached_translation_result.valid) {
   return cached_translation_result.result;
 }
@@ -1875,35 +2402,35 @@ if pass:[(]effective_mode == PrivilegeMode::M) {
   result.paddr = vaddr;
   return result;
 }
-SatpMode translation_mode = <<udb:doc:func:current_translation_mode,current_translation_mode>>pass:[(]effective_mode);
+SatpMode translation_mode = <<ame:doc:func:current_translation_mode,current_translation_mode>>pass:[(]effective_mode);
 if pass:[(]translation_mode == SatpMode::Reserved) {
   if pass:[(]op == MemoryOperation::Read) {
-    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::LoadPageFault, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::LoadPageFault, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
   } else if pass:[(]op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite) {
-    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::StoreAmoPageFault, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::StoreAmoPageFault, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
   } else {
-    <<udb:doc:func:assert,assert>>pass:[(]op == MemoryOperation::Fetch, "Unexpected memory operation");
-    <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::InstructionPageFault, <<udb:doc:func:mode,mode>>pass:[(]), vaddr);
+    <<ame:doc:func:assert,assert>>pass:[(]op == MemoryOperation::Fetch, "Unexpected memory operation");
+    <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::InstructionPageFault, <<ame:doc:func:mode,mode>>pass:[(]), vaddr);
   }
 }
 if pass:[(]translation_mode == SatpMode::Bare) {
   result.paddr = vaddr;
-} else if pass:[(]<<udb:doc:func:xlen,xlen>>pass:[(]) == 32 && translation_mode == SatpMode::Sv32) {
-  result = <<udb:doc:func:stage1_page_walk,stage1_page_walk>>pass:[(]32, 34, 32, 2, vaddr, op, effective_mode, encoding);
-} else if pass:[(]<<udb:doc:func:xlen,xlen>>pass:[(]) == 64 && translation_mode == SatpMode::Sv39) {
-  result = <<udb:doc:func:stage1_page_walk,stage1_page_walk>>pass:[(]39, 56, 64, 3, vaddr, op, effective_mode, encoding);
-} else if pass:[(]<<udb:doc:func:xlen,xlen>>pass:[(]) == 64 && translation_mode == SatpMode::Sv48) {
-  result = <<udb:doc:func:stage1_page_walk,stage1_page_walk>>pass:[(]48, 56, 64, 4, vaddr, op, effective_mode, encoding);
-} else if pass:[(]<<udb:doc:func:xlen,xlen>>pass:[(]) == 64 && translation_mode == SatpMode::Sv57) {
-  result = <<udb:doc:func:stage1_page_walk,stage1_page_walk>>pass:[(]57, 56, 64, 5, vaddr, op, effective_mode, encoding);
+} else if pass:[(]<<ame:doc:func:xlen,xlen>>pass:[(]) == 32 && translation_mode == SatpMode::Sv32) {
+  result = <<ame:doc:func:stage1_page_walk,stage1_page_walk>>pass:[(]32, 34, 32, 2, vaddr, op, effective_mode, encoding);
+} else if pass:[(]<<ame:doc:func:xlen,xlen>>pass:[(]) == 64 && translation_mode == SatpMode::Sv39) {
+  result = <<ame:doc:func:stage1_page_walk,stage1_page_walk>>pass:[(]39, 56, 64, 3, vaddr, op, effective_mode, encoding);
+} else if pass:[(]<<ame:doc:func:xlen,xlen>>pass:[(]) == 64 && translation_mode == SatpMode::Sv48) {
+  result = <<ame:doc:func:stage1_page_walk,stage1_page_walk>>pass:[(]48, 56, 64, 4, vaddr, op, effective_mode, encoding);
+} else if pass:[(]<<ame:doc:func:xlen,xlen>>pass:[(]) == 64 && translation_mode == SatpMode::Sv57) {
+  result = <<ame:doc:func:stage1_page_walk,stage1_page_walk>>pass:[(]57, 56, 64, 5, vaddr, op, effective_mode, encoding);
 } else {
-  <<udb:doc:func:assert,assert>>pass:[(]false, "Unexpected SatpMode");
+  <<ame:doc:func:assert,assert>>pass:[(]false, "Unexpected SatpMode");
 }
-<<udb:doc:func:maybe_cache_translation,maybe_cache_translation>>pass:[(]vaddr, op, result);
+<<ame:doc:func:maybe_cache_translation,maybe_cache_translation>>pass:[(]vaddr, op, result);
 return result;
 ----
 
-[#udb:doc:func:read_memory_aligned]
+[#ame:doc:func:read_memory_aligned]
 === `read_memory_aligned`
 Read from virtual memory using a known aligned address.
 
@@ -1920,23 +2447,23 @@ h| Arguments   l| U32 LEN, XReg virtual_address, Bits<INSTR_ENC_SIZE> encoding, 
 [subs="specialchars,macros"]
 ----
 TranslationResult result;
-if pass:[(]CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:S,S>> == 1) {
-  result = <<udb:doc:func:translate,translate>>pass:[(]virtual_address, MemoryOperation::Read, <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]), encoding);
+if pass:[(]CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:S,S>> == 1) {
+  result = <<ame:doc:func:translate,translate>>pass:[(]virtual_address, MemoryOperation::Read, <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]), encoding);
 } else {
   result.paddr = virtual_address;
 }
-<<udb:doc:func:access_check,access_check>>pass:[(]result.paddr, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]));
+<<ame:doc:func:access_check,access_check>>pass:[(]result.paddr, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]));
 if pass:[(]rl == 1'b1) {
-  <<udb:doc:func:memory_model_release,memory_model_release>>pass:[(]);
+  <<ame:doc:func:memory_model_release,memory_model_release>>pass:[(]);
 }
-XReg value = <<udb:doc:func:read_physical_memory,read_physical_memory>>pass:[(]LEN, result.paddr);
+XReg value = <<ame:doc:func:read_physical_memory,read_physical_memory>>pass:[(]LEN, result.paddr);
 if pass:[(]aq == 1'b1) {
-  <<udb:doc:func:memory_model_acquire,memory_model_acquire>>pass:[(]);
+  <<ame:doc:func:memory_model_acquire,memory_model_acquire>>pass:[(]);
 }
 return value;
 ----
 
-[#udb:doc:func:in_naturally_aligned_region?]
+[#ame:doc:func:in_naturally_aligned_region?]
 === `in_naturally_aligned_region?`
 Checks if a length-bit access starting at +address+ lies entirely within an N-bit naturally-aligned region.
 
@@ -1952,7 +2479,7 @@ XReg Mask = (N / 8) - 1;
 return (address & ~Mask) == ((address pass:[+] length - 1) & ~Mask);
 ----
 
-[#udb:doc:func:misaligned_is_atomic?]
+[#ame:doc:func:misaligned_is_atomic?]
 === `misaligned_is_atomic?`
 Returns true if an access starting at +physical_address+ that is +N+ bits long is atomic.
 
@@ -1968,20 +2495,20 @@ h| Arguments   l| U32 N, Bits<PHYS_ADDR_WIDTH> physical_address
 [subs="specialchars,macros"]
 ----
 return false if (MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE == 0);
-if pass:[(]<<udb:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::MAG16, physical_address, N) && <<udb:doc:func:in_naturally_aligned_region?,in_naturally_aligned_region?>>pass:[(]128, physical_address, N)) {
+if pass:[(]<<ame:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::MAG16, physical_address, N) && <<ame:doc:func:in_naturally_aligned_region?,in_naturally_aligned_region?>>pass:[(]128, physical_address, N)) {
   return true;
-} else if pass:[(]<<udb:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::MAG8, physical_address, N) && <<udb:doc:func:in_naturally_aligned_region?,in_naturally_aligned_region?>>pass:[(]64, physical_address, N)) {
+} else if pass:[(]<<ame:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::MAG8, physical_address, N) && <<ame:doc:func:in_naturally_aligned_region?,in_naturally_aligned_region?>>pass:[(]64, physical_address, N)) {
   return true;
-} else if pass:[(]<<udb:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::MAG4, physical_address, N) && <<udb:doc:func:in_naturally_aligned_region?,in_naturally_aligned_region?>>pass:[(]32, physical_address, N)) {
+} else if pass:[(]<<ame:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::MAG4, physical_address, N) && <<ame:doc:func:in_naturally_aligned_region?,in_naturally_aligned_region?>>pass:[(]32, physical_address, N)) {
   return true;
-} else if pass:[(]<<udb:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::MAG2, physical_address, N) && <<udb:doc:func:in_naturally_aligned_region?,in_naturally_aligned_region?>>pass:[(]16, physical_address, N)) {
+} else if pass:[(]<<ame:doc:func:pma_applies?,pma_applies?>>pass:[(]PmaAttribute::MAG2, physical_address, N) && <<ame:doc:func:in_naturally_aligned_region?,in_naturally_aligned_region?>>pass:[(]16, physical_address, N)) {
   return true;
 } else {
   return false;
 }
 ----
 
-[#udb:doc:func:read_physical_memory_8]
+[#ame:doc:func:read_physical_memory_8]
 === `read_physical_memory_8` (builtin)
 Read a byte from physical memory.
 
@@ -1992,7 +2519,7 @@ h| Arguments   l| XReg paddr
 |===
 
 
-[#udb:doc:func:read_memory]
+[#ame:doc:func:read_memory]
 === `read_memory`
 Read from virtual memory.
 
@@ -2005,39 +2532,39 @@ h| Arguments   l| U32 LEN, XReg virtual_address, Bits<INSTR_ENC_SIZE> encoding
 
 [subs="specialchars,macros"]
 ----
-Boolean aligned = <<udb:doc:func:is_naturally_aligned,is_naturally_aligned>>pass:[(]LEN, virtual_address);
+Boolean aligned = <<ame:doc:func:is_naturally_aligned,is_naturally_aligned>>pass:[(]LEN, virtual_address);
 XReg physical_address;
 if pass:[(]aligned) {
-  return <<udb:doc:func:read_memory_aligned,read_memory_aligned>>pass:[(]LEN, virtual_address, encoding, 1'b0, 1'b0);
+  return <<ame:doc:func:read_memory_aligned,read_memory_aligned>>pass:[(]LEN, virtual_address, encoding, 1'b0, 1'b0);
 }
 if pass:[(]MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE > 0) {
-  <<udb:doc:func:assert,assert>>pass:[(]MISALIGNED_LDST_EXCEPTION_PRIORITY == "low", "Invalid config: can't mix low-priority misaligned exceptions with large atomicity granule");
-  physical_address = (CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:S,S>> == 1) ? <<udb:doc:func:translate,translate>>pass:[(]virtual_address, MemoryOperation::Read, <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]), encoding).paddr : virtual_address;
-  if pass:[(]<<udb:doc:func:misaligned_is_atomic?,misaligned_is_atomic?>>pass:[(]LEN, physical_address)) {
-    <<udb:doc:func:access_check,access_check>>pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]));
-    return <<udb:doc:func:read_physical_memory,read_physical_memory>>pass:[(]LEN, physical_address);
+  <<ame:doc:func:assert,assert>>pass:[(]MISALIGNED_LDST_EXCEPTION_PRIORITY == "low", "Invalid config: can't mix low-priority misaligned exceptions with large atomicity granule");
+  physical_address = (CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:S,S>> == 1) ? <<ame:doc:func:translate,translate>>pass:[(]virtual_address, MemoryOperation::Read, <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]), encoding).paddr : virtual_address;
+  if pass:[(]<<ame:doc:func:misaligned_is_atomic?,misaligned_is_atomic?>>pass:[(]LEN, physical_address)) {
+    <<ame:doc:func:access_check,access_check>>pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]));
+    return <<ame:doc:func:read_physical_memory,read_physical_memory>>pass:[(]LEN, physical_address);
   }
 }
 if pass:[(]!MISALIGNED_LDST) {
   if pass:[(]MISALIGNED_LDST_EXCEPTION_PRIORITY == "low") {
-    physical_address = (CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:S,S>> == 1) ? <<udb:doc:func:translate,translate>>pass:[(]virtual_address, MemoryOperation::Read, <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]), encoding).paddr : virtual_address;
-    <<udb:doc:func:access_check,access_check>>pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]));
+    physical_address = (CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:S,S>> == 1) ? <<ame:doc:func:translate,translate>>pass:[(]virtual_address, MemoryOperation::Read, <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]), encoding).paddr : virtual_address;
+    <<ame:doc:func:access_check,access_check>>pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]));
   }
-  <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::LoadAddressMisaligned, <<udb:doc:func:mode,mode>>pass:[(]), virtual_address);
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::LoadAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), virtual_address);
 } else {
   if pass:[(]MISALIGNED_SPLIT_STRATEGY == "sequential_bytes") {
     XReg result = 0;
     for pass:[(]U32 I = 0; I < (LEN / 8); I++) {
-      result = result | (<<udb:doc:func:read_memory_aligned,read_memory_aligned>>pass:[(]8, virtual_address pass:[+] I, encoding, 1'b0, 1'b0) pass:[`]<< (8 * I));
+      result = result | (<<ame:doc:func:read_memory_aligned,read_memory_aligned>>pass:[(]8, virtual_address pass:[+] I, encoding, 1'b0, 1'b0) pass:[`]<< (8 * I));
     }
     return result;
   } else if pass:[(]MISALIGNED_SPLIT_STRATEGY == "custom") {
-    <<udb:doc:func:unpredictable,unpredictable>>pass:[(]"An implementation is free to break a misaligned access any way, leading to unpredictable behavior when any part of the misaligned access causes an exception");
+    <<ame:doc:func:unpredictable,unpredictable>>pass:[(]"An implementation is free to break a misaligned access any way, leading to unpredictable behavior when any part of the misaligned access causes an exception");
   }
 }
 ----
 
-[#udb:doc:func:read_physical_memory_16]
+[#ame:doc:func:read_physical_memory_16]
 === `read_physical_memory_16` (builtin)
 Read two bytes from physical memory.
 
@@ -2048,34 +2575,29 @@ h| Arguments   l| XReg paddr
 |===
 
 
-[#udb:doc:func:read_memory_ame]
+[#ame:doc:func:read_memory_ame]
 === `read_memory_ame`
-Read dtype_size_btyes from memory
+Reads `size_bytes` consecutive bytes from memory in increasing-address order.
+The byte at the lowest address supplies bits 7:0 of the result.
 
 
 |===
-h| Return Type l| Bits<MXLEN>
-h| Arguments   l| XReg virtual_address, Bits<INSTR_ENC_SIZE> encoding, Bits<AME_MAX_DTYPE_SIZE> dtype_size_bytes
+h| Return Type l| Bits<AME_MAX_SQUARE_SIZE>
+h| Arguments   l| XReg virtual_address, Bits<INSTR_ENC_SIZE> encoding, U32 size_bytes
 |===
 
 [subs="specialchars,macros"]
 ----
-if pass:[(]dtype_size_bytes == 4) {
-  return <<udb:doc:func:read_memory,read_memory>>pass:[(]4, virtual_address, encoding);
-} else if pass:[(]dtype_size_bytes == 8) {
-  return <<udb:doc:func:read_memory,read_memory>>pass:[(]8, virtual_address, encoding);
-} else if pass:[(]dtype_size_bytes == 16) {
-  return <<udb:doc:func:read_memory,read_memory>>pass:[(]16, virtual_address, encoding);
-} else if pass:[(]dtype_size_bytes == 32) {
-  return <<udb:doc:func:read_memory,read_memory>>pass:[(]32, virtual_address, encoding);
-} else if pass:[(]dtype_size_bytes == 64) {
-  return <<udb:doc:func:read_memory,read_memory>>pass:[(]64, virtual_address, encoding);
-} else {
-  <<udb:doc:func:unreachable,unreachable>>pass:[(]"Unsupported dtype size");
+Bits<AME_MAX_SQUARE_SIZE> result = 0;
+for pass:[(]U32 i = 0; i < size_bytes; i++) {
+  U32 bit_lo = i * 8;
+  U32 bit_hi = bit_lo pass:[+] 7;
+  result[bit_hi:bit_lo] = <<ame:doc:func:read_memory,read_memory>>pass:[(]8, virtual_address pass:[+] i, encoding)[7:0];
 }
+return result;
 ----
 
-[#udb:doc:func:ame_xform_cm_to_impl]
+[#ame:doc:func:ame_xform_cm_to_impl]
 === `ame_xform_cm_to_impl` (builtin)
 Given a square in column-major format, return the implementation-dependent
 representation of the square.
@@ -2083,11 +2605,11 @@ representation of the square.
 
 |===
 h| Return Type l| Bits<AME_MAX_SQUARE_SIZE>
-h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> cm_square, Bits<8> dtype
+h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> cm_square, Bits<32> dtype
 |===
 
 
-[#udb:doc:func:ame_xform_impl_to_cm]
+[#ame:doc:func:ame_xform_impl_to_cm]
 === `ame_xform_impl_to_cm` (builtin)
 Given a square in implementation-defined format, return the column-major
 representation of the square.
@@ -2095,11 +2617,11 @@ representation of the square.
 
 |===
 h| Return Type l| Bits<AME_MAX_SQUARE_SIZE>
-h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> impl_square, Bits<8> dtype
+h| Arguments   l| Bits<AME_MAX_SQUARE_SIZE> impl_square, Bits<32> dtype
 |===
 
 
-[#udb:doc:func:write_physical_memory]
+[#ame:doc:func:write_physical_memory]
 === `write_physical_memory`
 Write to physical memory.
 
@@ -2112,19 +2634,19 @@ h| Arguments   l| U32 len, XReg paddr, XReg value
 [subs="specialchars,macros"]
 ----
 if pass:[(]len == 8) {
-  <<udb:doc:func:write_physical_memory_8,write_physical_memory_8>>pass:[(]paddr, value);
+  <<ame:doc:func:write_physical_memory_8,write_physical_memory_8>>pass:[(]paddr, value);
 } else if pass:[(]len == 16) {
-  <<udb:doc:func:write_physical_memory_16,write_physical_memory_16>>pass:[(]paddr, value);
+  <<ame:doc:func:write_physical_memory_16,write_physical_memory_16>>pass:[(]paddr, value);
 } else if pass:[(]len == 32) {
-  <<udb:doc:func:write_physical_memory_32,write_physical_memory_32>>pass:[(]paddr, value);
+  <<ame:doc:func:write_physical_memory_32,write_physical_memory_32>>pass:[(]paddr, value);
 } else if pass:[(]len == 64) {
-  <<udb:doc:func:write_physical_memory_64,write_physical_memory_64>>pass:[(]paddr, value);
+  <<ame:doc:func:write_physical_memory_64,write_physical_memory_64>>pass:[(]paddr, value);
 } else {
-  <<udb:doc:func:assert,assert>>pass:[(]false, "Invalid len");
+  <<ame:doc:func:assert,assert>>pass:[(]false, "Invalid len");
 }
 ----
 
-[#udb:doc:func:write_memory_aligned]
+[#ame:doc:func:write_memory_aligned]
 === `write_memory_aligned`
 Write to virtual memory using a known aligned address.
 
@@ -2141,18 +2663,18 @@ h| Arguments   l| U32 LEN, XReg virtual_address, XReg value, Bits<INSTR_ENC_SIZE
 [subs="specialchars,macros"]
 ----
 XReg physical_address;
-physical_address = (CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:S,S>> == 1) ? <<udb:doc:func:translate,translate>>pass:[(]virtual_address, MemoryOperation::Write, <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]), encoding).paddr : virtual_address;
-<<udb:doc:func:access_check,access_check>>pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]));
+physical_address = (CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:S,S>> == 1) ? <<ame:doc:func:translate,translate>>pass:[(]virtual_address, MemoryOperation::Write, <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]), encoding).paddr : virtual_address;
+<<ame:doc:func:access_check,access_check>>pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]));
 if pass:[(]rl == 1'b1) {
-  <<udb:doc:func:memory_model_release,memory_model_release>>pass:[(]);
+  <<ame:doc:func:memory_model_release,memory_model_release>>pass:[(]);
 }
-<<udb:doc:func:write_physical_memory,write_physical_memory>>pass:[(]LEN, physical_address, value);
+<<ame:doc:func:write_physical_memory,write_physical_memory>>pass:[(]LEN, physical_address, value);
 if pass:[(]aq == 1'b1) {
-  <<udb:doc:func:memory_model_acquire,memory_model_acquire>>pass:[(]);
+  <<ame:doc:func:memory_model_acquire,memory_model_acquire>>pass:[(]);
 }
 ----
 
-[#udb:doc:func:write_physical_memory_8]
+[#ame:doc:func:write_physical_memory_8]
 === `write_physical_memory_8` (builtin)
 Write a byte to physical memory.
 
@@ -2163,7 +2685,7 @@ h| Arguments   l| XReg paddr, Bits<8> value
 |===
 
 
-[#udb:doc:func:write_memory]
+[#ame:doc:func:write_memory]
 === `write_memory`
 Write to virtual memory
 
@@ -2175,39 +2697,39 @@ h| Arguments   l| U32 LEN, XReg virtual_address, XReg value, Bits<INSTR_ENC_SIZE
 
 [subs="specialchars,macros"]
 ----
-Boolean aligned = <<udb:doc:func:is_naturally_aligned,is_naturally_aligned>>pass:[(]LEN, virtual_address);
+Boolean aligned = <<ame:doc:func:is_naturally_aligned,is_naturally_aligned>>pass:[(]LEN, virtual_address);
 XReg physical_address;
 if pass:[(]aligned) {
-  <<udb:doc:func:write_memory_aligned,write_memory_aligned>>pass:[(]LEN, virtual_address, value, encoding, 1'b0, 1'b0);
+  <<ame:doc:func:write_memory_aligned,write_memory_aligned>>pass:[(]LEN, virtual_address, value, encoding, 1'b0, 1'b0);
   return ;
 }
 if pass:[(]MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE > 0) {
-  <<udb:doc:func:assert,assert>>pass:[(]MISALIGNED_LDST_EXCEPTION_PRIORITY == "low", "Invalid config: can't mix low-priority misaligned exceptions with large atomicity granule");
-  physical_address = (CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:S,S>> == 1) ? <<udb:doc:func:translate,translate>>pass:[(]virtual_address, MemoryOperation::Write, <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]), encoding).paddr : virtual_address;
-  if pass:[(]<<udb:doc:func:misaligned_is_atomic?,misaligned_is_atomic?>>pass:[(]LEN, physical_address)) {
-    <<udb:doc:func:access_check,access_check>>pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]));
-    <<udb:doc:func:write_physical_memory,write_physical_memory>>pass:[(]LEN, physical_address, value);
+  <<ame:doc:func:assert,assert>>pass:[(]MISALIGNED_LDST_EXCEPTION_PRIORITY == "low", "Invalid config: can't mix low-priority misaligned exceptions with large atomicity granule");
+  physical_address = (CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:S,S>> == 1) ? <<ame:doc:func:translate,translate>>pass:[(]virtual_address, MemoryOperation::Write, <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]), encoding).paddr : virtual_address;
+  if pass:[(]<<ame:doc:func:misaligned_is_atomic?,misaligned_is_atomic?>>pass:[(]LEN, physical_address)) {
+    <<ame:doc:func:access_check,access_check>>pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]));
+    <<ame:doc:func:write_physical_memory,write_physical_memory>>pass:[(]LEN, physical_address, value);
     return ;
   }
 }
 if pass:[(]!MISALIGNED_LDST) {
   if pass:[(]MISALIGNED_LDST_EXCEPTION_PRIORITY == "low") {
-    physical_address = (CSR[<<udb:doc:csr:misa,misa>>].<<udb:doc:csr_field:misa:S,S>> == 1) ? <<udb:doc:func:translate,translate>>pass:[(]virtual_address, MemoryOperation::Write, <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]), encoding).paddr : virtual_address;
-    <<udb:doc:func:access_check,access_check>>pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, <<udb:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]));
+    physical_address = (CSR[<<ame:doc:csr:misa,misa>>].<<ame:doc:csr_field:misa:S,S>> == 1) ? <<ame:doc:func:translate,translate>>pass:[(]virtual_address, MemoryOperation::Write, <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]), encoding).paddr : virtual_address;
+    <<ame:doc:func:access_check,access_check>>pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, <<ame:doc:func:effective_ldst_mode,effective_ldst_mode>>pass:[(]));
   }
-  <<udb:doc:func:raise,raise>>pass:[(]ExceptionCode::StoreAmoAddressMisaligned, <<udb:doc:func:mode,mode>>pass:[(]), virtual_address);
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::StoreAmoAddressMisaligned, <<ame:doc:func:mode,mode>>pass:[(]), virtual_address);
 } else {
   if pass:[(]MISALIGNED_SPLIT_STRATEGY == "sequential_bytes") {
     for pass:[(]U32 I = 0; I < (LEN / 8); I++) {
-      <<udb:doc:func:write_memory_aligned,write_memory_aligned>>pass:[(]8, virtual_address pass:[+] I, (value >> (8 * I))[7:0], encoding, 1'b0, 1'b0);
+      <<ame:doc:func:write_memory_aligned,write_memory_aligned>>pass:[(]8, virtual_address pass:[+] I, (value >> (8 * I))[7:0], encoding, 1'b0, 1'b0);
     }
   } else if pass:[(]MISALIGNED_SPLIT_STRATEGY == "custom") {
-    <<udb:doc:func:unpredictable,unpredictable>>pass:[(]"An implementation is free to break a misaligned access any way, leading to unpredictable behavior when any part of the misaligned access causes an exception");
+    <<ame:doc:func:unpredictable,unpredictable>>pass:[(]"An implementation is free to break a misaligned access any way, leading to unpredictable behavior when any part of the misaligned access causes an exception");
   }
 }
 ----
 
-[#udb:doc:func:write_physical_memory_16]
+[#ame:doc:func:write_physical_memory_16]
 === `write_physical_memory_16` (builtin)
 Write two bytes to physical memory.
 
@@ -2218,7 +2740,7 @@ h| Arguments   l| XReg paddr, Bits<16> value
 |===
 
 
-[#udb:doc:func:write_physical_memory_32]
+[#ame:doc:func:write_physical_memory_32]
 === `write_physical_memory_32` (builtin)
 Write four bytes to physical memory.
 
@@ -2229,7 +2751,7 @@ h| Arguments   l| XReg paddr, Bits<32> value
 |===
 
 
-[#udb:doc:func:write_physical_memory_64]
+[#ame:doc:func:write_physical_memory_64]
 === `write_physical_memory_64` (builtin)
 Write eight bytes to physical memory.
 
@@ -2240,29 +2762,22 @@ h| Arguments   l| XReg paddr, Bits<64> value
 |===
 
 
-[#udb:doc:func:write_memory_ame]
+[#ame:doc:func:write_memory_ame]
 === `write_memory_ame`
-Write dtype_size_bytes of data to memory.
+Writes `size_bytes` consecutive bytes to memory in increasing-address order.
+Bits 7:0 of `data` are written to the lowest address.
 
 
 |===
 h| Return Type l| void
-h| Arguments   l| XReg virtual_address, Bits<INSTR_ENC_SIZE> encoding, Bits<AME_MAX_SQUARE_SIZE> data, Bits<AME_MAX_DTYPE_SIZE> dtype_size_bytes
+h| Arguments   l| XReg virtual_address, Bits<INSTR_ENC_SIZE> encoding, Bits<AME_MAX_SQUARE_SIZE> data, U32 size_bytes
 |===
 
 [subs="specialchars,macros"]
 ----
-if pass:[(]dtype_size_bytes == 4) {
-  <<udb:doc:func:write_memory,write_memory>>pass:[(]4, virtual_address, encoding, data[31:0]);
-} else if pass:[(]dtype_size_bytes == 8) {
-  <<udb:doc:func:write_memory,write_memory>>pass:[(]8, virtual_address, encoding, data[63:0]);
-} else if pass:[(]dtype_size_bytes == 16) {
-  <<udb:doc:func:write_memory,write_memory>>pass:[(]16, virtual_address, encoding, data[127:0]);
-} else if pass:[(]dtype_size_bytes == 32) {
-  <<udb:doc:func:write_memory,write_memory>>pass:[(]32, virtual_address, encoding, data[255:0]);
-} else if pass:[(]dtype_size_bytes == 64) {
-  <<udb:doc:func:write_memory,write_memory>>pass:[(]64, virtual_address, encoding, data[511:0]);
-} else {
-  <<udb:doc:func:unreachable,unreachable>>pass:[(]"Unsupported dtype size");
+for pass:[(]U32 i = 0; i < size_bytes; i++) {
+  U32 bit_lo = i * 8;
+  U32 bit_hi = bit_lo pass:[+] 7;
+  <<ame:doc:func:write_memory,write_memory>>pass:[(]8, virtual_address pass:[+] i, data[bit_hi:bit_lo], encoding);
 }
 ----

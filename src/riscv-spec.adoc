@@ -105,7 +105,7 @@ include::functions.adoc[]
 
 include::glossary.adoc[]
 
-include::xref-anchors.adoc[]
+include::base-isa-anchors.adoc[]
 
 // The index must precede the bibliography
 // include::index.adoc[]
