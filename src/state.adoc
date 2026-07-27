@@ -104,7 +104,7 @@ The encoding format of `Ad` datatypes is identical to the format for `Md`, and i
 
 === Control and status registers (CSRs)
 
-AME adds three CSRs.
+AME adds four CSRs.
 
 The addresses below are provisional allocations in the corresponding
 user-level custom read/write and read-only CSR ranges.  A future ratified
@@ -121,9 +121,39 @@ version may assign different standard CSR addresses.
 | `CC1`
 | AME unit datatype size in bits
 
+| <<ame:doc:csr:ame_scalar_dtype,ame_scalar_dtype>>
+| `CC2`
+| Datatype of data scalar operands supplied in `X` registers
+
 | <<ame:doc:csr:amestatus,amestatus>>
 | `800`
 | Status of the AME extension
+
+|===
+
+==== ame_scalar_dtype
+
+Selects the AME datatype used to interpret an X-register operand when an
+instruction declares a *data scalar* operand.  The encoding is the same
+32-bit datatype encoding used by `Md` registers.  A value of zero means that
+the scalar datatype is uninitialized; an unsupported datatype or conversion
+sets `amestatus.UN` and leaves the destination unchanged. Software may write
+any 32-bit encoding; unsupported encodings are retained in the CSR and are
+rejected when a data-scalar instruction uses them.
+
+This CSR does not apply to fixed-type control operands.  Shift amounts,
+indices, offsets, and other instruction-defined control values retain their
+fixed integer semantics and do not read this CSR.
+
+The CSR resets to zero.  It is hart state and must be saved and restored with
+the AME state when software changes execution context.
+
+|===
+| Field | Location | Description
+
+| VALUE
+| `31:0`
+| AME datatype encoding for data scalar X operands
 
 |===
 
