@@ -117,12 +117,12 @@ funct3_values = entries.map { |entry| entry[:funct3] }.uniq
 abort "AME instructions must all use funct3=0, found #{funct3_values.sort.join(', ')}" unless funct3_values == [0]
 
 reserved_funct7 = {
-  "R3" => [0x35],
+  "R3" => [],
   "R2" => [],
   "R1" => []
 }
 expected_funct7 = {
-  "R3" => (0x00..0x50).to_a - reserved_funct7.fetch("R3"),
+  "R3" => (0x00..0x50).to_a + (0x54..0x5c).to_a - reserved_funct7.fetch("R3"),
   "R2" => [0x51, 0x52],
   "R1" => [0x53]
 }
