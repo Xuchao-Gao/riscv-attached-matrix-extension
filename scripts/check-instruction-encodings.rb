@@ -134,7 +134,7 @@ reserved_funct7 = {
   "Fixed" => []
 }
 expected_funct7 = {
-  "R3" => (0x00..0x50).to_a - reserved_funct7.fetch("R3"),
+  "R3" => ((0x00..0x50).to_a + (0x54..0x57).to_a) - reserved_funct7.fetch("R3"),
   "R2" => [0x51, 0x52],
   "R1" => [0x53],
   "Fixed" => [0x52]
@@ -184,7 +184,7 @@ instructions_source.scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, sectio
   if !mnemonic_match
     field_errors << "#{name} has no parseable Mnemonic line"
   else
-    mnemonic_operands = mnemonic_match[1].to_s.split(',').map(&:strip).reject(&:empty?)
+    mnemonic_operands = mnemonic_match[1].to_s.split(',').map { |op| op.strip.delete('()') }.reject(&:empty?)
     diagram_operands = fields.keys
     unless mnemonic_operands == diagram_operands
       field_errors << "#{name} mnemonic operands #{mnemonic_operands.join(', ')} do not match diagram operands #{diagram_operands.join(', ')}"
