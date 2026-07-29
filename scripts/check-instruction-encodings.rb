@@ -122,9 +122,9 @@ reserved_funct7 = {
   "R1" => []
 }
 expected_funct7 = {
-  "R3" => (0x00..0x50).to_a - reserved_funct7.fetch("R3"),
-  "R2" => [0x51, 0x52],
-  "R1" => [0x53]
+  "R3" => (0x00..0x54).to_a - reserved_funct7.fetch("R3"),
+  "R2" => [0x55, 0x56],
+  "R1" => [0x57]
 }
 expected_funct7.each do |format_name, expected|
   actual = entries.select { |entry| entry[:format] == format_name }
@@ -165,7 +165,7 @@ File.read(instructions_path).scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |nam
   if !mnemonic_match
     field_errors << "#{name} has no parseable Mnemonic line"
   else
-    mnemonic_operands = mnemonic_match[1].to_s.split(',').map(&:strip).reject(&:empty?)
+    mnemonic_operands = mnemonic_match[1].to_s.split(',').map { |op| op.strip.delete('()') }.reject(&:empty?)
     diagram_operands = fields.keys
     unless mnemonic_operands == diagram_operands
       field_errors << "#{name} mnemonic operands #{mnemonic_operands.join(', ')} do not match diagram operands #{diagram_operands.join(', ')}"
@@ -193,7 +193,7 @@ end
 # funct7 bank.  This turns the space-saving policy into a checked invariant
 # rather than a documentation preference.
 reserved_extensions = {
-  ["R2", 0x51] => [9]
+  ["R2", 0x55] => [9]
 }
 [["R2", 32], ["R1", 1024]].each do |format_name, capacity|
   entries.select { |entry| entry[:format] == format_name }
