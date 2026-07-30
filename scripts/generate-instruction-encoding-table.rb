@@ -51,14 +51,14 @@ File.read(instructions_path).scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |nam
   end
 
   abort "#{name} encoding is #{position} bits, expected 32" unless position == 32
-  dest = fields.find { |field| field[:hi] == 11 && field[:lo] == 7 }
+  dest_operand = fields.any? { |field| field[:kind] == :operand && field[:hi] <= 11 && field[:lo] >= 7 }
   src1 = fields.find { |field| field[:hi] == 19 && field[:lo] == 15 }
   src2 = fields.find { |field| field[:hi] == 24 && field[:lo] == 20 }
   format = if src2[:kind] == :operand
              "R3"
            elsif src1[:kind] == :operand
              "R2"
-           elsif dest[:kind] == :operand
+           elsif dest_operand
              "R1"
            else
              "Fixed"
