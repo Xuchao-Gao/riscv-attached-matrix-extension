@@ -1089,9 +1089,11 @@ datatype's rounding mode.
 | If either operand is a NaN, or if opposite-signed infinities are added, return
 the destination datatype's canonical quiet NaN.  Otherwise an infinity plus a
 finite value, or two same-signed infinities, returns that infinity.
-| Each binary addition is correctly rounded according to the destination
-datatype's rounding mode.  Prefix and reduction instructions apply additions
-in ascending source-element order.
+| Implementation-defined: these operations are unordered reduction adds.
+Each binary addition is correctly rounded according to the destination
+datatype's rounding mode, but the association order of the additions is
+implementation-defined, so the delivered result may vary between
+implementations.
 
 | `SCATADDCOL1D`, `SCATADD1D`
 | The NaN and infinity results are the same as for `ADD1D`.
