@@ -6,7 +6,7 @@
 
 
 
-AME defines *122* instructions.
+AME defines *124* instructions.
 
 [IMPORTANT]
 ====
@@ -19,9 +19,25 @@ block shows a one-square loop or direct per-register indexing, the common rules
 are normative and supply the complete behavior for packed and wide datatypes;
 the shorthand does not restrict execution to one square or permit partial
 register-group access.
+
+Before any AME instruction other than `ame.acquire` or `ame.release` executes
+its `Operation` block, the implementation performs
+`<<ame:doc:func:ame_check_state_access,ame_check_state_access>>`. This check has
+priority over all instruction-specific validation.
 ====
 
 include::instruction-encoding-allocations.adoc[]
+
+Resource Management::
+[cols="1,2",%unbreakable]
+!===
+| Mnemonic | Name
+
+a| `ame.acquire xd, xs`
+| <<ame:doc:inst:ame_acquire,Acquire the AME backend>>
+a| `ame.release`
+| <<ame:doc:inst:ame_release,Release the AME backend>>
+!===
 
 
 Datatype Management::
@@ -344,6 +360,74 @@ a| `mreducemin.col md, ms1`
 a| `mreducemin.row md, ms1`
 | <<ame:doc:inst:mreducemin_row,Elementwise row reduce (min)>>
 !===
+
+
+<<<
+
+[#ame:doc:inst:ame_acquire]
+=== `ame.acquire`
+
+Synopsis::
+Acquire the entire AME backend
+
+Mnemonic::
+`ame.acquire xd, xs`
+
+Encoding::
++
+[IMPORTANT]
+This encoding is provisional and is not a final RISC-V allocation.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs","type":4},{"bits":5,"name": 0x9,"type":2},{"bits":7,"name": {ame-enc-r2-bank1-funct7},"type":2}]}
+....
+
+Description::
+Requests the entire AME backend; see <<ame-backend-management-operators>>.
+
+Decode Variables::
+[source,idl,subs="specialchars,macros"]
+----
+Bits<5> xd = $encoding[11:7];
+Bits<5> xs = $encoding[19:15];
+----
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+X[xd] = <<ame:doc:func:ame_acquire_backend,ame_acquire_backend>>pass:[(]X[xs]);
+----
+
+<<<
+
+[#ame:doc:inst:ame_release]
+=== `ame.release`
+
+Synopsis::
+Release the entire AME backend
+
+Mnemonic::
+`ame.release`
+
+Encoding::
++
+[IMPORTANT]
+This encoding is provisional and is not a final RISC-V allocation.
++
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": 0x0,"type":2},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": 0x0,"type":2},{"bits":5,"name": 0xa,"type":2},{"bits":7,"name": {ame-enc-r2-bank1-funct7},"type":2}]}
+....
+
+Description::
+Releases the entire AME backend; see <<ame-backend-management-operators>>.
+
+Operation::
+[source,idl,subs="specialchars,macros"]
+----
+<<ame:doc:func:ame_release_backend,ame_release_backend>>pass:[(]);
+----
 
 
 <<<

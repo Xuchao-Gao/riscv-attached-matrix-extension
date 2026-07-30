@@ -11,7 +11,7 @@
       font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
     main { max-width:1800px; margin:auto; padding:28px; } h1 { margin:0 0 6px; font-size:28px; }
     h2 { margin:30px 0 12px; } p { color:var(--muted); } code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
-    .cards { display:grid; grid-template-columns:repeat(5,minmax(130px,1fr)); gap:12px; margin:20px 0; }
+    .cards { display:grid; grid-template-columns:repeat(6,minmax(130px,1fr)); gap:12px; margin:20px 0; }
     .card { background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
     .card strong { display:block; font-size:24px; } .card span { color:var(--muted); }
     .formats { display:grid; gap:10px; } .format-row { display:grid; grid-template-columns:54px 1fr; align-items:center;
@@ -27,6 +27,7 @@
     .num { color:var(--muted); text-align:right; } .synopsis { color:var(--muted); font-size:12px; margin-top:3px; }
     .tag { display:inline-block; min-width:32px; text-align:center; padding:3px 6px; border-radius:999px; font-weight:700; }
     .tag.r3 { background:#dff4e7; color:#17653a; } .tag.r2 { background:#e5edff; color:#2b4d9d; } .tag.r1 { background:#fae9d2; color:#895315; }
+    .tag.fixed { background:#f3e6fa; color:#70418c; }
     .bitbar { display:flex; min-width:620px; height:48px; } .bit { display:flex; flex-direction:column; justify-content:center;
       text-align:center; overflow:hidden; border:1px solid; border-right:0; padding:2px 4px; white-space:nowrap; }
     .bit:first-child { border-radius:6px 0 0 6px; } .bit:last-child { border-right:1px solid; border-radius:0 6px 6px 0; }
@@ -36,23 +37,24 @@
     footer { margin:18px 0; color:var(--muted); }
     @media print { body { background:white; } main { max-width:none; padding:10px; } .toolbar { display:none; }
       .table-wrap { overflow:visible; border:0; } table { min-width:0; font-size:9px; } th { position:static; } .bitbar { min-width:360px; height:34px; }
-      .cards { grid-template-columns:repeat(5,1fr); } }
+      .cards { grid-template-columns:repeat(6,1fr); } }
   </style>
 </head>
 <body><main>
   <h1>AME instruction encoding review</h1>
   <p>Standalone review artifact generated from <code>src/instructions.adoc</code>. Decoder rule: <code>(word &amp; mask) == match</code>.</p>
   <div class="cards">
-    <div class="card"><strong>122</strong><span>instructions</span></div>
+    <div class="card"><strong>124</strong><span>instructions</span></div>
     <div class="card"><strong>80</strong><span>R3 encodings</span></div>
-    <div class="card"><strong>40</strong><span>R2 encodings</span></div>
+    <div class="card"><strong>41</strong><span>R2 encodings</span></div>
     <div class="card"><strong>2</strong><span>R1 encodings</span></div>
+    <div class="card"><strong>1</strong><span>fixed encodings</span></div>
     <div class="card"><strong>0</strong><span>decode overlaps</span></div>
   </div>
 
   <h2>Encoding formats</h2>
-  <p class="note"><b>Invariant:</b> <code>funct7[31:25]</code>, <code>funct3[14:12]</code>, and <code>opcode[6:0]</code> remain independent fields. Every instruction uses <code>funct3=000</code>; R0 is not defined.</p>
-  <p>R3 occupies <code>funct7=0x00..0x50</code> except reserved value <code>0x35</code>. R2 uses bank <code>0x51</code> with <code>xfunct5=0..31</code> except reserved value <code>0x09</code>, then continues in bank <code>0x52</code>. R1 uses bank <code>0x53</code> with <code>xfunct10=0..1</code>. The 44 <code>funct7</code> values <code>0x54..0x7f</code> remain unallocated.</p>
+  <p class="note"><b>Invariant:</b> <code>funct7[31:25]</code>, <code>funct3[14:12]</code>, and <code>opcode[6:0]</code> remain independent fields. Every instruction uses <code>funct3=000</code>.</p>
+  <p>R3 occupies <code>funct7=0x00..0x50</code> except reserved value <code>0x35</code>. R2 uses bank <code>0x51</code> with <code>xfunct5=0..31</code> except reserved value <code>0x09</code>, then continues in bank <code>0x52</code>. R1 uses bank <code>0x53</code> with <code>xfunct10=0..1</code>. The fixed, no-operand <code>ame.release</code> encoding shares the R2 <code>funct7=0x52</code> bank, using <code>xfunct5=0x0a</code> with <code>rs1=rd=0</code>; every other encoding under that selector is reserved. The 44 <code>funct7</code> values <code>0x54..0x7f</code> remain unallocated.</p>
   <div class="formats">
     <div class="format-row"><b>R3</b><div class="bitbar"><span class="bit fixed w7"><b>funct7</b><small>31:25</small></span><span class="bit operand w5"><b>src2</b><small>24:20</small></span><span class="bit operand w5"><b>src1</b><small>19:15</small></span><span class="bit fixed w3"><b>funct3=0</b><small>14:12</small></span><span class="bit operand w5"><b>dest</b><small>11:7</small></span><span class="bit fixed w7"><b>opcode</b><small>6:0</small></span></div></div>
     <div class="format-row"><b>R2</b><div class="bitbar"><span class="bit fixed w7"><b>funct7</b><small>31:25</small></span><span class="bit fixed w5"><b>xfunct5</b><small>24:20</small></span><span class="bit operand w5"><b>src1</b><small>19:15</small></span><span class="bit fixed w3"><b>funct3=0</b><small>14:12</small></span><span class="bit operand w5"><b>dest</b><small>11:7</small></span><span class="bit fixed w7"><b>opcode</b><small>6:0</small></span></div></div>
@@ -62,8 +64,8 @@
   <h2>All instruction encodings</h2>
   <div class="toolbar">
     <input id="search" type="search" placeholder="Search instruction, mnemonic, or description">
-    <select id="format"><option value="">All formats</option><option>R3</option><option>R2</option><option>R1</option></select>
-    <select id="category"><option value="">All categories</option><option value="Bitwise">Bitwise (16)</option><option value="Compare and Predication">Compare and Predication (8)</option><option value="Datatype Management">Datatype Management (4)</option><option value="Elementwise Arithmetic">Elementwise Arithmetic (31)</option><option value="Elementwise Math Functions">Elementwise Math Functions (18)</option><option value="Matrix Multiply">Matrix Multiply (8)</option><option value="Memory">Memory (6)</option><option value="Permutation">Permutation (12)</option><option value="Reduction">Reduction (10)</option><option value="Register move / data conversion">Register move / data conversion (4)</option><option value="State Management">State Management (5)</option></select>
+    <select id="format"><option value="">All formats</option><option>R3</option><option>R2</option><option>R1</option><option>Fixed</option></select>
+    <select id="category"><option value="">All categories</option><option value="Bitwise">Bitwise (16)</option><option value="Compare and Predication">Compare and Predication (8)</option><option value="Datatype Management">Datatype Management (4)</option><option value="Elementwise Arithmetic">Elementwise Arithmetic (31)</option><option value="Elementwise Math Functions">Elementwise Math Functions (18)</option><option value="Matrix Multiply">Matrix Multiply (8)</option><option value="Memory">Memory (6)</option><option value="Permutation">Permutation (12)</option><option value="Reduction">Reduction (10)</option><option value="Register move / data conversion">Register move / data conversion (4)</option><option value="Resource Management">Resource Management (2)</option><option value="State Management">State Management (5)</option></select>
     <span id="visible"></span>
   </div>
   <div class="table-wrap"><table>
@@ -1121,8 +1123,26 @@
     <td><code>0xfe00707f</code></td>
     <td><code>0x7c00002b</code></td>
   </tr>
-<tr data-format="R2" data-category="State Management">
+<tr data-format="R2" data-category="Resource Management">
     <td class="num">118</td>
+    <td><span class="tag r2">R2</span></td>
+    <td><code>ame.acquire</code></td>
+    <td><code>ame.acquire xd, xs</code><div class="synopsis">Acquire the entire AME backend</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x52</small></span><span class="bit fixed w5" title="bits 24:20"><b>xfunct5</b><small>0x9</small></span><span class="bit operand w5" title="bits 19:15"><b>xs</b><small>xs</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>xd</b><small>xd</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfff0707f</code></td>
+    <td><code>0xa490002b</code></td>
+  </tr>
+<tr data-format="Fixed" data-category="Resource Management">
+    <td class="num">119</td>
+    <td><span class="tag fixed">Fixed</span></td>
+    <td><code>ame.release</code></td>
+    <td><code>ame.release</code><div class="synopsis">Release the entire AME backend</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x52</small></span><span class="bit fixed w5" title="bits 24:20"><b>xfunct5</b><small>0xa</small></span><span class="bit fixed w5" title="bits 19:15"><b>rs1</b><small>0x0</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit fixed w5" title="bits 11:7"><b>rd</b><small>0x0</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xffffffff</code></td>
+    <td><code>0xa4a0002b</code></td>
+  </tr>
+<tr data-format="R2" data-category="State Management">
+    <td class="num">120</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mmov.a.m</code></td>
     <td><code>mmov.a.m md, acc</code><div class="synopsis">Elementwise unconditional move from accumulator to M register</div></td>
@@ -1131,7 +1151,7 @@
     <td><code>0xa3c0002b</code></td>
   </tr>
 <tr data-format="R2" data-category="State Management">
-    <td class="num">119</td>
+    <td class="num">121</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mmov.m.a</code></td>
     <td><code>mmov.m.a acc, ms</code><div class="synopsis">Elementwise unconditional move from M register to accumulator</div></td>
@@ -1140,7 +1160,7 @@
     <td><code>0xa3d0002b</code></td>
   </tr>
 <tr data-format="R2" data-category="State Management">
-    <td class="num">120</td>
+    <td class="num">122</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mmov.m.m</code></td>
     <td><code>mmov.m.m md, ms</code><div class="synopsis">Elementwise unconditional move between M registers</div></td>
@@ -1149,7 +1169,7 @@
     <td><code>0xa3e0002b</code></td>
   </tr>
 <tr data-format="R1" data-category="State Management">
-    <td class="num">121</td>
+    <td class="num">123</td>
     <td><span class="tag r1">R1</span></td>
     <td><code>mzero.2d.acc</code></td>
     <td><code>mzero.2d.acc acc</code><div class="synopsis">Clear accumulator tile</div></td>
@@ -1158,7 +1178,7 @@
     <td><code>0xa600002b</code></td>
   </tr>
 <tr data-format="R1" data-category="State Management">
-    <td class="num">122</td>
+    <td class="num">124</td>
     <td><span class="tag r1">R1</span></td>
     <td><code>mzero.2d.m</code></td>
     <td><code>mzero.2d.m md</code><div class="synopsis">Clear tensor register</div></td>
@@ -1167,7 +1187,7 @@
     <td><code>0xa600802b</code></td>
   </tr></tbody>
   </table></div>
-  <footer>Blue fields are fixed selectors; green fields are register operands. Category counts: Bitwise=16, Compare and Predication=8, Datatype Management=4, Elementwise Arithmetic=31, Elementwise Math Functions=18, Matrix Multiply=8, Memory=6, Permutation=12, Reduction=10, Register move / data conversion=4, State Management=5.</footer>
+  <footer>Blue fields are fixed selectors; green fields are register operands. Category counts: Bitwise=16, Compare and Predication=8, Datatype Management=4, Elementwise Arithmetic=31, Elementwise Math Functions=18, Matrix Multiply=8, Memory=6, Permutation=12, Reduction=10, Register move / data conversion=4, Resource Management=2, State Management=5.</footer>
 </main>
 <script>
   const search = document.querySelector('#search'); const fmt = document.querySelector('#format');

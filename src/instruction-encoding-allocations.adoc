@@ -11,11 +11,10 @@
 === Provisional encoding registry
 
 The encodings are provisional until the extension receives a stable RISC-V
-allocation.  Every instruction nevertheless has a unique decode value so
-that assemblers, decoders, and executable models can distinguish all current
-operations.
+allocation. The registry assigns a unique decode value to every AME
+instruction.
 
-All AME register instructions retain the standard R-type selector skeleton:
+All AME instructions retain the standard R-type selector skeleton:
 `funct7[31:25]`, `funct3[14:12]`, and `opcode[6:0]`.  A format with fewer
 register operands converts only the missing operand slots into extension
 function space; it does not merge or relocate the selector fields.
@@ -30,28 +29,30 @@ function space; it does not merge or relocate the selector fields.
 |===
 
 `opcode[6:0]` is `CUSTOM-1` (`0x2b`) and `funct3[14:12]` is `000` for every
-AME instruction.  R0 is not defined.  R2 adds 5 selector bits and R1 adds 10
-selector bits without changing the locations or meanings of `funct7`,
-`funct3`, or `opcode`.
+AME instruction. R2 adds 5 selector bits and R1 adds 10 without changing the
+locations or meanings of `funct7`, `funct3`, or `opcode`.
 
-One `(funct7, funct3, opcode)` bank is assigned to exactly one format.  R2
-and R1 consume their `xfunct` space densely before another `funct7` bank may
-be opened, except for explicitly reserved values.  This prevents a
-more-specific R1/R2 pattern from being hidden inside an R2/R3 decode and
-minimizes use of the shared `funct7` namespace.
+One `(funct7, funct3, opcode)` bank is assigned to one register format. A fixed
+no-operand instruction may use a reserved selector in that bank when all other
+encodings under that selector are reserved.
+
+`ame.release` is the fixed member of the Resource Management R2 bank. It uses
+`xfunct5=0x0A` with `rd=0` and `rs1=0`; every other encoding under that
+selector is reserved. This does not define an additional register format.
 
 [cols="1,1,1,2,2",options="header"]
 |===
-| Format | Instruction count | `funct7` allocation | Extension allocation | Remaining capacity
+| Allocation | Instruction count | `funct7` allocation | Selector / fixed fields | Remaining capacity
 
 | R3 | 80 | `0x00..0x50` except `0x35` | n/a | 1 reserved value
 | R2 bank 0 | 31 | `{ame-enc-r2-bank0-funct7}` | `xfunct5=0..31` except `0x09` | 1 reserved value
-| R2 bank 1 | 9 | `{ame-enc-r2-bank1-funct7}` | `xfunct5=0..8` | 23
+| R2 bank 1 | 11 | `{ame-enc-r2-bank1-funct7}` | `xfunct5=0..0x0A`; `0x0A` fixes `rs1=rd=0` | 21
 | R1 | 2 | `{ame-enc-r1-bank-funct7}` | `xfunct10=0..1` | 1022
 | Unallocated | 0 | `0x54..0x7f` | n/a | 44 `funct7` banks
 |===
 
-Within each format, operation numbers follow the order of the instruction
-categories and lists at the beginning of this chapter.  The generated
-`INSTRUCTION_ENCODINGS.md` and `INSTRUCTION_ENCODINGS.html` files contain the
-complete per-instruction `funct7`, `xfunct`, mask, and match values.
+Within each register format, operation numbers follow the order of the encoded
+instructions in the category lists at the beginning of this chapter. The
+generated `INSTRUCTION_ENCODINGS.md` and `INSTRUCTION_ENCODINGS.html` files
+contain the complete `funct7`, `xfunct`, mask, and match values for those
+instructions.
