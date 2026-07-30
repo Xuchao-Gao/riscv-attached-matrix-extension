@@ -23,11 +23,34 @@ headings.each_with_index do |(instruction, start_line), index|
   operation_label = section.index { |line| line.strip == "Operation::" }
   operation = nil
   if operation_label
-    operation_start = (operation_label...section.length).find { |offset| section[offset].strip == "----" }
-    if operation_start
-      operation_end = ((operation_start + 1)...section.length).find { |offset| section[offset].strip == "----" }
-      operation = section[(operation_start + 1)...operation_end] if operation_end
+    # Collect all contiguous source blocks under Operation::
+    # (separated only by blank lines or list-continuation "+")
+    operation_lines = []
+    cursor = operation_label
+    in_block = false
+    while cursor < section.length
+      line = section[cursor]
+      if !in_block
+        if line.strip == "----"
+          in_block = true
+        elsif line.strip.empty? || line.strip == "+"
+          # skip blank lines and list continuations between blocks
+        elsif line.strip.start_with?("[source") || line.strip.start_with?("[subs")
+          # skip block attributes
+        else
+          # non-blank, non-attribute, non-delimiter line => end of Operation
+          break unless operation_lines.empty?
+        end
+      else
+        if line.strip == "----"
+          in_block = false
+        else
+          operation_lines << line
+        end
+      end
+      cursor += 1
     end
+    operation = operation_lines unless operation_lines.empty?
   end
 
   section.each_with_index do |line, offset|

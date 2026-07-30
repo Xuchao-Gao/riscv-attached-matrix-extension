@@ -68,17 +68,22 @@ File.foreach(instructions_path) do |line|
     abort "#{instruction} must retain fixed funct7[31:25], funct3[14:12], and opcode[6:0] fields"
   end
   abort "#{instruction} must use CUSTOM-1 opcode 0x2b" unless (value & opcode_mask) == 0x2b
-  abort "#{instruction} has no destination operand in bits 11:7; R0 is not defined" unless (mask & dest_mask).zero?
 
+  dest_fixed = (mask & dest_mask) == dest_mask
   src1_fixed = (mask & src1_mask) == src1_mask
   src2_fixed = (mask & src2_mask) == src2_mask
-  format = if !src2_fixed
-             abort "#{instruction} uses src2[24:20] but fixes src1[19:15]" if src1_fixed
-             "R3"
-           elsif !src1_fixed
-             "R2"
+  format = if !dest_fixed
+             abort "#{instruction} uses src2[24:20] but fixes src1[19:15]" if src1_fixed && !src2_fixed
+             if !src2_fixed
+               "R3"
+             elsif !src1_fixed
+               "R2"
+             else
+               "R1"
+             end
            else
-             "R1"
+             abort "#{instruction} fixes dest but not src1/src2" unless src1_fixed && src2_fixed
+             "R0"
            end
 
   extension = case format
@@ -193,7 +198,8 @@ end
 # funct7 bank.  This turns the space-saving policy into a checked invariant
 # rather than a documentation preference.
 reserved_extensions = {
-  ["R2", 0x55] => [9]
+  ["R2", 0x55] => [9],
+  ["R1", 0x57] => (2..63).to_a
 }
 [["R2", 32], ["R1", 1024]].each do |format_name, capacity|
   entries.select { |entry| entry[:format] == format_name }

@@ -43,10 +43,10 @@
   <h1>AME instruction encoding review</h1>
   <p>Standalone review artifact generated from <code>src/instructions.adoc</code>. Decoder rule: <code>(word &amp; mask) == match</code>.</p>
   <div class="cards">
-    <div class="card"><strong>126</strong><span>instructions</span></div>
+    <div class="card"><strong>127</strong><span>instructions</span></div>
     <div class="card"><strong>84</strong><span>R3 encodings</span></div>
     <div class="card"><strong>40</strong><span>R2 encodings</span></div>
-    <div class="card"><strong>2</strong><span>R1 encodings</span></div>
+    <div class="card"><strong>3</strong><span>R1 encodings</span></div>
     <div class="card"><strong>0</strong><span>decode overlaps</span></div>
   </div>
 
@@ -63,7 +63,7 @@
   <div class="toolbar">
     <input id="search" type="search" placeholder="Search instruction, mnemonic, or description">
     <select id="format"><option value="">All formats</option><option>R3</option><option>R2</option><option>R1</option></select>
-    <select id="category"><option value="">All categories</option><option value="Bitwise">Bitwise (16)</option><option value="Compare and Predication">Compare and Predication (8)</option><option value="Datatype Management">Datatype Management (4)</option><option value="Elementwise Arithmetic">Elementwise Arithmetic (31)</option><option value="Elementwise Math Functions">Elementwise Math Functions (18)</option><option value="Matrix Multiply">Matrix Multiply (8)</option><option value="Memory">Memory (10)</option><option value="Permutation">Permutation (12)</option><option value="Reduction">Reduction (10)</option><option value="Register move / data conversion">Register move / data conversion (4)</option><option value="State Management">State Management (5)</option></select>
+    <select id="category"><option value="">All categories</option><option value="Bitwise">Bitwise (16)</option><option value="Compare and Predication">Compare and Predication (8)</option><option value="Datatype Management">Datatype Management (4)</option><option value="Elementwise Arithmetic">Elementwise Arithmetic (31)</option><option value="Elementwise Math Functions">Elementwise Math Functions (18)</option><option value="Matrix Multiply">Matrix Multiply (8)</option><option value="Memory">Memory (10)</option><option value="Permutation">Permutation (12)</option><option value="Reduction">Reduction (10)</option><option value="Register move / data conversion">Register move / data conversion (4)</option><option value="State Management">State Management (6)</option></select>
     <span id="visible"></span>
   </div>
   <div class="table-wrap"><table>
@@ -1157,8 +1157,17 @@
     <td><code>0xfe00707f</code></td>
     <td><code>0x7c00002b</code></td>
   </tr>
-<tr data-format="R2" data-category="State Management">
+<tr data-format="R1" data-category="State Management">
     <td class="num">122</td>
+    <td><span class="tag r1">R1</span></td>
+    <td><code>fence.ame</code></td>
+    <td><code>fence.ame sw, sr, pw, pr</code><div class="synopsis">Order selected AME memory transfers before selected non-AME memory transfers</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x57</small></span><span class="bit fixed w5" title="bits 24:20"><b>xfunct10[9:5]</b><small>0x2</small></span><span class="bit fixed w5" title="bits 19:15"><b>xfunct10[4:0]</b><small>0x0</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit fixed w1" title="bits 11:11"><b>fixed</b><small>0x0</small></span><span class="bit operand w1" title="bits 10:10"><b>pr</b><small>pr</small></span><span class="bit operand w1" title="bits 9:9"><b>pw</b><small>pw</small></span><span class="bit operand w1" title="bits 8:8"><b>sr</b><small>sr</small></span><span class="bit operand w1" title="bits 7:7"><b>sw</b><small>sw</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfffff87f</code></td>
+    <td><code>0xae20002b</code></td>
+  </tr>
+<tr data-format="R2" data-category="State Management">
+    <td class="num">123</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mmov.a.m</code></td>
     <td><code>mmov.a.m md, acc</code><div class="synopsis">Elementwise unconditional move from accumulator to M register</div></td>
@@ -1167,7 +1176,7 @@
     <td><code>0xabc0002b</code></td>
   </tr>
 <tr data-format="R2" data-category="State Management">
-    <td class="num">123</td>
+    <td class="num">124</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mmov.m.a</code></td>
     <td><code>mmov.m.a acc, ms</code><div class="synopsis">Elementwise unconditional move from M register to accumulator</div></td>
@@ -1176,7 +1185,7 @@
     <td><code>0xabd0002b</code></td>
   </tr>
 <tr data-format="R2" data-category="State Management">
-    <td class="num">124</td>
+    <td class="num">125</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mmov.m.m</code></td>
     <td><code>mmov.m.m md, ms</code><div class="synopsis">Elementwise unconditional move between M registers</div></td>
@@ -1185,7 +1194,7 @@
     <td><code>0xabe0002b</code></td>
   </tr>
 <tr data-format="R1" data-category="State Management">
-    <td class="num">125</td>
+    <td class="num">126</td>
     <td><span class="tag r1">R1</span></td>
     <td><code>mzero.2d.acc</code></td>
     <td><code>mzero.2d.acc acc</code><div class="synopsis">Clear accumulator tile</div></td>
@@ -1194,7 +1203,7 @@
     <td><code>0xae00002b</code></td>
   </tr>
 <tr data-format="R1" data-category="State Management">
-    <td class="num">126</td>
+    <td class="num">127</td>
     <td><span class="tag r1">R1</span></td>
     <td><code>mzero.2d.m</code></td>
     <td><code>mzero.2d.m md</code><div class="synopsis">Clear tensor register</div></td>
@@ -1203,7 +1212,7 @@
     <td><code>0xae00802b</code></td>
   </tr></tbody>
   </table></div>
-  <footer>Blue fields are fixed selectors; green fields are register operands. Category counts: Bitwise=16, Compare and Predication=8, Datatype Management=4, Elementwise Arithmetic=31, Elementwise Math Functions=18, Matrix Multiply=8, Memory=10, Permutation=12, Reduction=10, Register move / data conversion=4, State Management=5.</footer>
+  <footer>Blue fields are fixed selectors; green fields are register operands. Category counts: Bitwise=16, Compare and Predication=8, Datatype Management=4, Elementwise Arithmetic=31, Elementwise Math Functions=18, Matrix Multiply=8, Memory=10, Permutation=12, Reduction=10, Register move / data conversion=4, State Management=6.</footer>
 </main>
 <script>
   const search = document.querySelector('#search'); const fmt = document.querySelector('#format');

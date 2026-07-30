@@ -8,8 +8,8 @@ The canonical decoder test is `(instruction_word & mask) == match`. Fixed fields
 
 | Check | Count |
 |---|---:|
-| Instructions | 126 |
-| R1 encodings | 2 |
+| Instructions | 127 |
+| R1 encodings | 3 |
 | R2 encodings | 40 |
 | R3 encodings | 84 |
 | Exact duplicate decode patterns | 0 |
@@ -152,3 +152,4 @@ R3 uses `funct7=0x00..0x50` except the reserved value `0x35`. R2 uses `funct7=0x
 | 124 | R3 | `mxor.ew.x` | `mxor.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x29`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x5200002b` |
 | 125 | R1 | `mzero.2d.acc` | `mzero.2d.acc acc` | `acc[11:7]` | `[31:25]=0x57` (`ame-enc-r1-bank-funct7`); `[24:20]=0x00`; `[19:15]=0x00`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfffff07f` | `0xae00002b` |
 | 126 | R1 | `mzero.2d.m` | `mzero.2d.m md` | `md[11:7]` | `[31:25]=0x57` (`ame-enc-r1-bank-funct7`); `[24:20]=0x00`; `[19:15]=0x01`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfffff07f` | `0xae00802b` |
+| 127 | R1 | `fence.ame` | `fence.ame sw, sr, pw, pr` | `pr[10]`; `pw[9]`; `sr[8]`; `sw[7]` | `[31:25]=0x57` (`ame-enc-r1-bank-funct7`); `[24:20]=0x02`; `[19:15]=0x00`; `[14:12]=0x0` (`ame-enc-funct3`); `[11]=0x0`; `[6:0]=0x2b` | `0xfffff87f` | `0xae20002b` |
