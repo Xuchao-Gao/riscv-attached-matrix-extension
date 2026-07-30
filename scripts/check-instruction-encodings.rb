@@ -217,7 +217,8 @@ end
 # rather than a documentation preference.
 reserved_extensions = {
   ["R2", 0x51] => [9],
-  ["R2", 0x52] => [10]
+  ["R2", 0x52] => [10],
+  ["R1", 0x53] => (2..63).to_a
 }
 [["R2", 32], ["R1", 1024]].each do |format_name, capacity|
   entries.select { |entry| entry[:format] == format_name }

@@ -474,11 +474,16 @@ the hart (from/to the X, F, or V register files).
 
 Informally, memory transfers involving AME state may appear out of program order
 with respect to non-AME memory transfers in the hart.
-Software must explicitly execute a `fence` instruction to enforce ordering between
-AME memory transfers and non-AME memory transfers.
 
-The `fence.ame` instruction orders all AME read or write memory transfers
-in its predecessor set before all non-AME read or write memory operations in its successor set.
+The standard RISC-V `fence` instruction can enforce ordering between any combination of
+AME and non-AME memory transfers: software may always use `fence` with appropriate predecessor
+and successor sets to guarantee the desired order.
+
+AME additionally provides a finer-grained `fence.ame` instruction (defined in
+<<ame-fence-ame>>) that orders selected AME memory transfers (predecessor) before selected
+non-AME memory transfers (successor), with independent read/write select bits.
+This dedicated instruction enables more efficient ordering in the AME-to-non-AME direction,
+avoiding the broader serialization imposed by a full `fence`.
 
 AME memory transfers from the same hart to overlapping addresses are guaranteed to be performed
 in program order with respect to one another; no explicit fence is required to order
@@ -495,9 +500,13 @@ which may be expensive. Performance-sensitive code should therefore avoid freque
 between AME state and non-AME state (X, F, or V registers via memory) in hot loops.
 --
 
+The `fence.ame` instruction provides a fine-grained ordering primitive for the
+AME-to-non-AME direction. Its encoding and detailed semantics are described in
+<<ame:doc:inst:fence_ame>> and in <<ame-consistency-model>>.
+
 === Operators
 
-AME supports six broad classes of arithmetic and/or logical operators:
+AME supports seven broad classes of operations:
 
 *  2D Matrix multiply
 *  1D Element-wise/vector
@@ -505,6 +514,7 @@ AME supports six broad classes of arithmetic and/or logical operators:
 *  Register move / data conversion
 *  Scalar ingress and data scalar operands
 *  Load/store
+*  Memory ordering
 
 AME does not support general masking/predication on computational instructions, though a future extension may add support.
 
@@ -1235,8 +1245,13 @@ For `mls.tst` and `mss.tst`, the square is transposed during the transfer: rows 
 square in the `M` register map to columns of the in-memory matrix, so element `(i,j)` of the
 register square is read from or written to address `base + j * stride + i * element_size`.
 
-For *packed datatypes*, `pack_factor` squares are transferred per instruction
-with the same stride and layout conventions as described above.
+For *packed datatypes*, `pack_factor` squares are transferred per instruction.
+For `.st` instructions, each stride segment contains `pack_factor * sqrt(AME_NELEM)`
+contiguous elements — `pack_factor` sub-squares placed side by side horizontally within
+each row — and the number of segments remains `sqrt(AME_NELEM)`.
+For `.tst` instructions, each segment contains `sqrt(AME_NELEM)` elements, and the
+number of segments is `pack_factor * sqrt(AME_NELEM)` — one column per sub-square,
+stacked vertically.
 
 .strided memory access example for packed datatypes
 image::packed-strided-instructions.png[Packed strided load/store illustration]
@@ -1247,9 +1262,39 @@ In addition to the Illegal Instruction exceptions covered by
 <<Operand validation and exception priority>>, AME load and store instructions report
 two further classes of exception:
 
-* **Unsupported datatype (imprecise):** A load or store that names an `M` register whose
-  programmed datatype is unsupported sets `amestatus.UN` and does not modify any
-  architectural state. This is an imprecise exception as described in <<datatypes>>.
+* **Unsupported datatype (unsupported-operation report):** A load or store that names an
+  `M` register whose programmed datatype is unsupported sets `amestatus.UN` and makes no
+  other architectural state change — neither the `M` register group nor memory is modified.
+  This is not a synchronous exception; it is an unsupported-operation report as described
+  in <<datatypes>>.
 
 * **Memory fault (precise):** When a load or store encounters a page fault, access fault, or
   PMA violation, the precise exception is reported in the standard RISC-V trap CSRs.
+  No partial completion is permitted: the faulting instruction does not modify any memory or
+  register locations, and the reported fault address is the base address of the instruction
+  (the value in the integer register operand), not the address of a specific segment.
+
+==== Memory ordering
+
+AME provides the `<<ame:doc:inst:fence_ame,fence.ame>>` instruction to enforce ordering
+between AME and non-AME memory transfers. Its predecessor set consists of AME memory
+transfers and its successor set consists of non-AME memory transfers. Four encoding bits
+independently select which transfer classes participate in the ordering constraint:
+
+* `pr` (bit 10) — when set, AME loads (reads from memory into `M` registers) are
+  included in the predecessor set.
+* `pw` (bit 9) — when set, AME stores (writes from `M` registers to memory) are
+  included in the predecessor set.
+* `sr` (bit 8) — when set, non-AME loads (reads into X, F, or V register files) are
+  included in the successor set.
+* `sw` (bit 7) — when set, non-AME stores (writes from X, F, or V register files) are
+  included in the successor set.
+
+All AME memory transfers in the predecessor set are guaranteed to be globally visible
+before any non-AME memory transfer in the successor set is initiated.
+At least one of `pr`/`pw` must be set, and at least one of `sr`/`sw` must be set;
+otherwise the instruction executes as a NOP with no ordering effect.
+
+`fence.ame` does *not* order non-AME transfers before AME transfers.
+For that direction, software must use the standard RISC-V `fence` instruction with
+appropriate predecessor and successor sets.

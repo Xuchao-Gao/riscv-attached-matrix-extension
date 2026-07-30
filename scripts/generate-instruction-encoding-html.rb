@@ -77,7 +77,7 @@ instructions_source.scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, sectio
              "R3"
            elsif by_range.fetch([19, 15])[:kind] == :operand
              "R2"
-           elsif by_range.fetch([11, 7])[:kind] == :operand
+           elsif fields.any? { |field| field[:kind] == :operand && field[:hi] <= 11 && field[:lo] >= 7 }
              "R1"
            else
              "Fixed"
