@@ -991,8 +991,8 @@ to the destination integer datatype.  A destination with `Saturation=1`
 clamps an out-of-range result; a destination with `Saturation=0` retains the
 low destination-width bits.  When a destination with `Saturation=1` clamps an
 out-of-range result, the operation also sets
-`CSR[<<ame:doc:csr:mxsat,mxsat>>].<<ame:doc:csr_field:mxsat:SAT,SAT>>`;
-operations that do not saturate their output leave `mxsat` unchanged.
+`CSR[<<ame:doc:csr:amexsat,amexsat>>].<<ame:doc:csr_field:amexsat:SAT,SAT>>`;
+operations that do not saturate their output leave `amexsat` unchanged.
 When the exact intermediate result of a standard integer tuple has fraction
 bits below the LSB of the destination datatype (`HDIFF1D` and `MEAN1D`), the
 result is rounded according to the destination datatype's *Rounding mode*
@@ -1000,15 +1000,15 @@ field (RNU/RNE/RDN/ROD, see <<datatypes>>) before the conversion above.
 Custom datatype tuples may define their own conversion rule.
 
 Standard floating-point tuples accrue the IEEE exception flags of each
-element operation into `CSR[<<ame:doc:csr:mfflags,mfflags>>]`, using the same
+element operation into `CSR[<<ame:doc:csr:amefflags,amefflags>>]`, using the same
 flag definitions as the `fflags` CSR of the F extension.  AME operations do
 not modify `fflags` itself.
 
-Status-flag updates to `mfflags` and `mxsat` are not architecturally visible
+Status-flag updates to `amefflags` and `amexsat` are not architecturally visible
 per element.  They are accumulated in instruction-local staged state and are
 OR-ed into the architectural CSRs only when the instruction completes and its
 staged destination writes commit.  An instruction that raises a synchronous
-exception commits no `mfflags` or `mxsat` update, following the same atomic
+exception commits no `amefflags` or `amexsat` update, following the same atomic
 writeback rules as staged register writes.
 
 Floating-point `CMPGE1D` and `CMPLT1D` use ordered IEEE comparisons: a NaN
@@ -1170,14 +1170,14 @@ minimum or maximum, as appropriate.  An operation/datatype tuple that cannot
 represent a required NaN result is unsupported.
 
 Floating-point exceptional conditions neither raise an exception nor set
-`amestatus.UN`; they accrue the corresponding `mfflags` flags as described
+`amestatus.UN`; they accrue the corresponding `amefflags` flags as described
 above.  Once `ame_op_supported` has accepted a tuple, the special cases above
 are normal data results.  `amestatus.UN` reports only an unsupported
 operation/datatype tuple.
 
 [NOTE]
 ====
-The per-operation conditions under which each `mfflags` flag is set are not
+The per-operation conditions under which each `amefflags` flag is set are not
 yet specified.  AME operations are polymorphic over datatypes and the set of
 supported datatypes is not yet finalized; the flag-setting conditions will
 be defined together with that datatype set in a future revision.
@@ -1250,7 +1250,7 @@ datatype's canonical quiet NaN.  Invalid infinite forms, including zero times
 infinity and addition of opposite-signed infinities, also produce that NaN.
 Other infinities follow the mathematical expression.  A finite result is
 rounded once according to the destination datatype's rounding mode.  These
-results accrue `mfflags` flags under the same rules as `ame_op`.
+results accrue `amefflags` flags under the same rules as `ame_op`.
 
 [#ame:doc:func:ame_xform_rm_to_impl]
 === `ame_xform_rm_to_impl` (builtin)

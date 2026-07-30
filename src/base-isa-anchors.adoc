@@ -6,6 +6,10 @@ definitions that are referenced in the AME specification.
 
 === CSRs
 
+[#ame:doc:csr:amefflags]
+amefflags::
+  See the AME state chapter for details on the `amefflags` CSR.
+
 [#ame:doc:csr:amenlen]
 amenlen::
   See the RISC-V Privileged Specification for details on the `amenlen` CSR.
@@ -21,6 +25,10 @@ ameudsz::
 [#ame:doc:csr:ame_scalar_dtype]
 ame_scalar_dtype::
   See the RISC-V Privileged Specification for details on the `ame_scalar_dtype` CSR.
+
+[#ame:doc:csr:amexsat]
+amexsat::
+  See the AME state chapter for details on the `amexsat` CSR.
 
 [#ame:doc:csr:hedeleg]
 hedeleg::
@@ -62,10 +70,6 @@ menvcfg::
 mepc::
   See the RISC-V Privileged Specification for details on the `mepc` CSR.
 
-[#ame:doc:csr:mfflags]
-mfflags::
-  See the AME state chapter for details on the `mfflags` CSR.
-
 [#ame:doc:csr:mideleg]
 mideleg::
   See the RISC-V Privileged Specification for details on the `mideleg` CSR.
@@ -105,10 +109,6 @@ mtval2::
 [#ame:doc:csr:mtvec]
 mtvec::
   See the RISC-V Privileged Specification for details on the `mtvec` CSR.
-
-[#ame:doc:csr:mxsat]
-mxsat::
-  See the AME state chapter for details on the `mxsat` CSR.
 
 [#ame:doc:csr:satp]
 satp::
@@ -160,33 +160,33 @@ vstvec::
 
 === CSR Fields
 
+[#ame:doc:csr_field:amefflags:NV]
+amefflags.NV::
+  See the AME state chapter for details on the `amefflags.NV` field.
+
+[#ame:doc:csr_field:amefflags:DZ]
+amefflags.DZ::
+  See the AME state chapter for details on the `amefflags.DZ` field.
+
+[#ame:doc:csr_field:amefflags:OF]
+amefflags.OF::
+  See the AME state chapter for details on the `amefflags.OF` field.
+
+[#ame:doc:csr_field:amefflags:UF]
+amefflags.UF::
+  See the AME state chapter for details on the `amefflags.UF` field.
+
+[#ame:doc:csr_field:amefflags:NX]
+amefflags.NX::
+  See the AME state chapter for details on the `amefflags.NX` field.
+
 [#ame:doc:csr_field:amestatus:UN]
 amestatus.UN::
   See the RISC-V Privileged Specification for details on the `amestatus.UN` field.
 
-[#ame:doc:csr_field:mfflags:NV]
-mfflags.NV::
-  See the AME state chapter for details on the `mfflags.NV` field.
-
-[#ame:doc:csr_field:mfflags:DZ]
-mfflags.DZ::
-  See the AME state chapter for details on the `mfflags.DZ` field.
-
-[#ame:doc:csr_field:mfflags:OF]
-mfflags.OF::
-  See the AME state chapter for details on the `mfflags.OF` field.
-
-[#ame:doc:csr_field:mfflags:UF]
-mfflags.UF::
-  See the AME state chapter for details on the `mfflags.UF` field.
-
-[#ame:doc:csr_field:mfflags:NX]
-mfflags.NX::
-  See the AME state chapter for details on the `mfflags.NX` field.
-
-[#ame:doc:csr_field:mxsat:SAT]
-mxsat.SAT::
-  See the AME state chapter for details on the `mxsat.SAT` field.
+[#ame:doc:csr_field:amexsat:SAT]
+amexsat.SAT::
+  See the AME state chapter for details on the `amexsat.SAT` field.
 
 [#ame:doc:csr_field:henvcfg:ADUE]
 henvcfg.ADUE::

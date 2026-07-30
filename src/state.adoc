@@ -125,11 +125,11 @@ version may assign different standard CSR addresses.
 | `CC2`
 | Datatype of data scalar operands supplied in `X` registers
 
-| <<ame:doc:csr:mfflags,mfflags>>
+| <<ame:doc:csr:amefflags,amefflags>>
 | `CC4`
 | Accrued AME floating-point exception flags
 
-| <<ame:doc:csr:mxsat,mxsat>>
+| <<ame:doc:csr:amexsat,amexsat>>
 | `CC5`
 | AME fixed-point saturation flag
 
@@ -218,16 +218,16 @@ without hardcoding any implementation-specific constant.
 
 |===
 
-==== mfflags
+==== amefflags
 
-`mfflags` holds the accrued floating-point exception flags raised by AME
+`amefflags` holds the accrued floating-point exception flags raised by AME
 floating-point operations.  The low 5 bits have the same meaning as the
 `fflags` CSR of the RISC-V F extension.  An AME floating-point operation that
 raises an exceptional condition sets the corresponding flag bits; flags
 accrue (are never cleared by hardware) until software clears them by writing
 the CSR.  Flag updates from an executing instruction are staged and commit
 atomically with the instruction's destination writes; an instruction that
-raises a synchronous exception does not update `mfflags`.  Reserved bits are
+raises a synchronous exception does not update `amefflags`.  Reserved bits are
 WPRI and read as zero.
 
 The CSR resets to zero.  It is hart state and must be saved and restored with
@@ -259,17 +259,17 @@ modify the `fflags` CSR of the F extension.
 
 |===
 
-==== mxsat
+==== amexsat
 
-`mxsat` reports fixed-point saturation from AME integer operations.  Bit 0 is
+`amexsat` reports fixed-point saturation from AME integer operations.  Bit 0 is
 the sticky saturation flag `SAT`.  `SAT` is set only when an integer
 operation whose destination datatype has `Saturation=1` clamps (saturates) an
 out-of-range result to the destination range; operations that do not saturate
-their output leave `mxsat` unchanged.  Destinations with `Saturation=0` never
-update `mxsat`.  `SAT` remains set until software clears it by writing the
+their output leave `amexsat` unchanged.  Destinations with `Saturation=0` never
+update `amexsat`.  `SAT` remains set until software clears it by writing the
 CSR.  Flag updates from an executing instruction are staged and commit
 atomically with the instruction's destination writes; an instruction that
-raises a synchronous exception does not update `mxsat`.  Reserved bits are
+raises a synchronous exception does not update `amexsat`.  Reserved bits are
 WPRI and read as zero.
 
 The CSR resets to zero.  It is hart state and must be saved and restored with

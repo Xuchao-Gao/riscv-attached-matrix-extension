@@ -262,14 +262,14 @@ snapshot observed by later pseudocode statements.
 [#norm:ame_atomic_register_writeback]#For register-only AME instructions, all
 destination `M`, `Md`, `Acc`, and `Ad` writes are staged and become visible
 together only after every operand, datatype, alignment, bounds, and index check
-has completed successfully.# Accrued status-flag updates to `mfflags` and
-`mxsat` are staged in the same way and commit together with the destination
+has completed successfully.# Accrued status-flag updates to `amefflags` and
+`amexsat` are staged in the same way and commit together with the destination
 writes.
 
 [#norm:ame_register_exception_atomicity]#If a register-only AME instruction
 raises a synchronous exception, none of its staged destination writes commit;
 only architectural trap state written by exception handling may change.# Such
-an instruction likewise commits no staged `mfflags` or `mxsat`
+an instruction likewise commits no staged `amefflags` or `amexsat`
 update.  An
 unsupported datatype or operation is not a synchronous exception: it sets
 `amestatus.UN` and returns without committing any destination write, as
