@@ -44,11 +44,11 @@ minimizes use of the shared `funct7` namespace.
 |===
 | Format | Instruction count | `funct7` allocation | Extension allocation | Remaining capacity
 
-| R3 | 90 | `0x00..0x50`, `0x54..0x5c` | n/a | 0 reserved values
+| R3 | 90 | `0x00..0x50`, `0x58..0x60` | n/a | 0 reserved values
 | R2 bank 0 | 31 | `{ame-enc-r2-bank0-funct7}` | `xfunct5=0..31` except `0x09` | 1 reserved value
 | R2 bank 1 | 9 | `{ame-enc-r2-bank1-funct7}` | `xfunct5=0..8` | 23
 | R1 | 4 | `{ame-enc-r1-bank-funct7}` | `xfunct10=0..3` | 1020
-| Unallocated | 0 | `0x5d..0x7f` | n/a | 35 `funct7` banks
+| Unallocated | 0 | `0x54..0x57`, `0x61..0x7f` | n/a | 35 `funct7` banks
 |===
 
 Within each format, operation numbers follow the order of the instruction

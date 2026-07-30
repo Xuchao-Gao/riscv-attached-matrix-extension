@@ -2674,7 +2674,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs1","type":4},{"bits":5,"name":"xtyp","type":4},{"bits":7,"name":0x54,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs1","type":4},{"bits":5,"name":"xtyp","type":4},{"bits":7,"name":0x58,"type":2}]}
 ....
 
 Description::
@@ -5274,7 +5274,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x55,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x59,"type":2}]}
 ....
 
 Description::
@@ -5290,11 +5290,14 @@ bits of `X[xs1]`; higher bits are ignored.  The selected column is
 This instruction is intended for debugging.  The element size is defined by
 the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
 read or convert using `Md[md]`, does not form a register group, and never
-sets `amestatus.UN`.  The register contents are accessed through the
-row-major layout transformation, using the unsigned integer datatype whose
-size equals the instruction's element size (its 32-bit datatype encoding
-value is numerically equal to the element size), so the position-to-element
-mapping is identical on every implementation.  If one row of the row-major
+sets `amestatus.UN`.  The register contents are first normalized with the
+row-major layout transformation, using the unsigned integer datatype of
+size `AME_UNIT_DATATYPE_SIZE`, for which exactly one square occupies one M
+register; the normalized image is then reinterpreted, by bit slicing, as
+`N` rows of `row_elements` elements of the instruction's element size.
+Both steps are defined independently of the implementation register
+layout, so the position-to-element mapping is identical on every
+implementation.  If one row of the row-major
 view is narrower than the element size, an `Illegal Instruction` exception
 is raised.
 
@@ -5329,7 +5332,7 @@ U32 total_elements = N * row_elements;
 U32 pos = X[xs1][31:0] % total_elements;
 U32 bit_lo = pos * element_size;
 U32 bit_hi = bit_lo pass:[+] element_size - 1;
-Bits<32> view_dtype = element_size;
+Bits<32> view_dtype = AME_UNIT_DATATYPE_SIZE;
 Bits<AME_MAX_SQUARE_SIZE> rm_image = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md], view_dtype);
 rm_image[bit_hi:bit_lo] = X[xs2][element_size - 1:0];
 M[md] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]rm_image, view_dtype);
@@ -5354,7 +5357,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x56,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5a,"type":2}]}
 ....
 
 Description::
@@ -5370,11 +5373,14 @@ bits of `X[xs1]`; higher bits are ignored.  The selected column is
 This instruction is intended for debugging.  The element size is defined by
 the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
 read or convert using `Md[md]`, does not form a register group, and never
-sets `amestatus.UN`.  The register contents are accessed through the
-row-major layout transformation, using the unsigned integer datatype whose
-size equals the instruction's element size (its 32-bit datatype encoding
-value is numerically equal to the element size), so the position-to-element
-mapping is identical on every implementation.  If one row of the row-major
+sets `amestatus.UN`.  The register contents are first normalized with the
+row-major layout transformation, using the unsigned integer datatype of
+size `AME_UNIT_DATATYPE_SIZE`, for which exactly one square occupies one M
+register; the normalized image is then reinterpreted, by bit slicing, as
+`N` rows of `row_elements` elements of the instruction's element size.
+Both steps are defined independently of the implementation register
+layout, so the position-to-element mapping is identical on every
+implementation.  If one row of the row-major
 view is narrower than the element size, an `Illegal Instruction` exception
 is raised.
 
@@ -5409,7 +5415,7 @@ U32 total_elements = N * row_elements;
 U32 pos = X[xs1][31:0] % total_elements;
 U32 bit_lo = pos * element_size;
 U32 bit_hi = bit_lo pass:[+] element_size - 1;
-Bits<32> view_dtype = element_size;
+Bits<32> view_dtype = AME_UNIT_DATATYPE_SIZE;
 Bits<AME_MAX_SQUARE_SIZE> rm_image = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md], view_dtype);
 rm_image[bit_hi:bit_lo] = X[xs2][element_size - 1:0];
 M[md] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]rm_image, view_dtype);
@@ -5434,7 +5440,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x57,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5b,"type":2}]}
 ....
 
 Description::
@@ -5450,11 +5456,14 @@ bits of `X[xs1]`; higher bits are ignored.  The selected column is
 This instruction is intended for debugging.  The element size is defined by
 the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
 read or convert using `Md[md]`, does not form a register group, and never
-sets `amestatus.UN`.  The register contents are accessed through the
-row-major layout transformation, using the unsigned integer datatype whose
-size equals the instruction's element size (its 32-bit datatype encoding
-value is numerically equal to the element size), so the position-to-element
-mapping is identical on every implementation.  If one row of the row-major
+sets `amestatus.UN`.  The register contents are first normalized with the
+row-major layout transformation, using the unsigned integer datatype of
+size `AME_UNIT_DATATYPE_SIZE`, for which exactly one square occupies one M
+register; the normalized image is then reinterpreted, by bit slicing, as
+`N` rows of `row_elements` elements of the instruction's element size.
+Both steps are defined independently of the implementation register
+layout, so the position-to-element mapping is identical on every
+implementation.  If one row of the row-major
 view is narrower than the element size, an `Illegal Instruction` exception
 is raised.
 
@@ -5489,7 +5498,7 @@ U32 total_elements = N * row_elements;
 U32 pos = X[xs1][31:0] % total_elements;
 U32 bit_lo = pos * element_size;
 U32 bit_hi = bit_lo pass:[+] element_size - 1;
-Bits<32> view_dtype = element_size;
+Bits<32> view_dtype = AME_UNIT_DATATYPE_SIZE;
 Bits<AME_MAX_SQUARE_SIZE> rm_image = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md], view_dtype);
 rm_image[bit_hi:bit_lo] = X[xs2][element_size - 1:0];
 M[md] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]rm_image, view_dtype);
@@ -5514,7 +5523,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x58,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5c,"type":2}]}
 ....
 
 Description::
@@ -5523,6 +5532,9 @@ single M register `md`.  The contents of `md` are viewed, in row-major order, as
 `N = sqrt(AME_NELEM)` rows of `row_elements = (N * AME_UNIT_DATATYPE_SIZE) / 64`
 64-bit elements each, independent of the configured datatype `Md[md]`.
 +
+This 64-bit form requires `XLEN >= 64`; when `XLEN < 64`, the instruction
+raises an `Illegal Instruction` exception.
++
 The element position `pos` is selected by the low `log2(N * row_elements)`
 bits of `X[xs1]`; higher bits are ignored.  The selected column is
 `pos % row_elements` and the selected row is `pos / row_elements`.
@@ -5530,11 +5542,14 @@ bits of `X[xs1]`; higher bits are ignored.  The selected column is
 This instruction is intended for debugging.  The element size is defined by
 the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
 read or convert using `Md[md]`, does not form a register group, and never
-sets `amestatus.UN`.  The register contents are accessed through the
-row-major layout transformation, using the unsigned integer datatype whose
-size equals the instruction's element size (its 32-bit datatype encoding
-value is numerically equal to the element size), so the position-to-element
-mapping is identical on every implementation.  If one row of the row-major
+sets `amestatus.UN`.  The register contents are first normalized with the
+row-major layout transformation, using the unsigned integer datatype of
+size `AME_UNIT_DATATYPE_SIZE`, for which exactly one square occupies one M
+register; the normalized image is then reinterpreted, by bit slicing, as
+`N` rows of `row_elements` elements of the instruction's element size.
+Both steps are defined independently of the implementation register
+layout, so the position-to-element mapping is identical on every
+implementation.  If one row of the row-major
 view is narrower than the element size, an `Illegal Instruction` exception
 is raised.
 
@@ -5560,6 +5575,9 @@ if pass:[(]AME_NUM_M_REGS == 16 && (md >= 16)) {
   <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
 }
 U32 element_size = 64;
+if pass:[(]XLEN < 64) {
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+}
 U32 N = <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
 U32 row_elements = (N * AME_UNIT_DATATYPE_SIZE) / element_size;
 if pass:[(]row_elements == 0) {
@@ -5569,7 +5587,7 @@ U32 total_elements = N * row_elements;
 U32 pos = X[xs1][31:0] % total_elements;
 U32 bit_lo = pos * element_size;
 U32 bit_hi = bit_lo pass:[+] element_size - 1;
-Bits<32> view_dtype = element_size;
+Bits<32> view_dtype = AME_UNIT_DATATYPE_SIZE;
 Bits<AME_MAX_SQUARE_SIZE> rm_image = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[md], view_dtype);
 rm_image[bit_hi:bit_lo] = X[xs2][element_size - 1:0];
 M[md] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]rm_image, view_dtype);
@@ -5594,7 +5612,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"xd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x59,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"xd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5d,"type":2}]}
 ....
 
 Description::
@@ -5611,11 +5629,14 @@ the selected row is `pos / row_elements`.
 This instruction is intended for debugging.  The element size is defined by
 the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
 read or convert using `Md[ms2]`, does not form a register group, and never
-sets `amestatus.UN`.  The register contents are accessed through the
-row-major layout transformation, using the unsigned integer datatype whose
-size equals the instruction's element size (its 32-bit datatype encoding
-value is numerically equal to the element size), so the position-to-element
-mapping is identical on every implementation.  If one row of the row-major
+sets `amestatus.UN`.  The register contents are first normalized with the
+row-major layout transformation, using the unsigned integer datatype of
+size `AME_UNIT_DATATYPE_SIZE`, for which exactly one square occupies one M
+register; the normalized image is then reinterpreted, by bit slicing, as
+`N` rows of `row_elements` elements of the instruction's element size.
+Both steps are defined independently of the implementation register
+layout, so the position-to-element mapping is identical on every
+implementation.  If one row of the row-major
 view is narrower than the element size, an `Illegal Instruction` exception
 is raised.
 
@@ -5650,7 +5671,7 @@ U32 total_elements = N * row_elements;
 U32 pos = X[xs1][31:0] % total_elements;
 U32 bit_lo = pos * element_size;
 U32 bit_hi = bit_lo pass:[+] element_size - 1;
-Bits<32> view_dtype = element_size;
+Bits<32> view_dtype = AME_UNIT_DATATYPE_SIZE;
 Bits<AME_MAX_SQUARE_SIZE> rm_image = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2], view_dtype);
 X[xd] = rm_image[bit_hi:bit_lo];
 ----
@@ -5674,7 +5695,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"xd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5a,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"xd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5e,"type":2}]}
 ....
 
 Description::
@@ -5691,11 +5712,14 @@ the selected row is `pos / row_elements`.
 This instruction is intended for debugging.  The element size is defined by
 the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
 read or convert using `Md[ms2]`, does not form a register group, and never
-sets `amestatus.UN`.  The register contents are accessed through the
-row-major layout transformation, using the unsigned integer datatype whose
-size equals the instruction's element size (its 32-bit datatype encoding
-value is numerically equal to the element size), so the position-to-element
-mapping is identical on every implementation.  If one row of the row-major
+sets `amestatus.UN`.  The register contents are first normalized with the
+row-major layout transformation, using the unsigned integer datatype of
+size `AME_UNIT_DATATYPE_SIZE`, for which exactly one square occupies one M
+register; the normalized image is then reinterpreted, by bit slicing, as
+`N` rows of `row_elements` elements of the instruction's element size.
+Both steps are defined independently of the implementation register
+layout, so the position-to-element mapping is identical on every
+implementation.  If one row of the row-major
 view is narrower than the element size, an `Illegal Instruction` exception
 is raised.
 
@@ -5730,7 +5754,7 @@ U32 total_elements = N * row_elements;
 U32 pos = X[xs1][31:0] % total_elements;
 U32 bit_lo = pos * element_size;
 U32 bit_hi = bit_lo pass:[+] element_size - 1;
-Bits<32> view_dtype = element_size;
+Bits<32> view_dtype = AME_UNIT_DATATYPE_SIZE;
 Bits<AME_MAX_SQUARE_SIZE> rm_image = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2], view_dtype);
 X[xd] = rm_image[bit_hi:bit_lo];
 ----
@@ -5754,7 +5778,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"xd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5b,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"xd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5f,"type":2}]}
 ....
 
 Description::
@@ -5771,11 +5795,14 @@ the selected row is `pos / row_elements`.
 This instruction is intended for debugging.  The element size is defined by
 the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
 read or convert using `Md[ms2]`, does not form a register group, and never
-sets `amestatus.UN`.  The register contents are accessed through the
-row-major layout transformation, using the unsigned integer datatype whose
-size equals the instruction's element size (its 32-bit datatype encoding
-value is numerically equal to the element size), so the position-to-element
-mapping is identical on every implementation.  If one row of the row-major
+sets `amestatus.UN`.  The register contents are first normalized with the
+row-major layout transformation, using the unsigned integer datatype of
+size `AME_UNIT_DATATYPE_SIZE`, for which exactly one square occupies one M
+register; the normalized image is then reinterpreted, by bit slicing, as
+`N` rows of `row_elements` elements of the instruction's element size.
+Both steps are defined independently of the implementation register
+layout, so the position-to-element mapping is identical on every
+implementation.  If one row of the row-major
 view is narrower than the element size, an `Illegal Instruction` exception
 is raised.
 
@@ -5810,7 +5837,7 @@ U32 total_elements = N * row_elements;
 U32 pos = X[xs1][31:0] % total_elements;
 U32 bit_lo = pos * element_size;
 U32 bit_hi = bit_lo pass:[+] element_size - 1;
-Bits<32> view_dtype = element_size;
+Bits<32> view_dtype = AME_UNIT_DATATYPE_SIZE;
 Bits<AME_MAX_SQUARE_SIZE> rm_image = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2], view_dtype);
 X[xd] = rm_image[bit_hi:bit_lo];
 ----
@@ -5834,7 +5861,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"xd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5c,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"xd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x60,"type":2}]}
 ....
 
 Description::
@@ -5842,6 +5869,9 @@ Reads one 64-bit element from the single M register `ms2` and writes it,
 zero-extended, to `X[xd]`.  The contents of `ms2` are viewed, in row-major order, as
 `N = sqrt(AME_NELEM)` rows of `row_elements = (N * AME_UNIT_DATATYPE_SIZE) / 64`
 64-bit elements each, independent of the configured datatype `Md[ms2]`.
++
+This 64-bit form requires `XLEN >= 64`; when `XLEN < 64`, the instruction
+raises an `Illegal Instruction` exception.
 +
 The element position `pos` is selected by the low `log2(N * row_elements)`
 bits of `X[xs1]`, exactly as in `<<ame:doc:inst:mmove64_m_x,mmove64.m.x>>`;
@@ -5851,11 +5881,14 @@ the selected row is `pos / row_elements`.
 This instruction is intended for debugging.  The element size is defined by
 the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
 read or convert using `Md[ms2]`, does not form a register group, and never
-sets `amestatus.UN`.  The register contents are accessed through the
-row-major layout transformation, using the unsigned integer datatype whose
-size equals the instruction's element size (its 32-bit datatype encoding
-value is numerically equal to the element size), so the position-to-element
-mapping is identical on every implementation.  If one row of the row-major
+sets `amestatus.UN`.  The register contents are first normalized with the
+row-major layout transformation, using the unsigned integer datatype of
+size `AME_UNIT_DATATYPE_SIZE`, for which exactly one square occupies one M
+register; the normalized image is then reinterpreted, by bit slicing, as
+`N` rows of `row_elements` elements of the instruction's element size.
+Both steps are defined independently of the implementation register
+layout, so the position-to-element mapping is identical on every
+implementation.  If one row of the row-major
 view is narrower than the element size, an `Illegal Instruction` exception
 is raised.
 
@@ -5881,6 +5914,9 @@ if pass:[(]AME_NUM_M_REGS == 16 && (ms2 >= 16)) {
   <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
 }
 U32 element_size = 64;
+if pass:[(]XLEN < 64) {
+  <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+}
 U32 N = <<ame:doc:func:sqrt,sqrt>>pass:[(]AME_NELEM);
 U32 row_elements = (N * AME_UNIT_DATATYPE_SIZE) / element_size;
 if pass:[(]row_elements == 0) {
@@ -5890,7 +5926,7 @@ U32 total_elements = N * row_elements;
 U32 pos = X[xs1][31:0] % total_elements;
 U32 bit_lo = pos * element_size;
 U32 bit_hi = bit_lo pass:[+] element_size - 1;
-Bits<32> view_dtype = element_size;
+Bits<32> view_dtype = AME_UNIT_DATATYPE_SIZE;
 Bits<AME_MAX_SQUARE_SIZE> rm_image = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]M[ms2], view_dtype);
 X[xd] = rm_image[bit_hi:bit_lo];
 ----

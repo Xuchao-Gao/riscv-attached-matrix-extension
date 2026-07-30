@@ -1004,6 +1004,13 @@ element operation into `CSR[<<ame:doc:csr:mfflags,mfflags>>]`, using the same
 flag definitions as the `fflags` CSR of the F extension.  AME operations do
 not modify `fflags` itself.
 
+Status-flag updates to `mfflags` and `mxsat` are not architecturally visible
+per element.  They are accumulated in instruction-local staged state and are
+OR-ed into the architectural CSRs only when the instruction completes and its
+staged destination writes commit.  An instruction that raises a synchronous
+exception commits no `mfflags` or `mxsat` update, following the same atomic
+writeback rules as staged register writes.
+
 Floating-point `CMPGE1D` and `CMPLT1D` use ordered IEEE comparisons: a NaN
 operand makes the comparison false, and `-0` compares equal to `+0`.
 The unselected result of `SELGE1D` and `SEL1D` is the destination datatype's

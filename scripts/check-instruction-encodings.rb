@@ -122,7 +122,7 @@ reserved_funct7 = {
   "R1" => []
 }
 expected_funct7 = {
-  "R3" => (0x00..0x50).to_a + (0x54..0x5c).to_a - reserved_funct7.fetch("R3"),
+  "R3" => (0x00..0x50).to_a + (0x58..0x60).to_a - reserved_funct7.fetch("R3"),
   "R2" => [0x51, 0x52],
   "R1" => [0x53]
 }
