@@ -1167,10 +1167,19 @@ does not encode infinity, the result saturates to that datatype's signed
 minimum or maximum, as appropriate.  An operation/datatype tuple that cannot
 represent a required NaN result is unsupported.
 
-AME defines no floating-point exception flags.  Once `ame_op_supported` has
-accepted a tuple, the special cases above are normal data results: they neither
-set `amestatus.UN` nor raise an exception.  `amestatus.UN` reports only an
-unsupported operation/datatype tuple.
+Floating-point exceptional conditions neither raise an exception nor set
+`amestatus.UN`; they accrue the corresponding `mfflags` flags as described
+above.  Once `ame_op_supported` has accepted a tuple, the special cases above
+are normal data results.  `amestatus.UN` reports only an unsupported
+operation/datatype tuple.
+
+[NOTE]
+====
+The per-operation conditions under which each `mfflags` flag is set are not
+yet specified.  AME operations are polymorphic over datatypes and the set of
+supported datatypes is not yet finalized; the flag-setting conditions will
+be defined together with that datatype set in a future revision.
+====
 
 
 [#ame:doc:func:ame_op3]
@@ -1239,7 +1248,7 @@ datatype's canonical quiet NaN.  Invalid infinite forms, including zero times
 infinity and addition of opposite-signed infinities, also produce that NaN.
 Other infinities follow the mathematical expression.  A finite result is
 rounded once according to the destination datatype's rounding mode.  These
-results follow the same no-floating-point-exception-flags rule as `ame_op`.
+results accrue `mfflags` flags under the same rules as `ame_op`.
 
 [#ame:doc:func:ame_xform_rm_to_impl]
 === `ame_xform_rm_to_impl` (builtin)
