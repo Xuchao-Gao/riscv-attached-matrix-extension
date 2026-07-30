@@ -479,11 +479,11 @@ The standard RISC-V `fence` instruction can enforce ordering between any combina
 AME and non-AME memory transfers: software may always use `fence` with appropriate predecessor
 and successor sets to guarantee the desired order.
 
-AME additionally provides a finer-grained `fence.ame` instruction (defined in
-<<ame-fence-ame>>) that orders selected AME memory transfers (predecessor) before selected
-non-AME memory transfers (successor), with independent read/write select bits.
-This dedicated instruction enables more efficient ordering in the AME-to-non-AME direction,
-avoiding the broader serialization imposed by a full `fence`.
+AME additionally provides a finer-grained `fence.ame` instruction that orders selected
+AME memory transfers (predecessor) before selected non-AME memory transfers (successor),
+with independent read/write select bits. This dedicated instruction enables more efficient
+ordering in the AME-to-non-AME direction, avoiding the broader serialization imposed
+by a full `fence`.
 
 AME memory transfers from the same hart to overlapping addresses are guaranteed to be performed
 in program order with respect to one another; no explicit fence is required to order
@@ -500,14 +500,11 @@ which may be expensive. Performance-sensitive code should therefore avoid freque
 between AME state and non-AME state (X, F, or V registers via memory) in hot loops.
 --
 
-The `fence.ame` instruction provides a fine-grained ordering primitive for the
-AME-to-non-AME direction. Its encoding and detailed semantics are described in
-<<ame:doc:inst:fence_ame>> and in <<ame-consistency-model>>.
-
 === Operators
 
-AME supports seven broad classes of operations:
+AME supports several broad classes of operations:
 
+*  Backend management
 *  2D Matrix multiply
 *  1D Element-wise/vector
 *  Intra-tensor (reduction/expansion/permutation)
