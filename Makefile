@@ -12,7 +12,7 @@
 #   make pdf
 
 EXTENSION := Ztt
-VERSION := 0.1
+VERSION ?= snapshot
 OUTFILE := $(EXTENSION)-$(VERSION).pdf
 
 BUILD_TIME := $(shell date -u '+%Y-%m-%d %H:%M:%S UTC')
@@ -34,6 +34,7 @@ ALL_IMAGES := $(wildcard $(SRC_DIR)/images/*)
 OPTIONS := --trace \
 	-r asciidoctor-diagram \
 	-r asciidoctor-lists \
+	-a spec-version=$(VERSION) \
 	-a build-time="$(BUILD_TIME)" \
 	-a build-commit=$(BUILD_COMMIT) \
 	-a pdf-fontsdir=$(abspath $(DOCS_RESOURCES)/fonts) \
