@@ -3,9 +3,12 @@ Authors: Derek Hower, Luca Maroncelli, Eric Mahurin, Siqi Zhao, Qiu Jing, Xiang 
 include::../docs-resources/global-config.adoc[]
 :docgroup: AME TG
 :description: Attached Matrix Extension (Ztt)
+ifdef::spec-version[]
+:version-label: Version
+:revnumber: {spec-version}
+endif::[]
 ifdef::build-commit[]
-:version-label: Commit
-:revnumber: {build-commit}
+:revremark: Commit {build-commit}
 endif::[]
 ifdef::build-time[]
 :revdate: Built {build-time}
