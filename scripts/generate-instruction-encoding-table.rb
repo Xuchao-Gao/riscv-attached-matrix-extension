@@ -128,12 +128,12 @@ lines << ""
 lines << "A `(funct7, funct3, opcode)` bank belongs to only one register format. " \
          "A fixed no-operand instruction may occupy a reserved selector in that " \
          "bank when every other encoding under the selector is reserved."
-lines << "R3 uses `funct7=0x00..0x50` except the reserved value `0x35`. R2 uses " \
+lines << "R3 uses `funct7=0x00..0x50` and `funct7=0x54..0x60`. R2 uses " \
          "`funct7=0x51` with `xfunct5=0..31` except the reserved value `0x09`, " \
          "before continuing at `funct7=0x52`; R1 uses `funct7=0x53` with " \
-         "`xfunct10=0..1`. The fixed `ame.release` encoding shares the R2 " \
-         "`funct7=0x52` bank, using `xfunct5=0x0a` with `rs1=rd=0`. Values " \
-         "`0x54..0x7f` remain free."
+         "`xfunct10=0..3` and `xfunct10=64..79`. The fixed `ame.release` encoding " \
+         "shares the R2 `funct7=0x52` bank, using `xfunct5=0x0a` with `rs1=rd=0`. " \
+         "Values `0x61..0x7f` remain free."
 
 lines << ""
 lines << "## All instruction encodings"

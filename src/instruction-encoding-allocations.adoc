@@ -44,11 +44,11 @@ selector is reserved. This does not define an additional register format.
 |===
 | Allocation | Instruction count | `funct7` allocation | Selector / fixed fields | Remaining capacity
 
-| R3 | 84 | `0x00..0x50,0x54..0x57` except `0x35` | n/a | 1 reserved value
+| R3 | 94 | `0x00..0x50`, `0x54..0x60` | n/a | 0 reserved values
 | R2 bank 0 | 31 | `{ame-enc-r2-bank0-funct7}` | `xfunct5=0..31` except `0x09` | 1 reserved value
 | R2 bank 1 | 11 | `{ame-enc-r2-bank1-funct7}` | `xfunct5=0..0x0A`; `0x0A` fixes `rs1=rd=0` | 21
-| R1 | 3 | `{ame-enc-r1-bank-funct7}` | `xfunct10=0..1,64..79` | 959
-| Unallocated | 0 | `0x58..0x7f` | n/a | 40 `funct7` banks
+| R1 | 5 | `{ame-enc-r1-bank-funct7}` | `xfunct10=0..3,64..79` | 959
+| Unallocated | 0 | `0x61..0x7f` | n/a | 31 `funct7` banks
 |===
 
 Within each register format, operation numbers follow the order of the encoded

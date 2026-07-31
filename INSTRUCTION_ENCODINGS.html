@@ -44,17 +44,17 @@
   <h1>AME instruction encoding review</h1>
   <p>Standalone review artifact generated from <code>src/instructions.adoc</code>. Decoder rule: <code>(word &amp; mask) == match</code>.</p>
   <div class="cards">
-    <div class="card"><strong>129</strong><span>instructions</span></div>
-    <div class="card"><strong>84</strong><span>R3 encodings</span></div>
+    <div class="card"><strong>141</strong><span>instructions</span></div>
+    <div class="card"><strong>94</strong><span>R3 encodings</span></div>
     <div class="card"><strong>41</strong><span>R2 encodings</span></div>
-    <div class="card"><strong>3</strong><span>R1 encodings</span></div>
+    <div class="card"><strong>5</strong><span>R1 encodings</span></div>
     <div class="card"><strong>1</strong><span>fixed encodings</span></div>
     <div class="card"><strong>0</strong><span>decode overlaps</span></div>
   </div>
 
   <h2>Encoding formats</h2>
   <p class="note"><b>Invariant:</b> <code>funct7[31:25]</code>, <code>funct3[14:12]</code>, and <code>opcode[6:0]</code> remain independent fields. Every instruction uses <code>funct3=000</code>.</p>
-  <p>R3 occupies <code>funct7=0x00..0x50</code> except reserved value <code>0x35</code>. R2 uses bank <code>0x51</code> with <code>xfunct5=0..31</code> except reserved value <code>0x09</code>, then continues in bank <code>0x52</code>. R1 uses bank <code>0x53</code> with <code>xfunct10=0..1</code>. The fixed, no-operand <code>ame.release</code> encoding shares the R2 <code>funct7=0x52</code> bank, using <code>xfunct5=0x0a</code> with <code>rs1=rd=0</code>; every other encoding under that selector is reserved. The 44 <code>funct7</code> values <code>0x54..0x7f</code> remain unallocated.</p>
+  <p>R3 occupies <code>funct7=0x00..0x50</code> and <code>funct7=0x54..0x60</code>. R2 uses bank <code>0x51</code> with <code>xfunct5=0..31</code> except reserved value <code>0x09</code>, then continues in bank <code>0x52</code>. R1 uses bank <code>0x53</code> with <code>xfunct10=0..3</code> and <code>xfunct10=64..79</code>. The fixed, no-operand <code>ame.release</code> encoding shares the R2 <code>funct7=0x52</code> bank, using <code>xfunct5=0x0a</code> with <code>rs1=rd=0</code>; every other encoding under that selector is reserved. The 31 <code>funct7</code> values <code>0x61..0x7f</code> remain unallocated.</p>
   <div class="formats">
     <div class="format-row"><b>R3</b><div class="bitbar"><span class="bit fixed w7"><b>funct7</b><small>31:25</small></span><span class="bit operand w5"><b>src2</b><small>24:20</small></span><span class="bit operand w5"><b>src1</b><small>19:15</small></span><span class="bit fixed w3"><b>funct3=0</b><small>14:12</small></span><span class="bit operand w5"><b>dest</b><small>11:7</small></span><span class="bit fixed w7"><b>opcode</b><small>6:0</small></span></div></div>
     <div class="format-row"><b>R2</b><div class="bitbar"><span class="bit fixed w7"><b>funct7</b><small>31:25</small></span><span class="bit fixed w5"><b>xfunct5</b><small>24:20</small></span><span class="bit operand w5"><b>src1</b><small>19:15</small></span><span class="bit fixed w3"><b>funct3=0</b><small>14:12</small></span><span class="bit operand w5"><b>dest</b><small>11:7</small></span><span class="bit fixed w7"><b>opcode</b><small>6:0</small></span></div></div>
@@ -65,7 +65,7 @@
   <div class="toolbar">
     <input id="search" type="search" placeholder="Search instruction, mnemonic, or description">
     <select id="format"><option value="">All formats</option><option>R3</option><option>R2</option><option>R1</option><option>Fixed</option></select>
-    <select id="category"><option value="">All categories</option><option value="Bitwise">Bitwise (16)</option><option value="Compare and Predication">Compare and Predication (8)</option><option value="Datatype Management">Datatype Management (4)</option><option value="Elementwise Arithmetic">Elementwise Arithmetic (31)</option><option value="Elementwise Math Functions">Elementwise Math Functions (18)</option><option value="Matrix Multiply">Matrix Multiply (8)</option><option value="Memory">Memory (10)</option><option value="Permutation">Permutation (12)</option><option value="Reduction">Reduction (10)</option><option value="Register move / data conversion">Register move / data conversion (4)</option><option value="Resource Management">Resource Management (2)</option><option value="State Management">State Management (6)</option></select>
+    <select id="category"><option value="">All categories</option><option value="Bitwise">Bitwise (16)</option><option value="Compare and Predication">Compare and Predication (8)</option><option value="Datatype Management">Datatype Management (4)</option><option value="Elementwise Arithmetic">Elementwise Arithmetic (31)</option><option value="Elementwise Math Functions">Elementwise Math Functions (18)</option><option value="Matrix Multiply">Matrix Multiply (8)</option><option value="Memory">Memory (10)</option><option value="Permutation">Permutation (14)</option><option value="Reduction">Reduction (10)</option><option value="Register move / data conversion">Register move / data conversion (12)</option><option value="Resource Management">Resource Management (2)</option><option value="State Management">State Management (8)</option></select>
     <span id="visible"></span>
   </div>
   <div class="table-wrap"><table>
@@ -928,6 +928,15 @@
 <tr data-format="R3" data-category="Permutation">
     <td class="num">96</td>
     <td><span class="tag r3">R3</span></td>
+    <td><code>mcolbcast.ew.x</code></td>
+    <td><code>mcolbcast.ew.x md, ms1, xs1</code><div class="synopsis">Broadcast one column to all columns</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x32</small></span><span class="bit operand w5" title="bits 24:20"><b>xs1</b><small>xs1</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0x6400002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Permutation">
+    <td class="num">97</td>
+    <td><span class="tag r3">R3</span></td>
     <td><code>mcolgather.ew</code></td>
     <td><code>mcolgather.ew md, ms1, ms2</code><div class="synopsis">Elementwise column gather (take)</div></td>
     <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x33</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
@@ -935,7 +944,7 @@
     <td><code>0x6600002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Permutation">
-    <td class="num">97</td>
+    <td class="num">98</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mcolshift.ew.x</code></td>
     <td><code>mcolshift.ew.x md, ms1, xs1</code><div class="synopsis">Elementwise column shift by scalar offset</div></td>
@@ -944,7 +953,7 @@
     <td><code>0x6800002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Permutation">
-    <td class="num">98</td>
+    <td class="num">99</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mcolunzip.ew</code></td>
     <td><code>mcolunzip.ew md, ms1</code><div class="synopsis">Elementwise column unzip (de-interleave)</div></td>
@@ -953,7 +962,7 @@
     <td><code>0xa2a0002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Permutation">
-    <td class="num">99</td>
+    <td class="num">100</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mcolzip.ew</code></td>
     <td><code>mcolzip.ew md, ms1</code><div class="synopsis">Elementwise column zip (interleave)</div></td>
@@ -962,7 +971,16 @@
     <td><code>0xa2b0002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Permutation">
-    <td class="num">100</td>
+    <td class="num">101</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mrowbcast.ew.x</code></td>
+    <td><code>mrowbcast.ew.x md, ms1, xs1</code><div class="synopsis">Broadcast one row to all rows</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x35</small></span><span class="bit operand w5" title="bits 24:20"><b>xs1</b><small>xs1</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0x6a00002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Permutation">
+    <td class="num">102</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mrowgather.ew</code></td>
     <td><code>mrowgather.ew md, ms1, ms2</code><div class="synopsis">Elementwise row gather (take)</div></td>
@@ -971,7 +989,7 @@
     <td><code>0x6c00002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Permutation">
-    <td class="num">101</td>
+    <td class="num">103</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mrowshift.ew.x</code></td>
     <td><code>mrowshift.ew.x md, ms1, xs1</code><div class="synopsis">Elementwise row shift by scalar offset</div></td>
@@ -980,7 +998,7 @@
     <td><code>0x6e00002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Permutation">
-    <td class="num">102</td>
+    <td class="num">104</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mrowunzip.ew</code></td>
     <td><code>mrowunzip.ew md, ms1</code><div class="synopsis">Row unzip (de-interleave rows)</div></td>
@@ -989,7 +1007,7 @@
     <td><code>0xa2c0002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Permutation">
-    <td class="num">103</td>
+    <td class="num">105</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mrowzip.ew</code></td>
     <td><code>mrowzip.ew md, ms1, ms2</code><div class="synopsis">Row zip (interleave rows from two inputs)</div></td>
@@ -998,7 +1016,7 @@
     <td><code>0x7000002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Permutation">
-    <td class="num">104</td>
+    <td class="num">106</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mscatadd.col</code></td>
     <td><code>mscatadd.col md, ms1, ms2</code><div class="synopsis">Elementwise column scatter-add</div></td>
@@ -1007,7 +1025,7 @@
     <td><code>0x7200002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Permutation">
-    <td class="num">105</td>
+    <td class="num">107</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mscatadd.row</code></td>
     <td><code>mscatadd.row md, ms1, ms2</code><div class="synopsis">Elementwise scatter-add</div></td>
@@ -1016,7 +1034,7 @@
     <td><code>0x7400002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Permutation">
-    <td class="num">106</td>
+    <td class="num">108</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mscatmax.col</code></td>
     <td><code>mscatmax.col md, ms1, ms2</code><div class="synopsis">Elementwise column scatter-max</div></td>
@@ -1025,7 +1043,7 @@
     <td><code>0x7600002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Permutation">
-    <td class="num">107</td>
+    <td class="num">109</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mscatmax.row</code></td>
     <td><code>mscatmax.row md, ms1, ms2</code><div class="synopsis">Elementwise scatter-max</div></td>
@@ -1034,7 +1052,7 @@
     <td><code>0x7800002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Reduction">
-    <td class="num">108</td>
+    <td class="num">110</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mprefixadd.col</code></td>
     <td><code>mprefixadd.col md, ms1</code><div class="synopsis">Elementwise column prefix-sum (inclusive scan)</div></td>
@@ -1043,7 +1061,7 @@
     <td><code>0xa3f0002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Reduction">
-    <td class="num">109</td>
+    <td class="num">111</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mprefixadd.row</code></td>
     <td><code>mprefixadd.row md, ms1</code><div class="synopsis">Elementwise row prefix-sum (inclusive scan)</div></td>
@@ -1052,7 +1070,7 @@
     <td><code>0xa400002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Reduction">
-    <td class="num">110</td>
+    <td class="num">112</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mprefixmax.col</code></td>
     <td><code>mprefixmax.col md, ms1</code><div class="synopsis">Elementwise column prefix-max (running maximum scan)</div></td>
@@ -1061,7 +1079,7 @@
     <td><code>0xa410002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Reduction">
-    <td class="num">111</td>
+    <td class="num">113</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mprefixmax.row</code></td>
     <td><code>mprefixmax.row md, ms1</code><div class="synopsis">Elementwise row prefix-max (running maximum scan)</div></td>
@@ -1070,7 +1088,7 @@
     <td><code>0xa420002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Reduction">
-    <td class="num">112</td>
+    <td class="num">114</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mreduceadd.col</code></td>
     <td><code>mreduceadd.col md, ms1</code><div class="synopsis">Elementwise column reduce (add)</div></td>
@@ -1079,7 +1097,7 @@
     <td><code>0xa430002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Reduction">
-    <td class="num">113</td>
+    <td class="num">115</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mreduceadd.row</code></td>
     <td><code>mreduceadd.row md, ms1</code><div class="synopsis">Elementwise row reduce (add)</div></td>
@@ -1088,7 +1106,7 @@
     <td><code>0xa440002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Reduction">
-    <td class="num">114</td>
+    <td class="num">116</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mreducemax.col</code></td>
     <td><code>mreducemax.col md, ms1</code><div class="synopsis">Elementwise column reduce (max)</div></td>
@@ -1097,7 +1115,7 @@
     <td><code>0xa450002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Reduction">
-    <td class="num">115</td>
+    <td class="num">117</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mreducemax.row</code></td>
     <td><code>mreducemax.row md, ms1</code><div class="synopsis">Elementwise row reduce (max)</div></td>
@@ -1106,7 +1124,7 @@
     <td><code>0xa460002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Reduction">
-    <td class="num">116</td>
+    <td class="num">118</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mreducemin.col</code></td>
     <td><code>mreducemin.col md, ms1</code><div class="synopsis">Elementwise column reduce (min)</div></td>
@@ -1115,7 +1133,7 @@
     <td><code>0xa470002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Reduction">
-    <td class="num">117</td>
+    <td class="num">119</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mreducemin.row</code></td>
     <td><code>mreducemin.row md, ms1</code><div class="synopsis">Elementwise row reduce (min)</div></td>
@@ -1123,8 +1141,17 @@
     <td><code>0xfff0707f</code></td>
     <td><code>0xa480002b</code></td>
   </tr>
+<tr data-format="R3" data-category="Register move / data conversion">
+    <td class="num">120</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mbcast.m.x</code></td>
+    <td><code>mbcast.m.x md, xs1, xtyp</code><div class="synopsis">Convert an X-register scalar and broadcast it to an M operand</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x58</small></span><span class="bit operand w5" title="bits 24:20"><b>xtyp</b><small>xtyp</small></span><span class="bit operand w5" title="bits 19:15"><b>xs1</b><small>xs1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0xb000002b</code></td>
+  </tr>
 <tr data-format="R2" data-category="Register move / data conversion">
-    <td class="num">118</td>
+    <td class="num">121</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mconv.ew</code></td>
     <td><code>mconv.ew md, ms1</code><div class="synopsis">Convert element data between supported datatypes, including packed and non-packed representations</div></td>
@@ -1133,16 +1160,79 @@
     <td><code>0xa2d0002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Register move / data conversion">
-    <td class="num">119</td>
+    <td class="num">122</td>
     <td><span class="tag r3">R3</span></td>
-    <td><code>mmov.m.x</code></td>
-    <td><code>mmov.m.x md, xs1, xtyp</code><div class="synopsis">Convert an X-register scalar and broadcast it to an M operand</div></td>
-    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x32</small></span><span class="bit operand w5" title="bits 24:20"><b>xtyp</b><small>xtyp</small></span><span class="bit operand w5" title="bits 19:15"><b>xs1</b><small>xs1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>mmove16.m.x</code></td>
+    <td><code>mmove16.m.x md, xs2, xs1</code><div class="synopsis">Move one 16-bit scalar into an M register position (debug)</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x5a</small></span><span class="bit operand w5" title="bits 24:20"><b>xs1</b><small>xs1</small></span><span class="bit operand w5" title="bits 19:15"><b>xs2</b><small>xs2</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
     <td><code>0xfe00707f</code></td>
-    <td><code>0x6400002b</code></td>
+    <td><code>0xb400002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Register move / data conversion">
-    <td class="num">120</td>
+    <td class="num">123</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mmove16.x.m</code></td>
+    <td><code>mmove16.x.m xd, ms2, xs1</code><div class="synopsis">Move one 16-bit element from an M register position to an X register (debug)</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x5e</small></span><span class="bit operand w5" title="bits 24:20"><b>xs1</b><small>xs1</small></span><span class="bit operand w5" title="bits 19:15"><b>ms2</b><small>ms2</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>xd</b><small>xd</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0xbc00002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Register move / data conversion">
+    <td class="num">124</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mmove32.m.x</code></td>
+    <td><code>mmove32.m.x md, xs2, xs1</code><div class="synopsis">Move one 32-bit scalar into an M register position (debug)</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x5b</small></span><span class="bit operand w5" title="bits 24:20"><b>xs1</b><small>xs1</small></span><span class="bit operand w5" title="bits 19:15"><b>xs2</b><small>xs2</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0xb600002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Register move / data conversion">
+    <td class="num">125</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mmove32.x.m</code></td>
+    <td><code>mmove32.x.m xd, ms2, xs1</code><div class="synopsis">Move one 32-bit element from an M register position to an X register (debug)</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x5f</small></span><span class="bit operand w5" title="bits 24:20"><b>xs1</b><small>xs1</small></span><span class="bit operand w5" title="bits 19:15"><b>ms2</b><small>ms2</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>xd</b><small>xd</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0xbe00002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Register move / data conversion">
+    <td class="num">126</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mmove64.m.x</code></td>
+    <td><code>mmove64.m.x md, xs2, xs1</code><div class="synopsis">Move one 64-bit scalar into an M register position (debug)</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x5c</small></span><span class="bit operand w5" title="bits 24:20"><b>xs1</b><small>xs1</small></span><span class="bit operand w5" title="bits 19:15"><b>xs2</b><small>xs2</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0xb800002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Register move / data conversion">
+    <td class="num">127</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mmove64.x.m</code></td>
+    <td><code>mmove64.x.m xd, ms2, xs1</code><div class="synopsis">Move one 64-bit element from an M register position to an X register (debug)</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x60</small></span><span class="bit operand w5" title="bits 24:20"><b>xs1</b><small>xs1</small></span><span class="bit operand w5" title="bits 19:15"><b>ms2</b><small>ms2</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>xd</b><small>xd</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0xc000002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Register move / data conversion">
+    <td class="num">128</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mmove8.m.x</code></td>
+    <td><code>mmove8.m.x md, xs2, xs1</code><div class="synopsis">Move one 8-bit scalar into an M register position (debug)</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x59</small></span><span class="bit operand w5" title="bits 24:20"><b>xs1</b><small>xs1</small></span><span class="bit operand w5" title="bits 19:15"><b>xs2</b><small>xs2</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0xb200002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Register move / data conversion">
+    <td class="num">129</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mmove8.x.m</code></td>
+    <td><code>mmove8.x.m xd, ms2, xs1</code><div class="synopsis">Move one 8-bit element from an M register position to an X register (debug)</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x5d</small></span><span class="bit operand w5" title="bits 24:20"><b>xs1</b><small>xs1</small></span><span class="bit operand w5" title="bits 19:15"><b>ms2</b><small>ms2</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>xd</b><small>xd</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0xba00002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Register move / data conversion">
+    <td class="num">130</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mpack.ew.x</code></td>
     <td><code>mpack.ew.x md, ms1, xs1</code><div class="synopsis">Pack one square into a slot of a packed M register</div></td>
@@ -1151,7 +1241,7 @@
     <td><code>0x7a00002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Register move / data conversion">
-    <td class="num">121</td>
+    <td class="num">131</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>munpack.ew.x</code></td>
     <td><code>munpack.ew.x md, ms1, xs1</code><div class="synopsis">Unpack one sub-square from a packed M register</div></td>
@@ -1160,7 +1250,7 @@
     <td><code>0x7c00002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Resource Management">
-    <td class="num">122</td>
+    <td class="num">132</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>ame.acquire</code></td>
     <td><code>ame.acquire xd, xs</code><div class="synopsis">Acquire the entire AME backend</div></td>
@@ -1169,7 +1259,7 @@
     <td><code>0xa490002b</code></td>
   </tr>
 <tr data-format="Fixed" data-category="Resource Management">
-    <td class="num">123</td>
+    <td class="num">133</td>
     <td><span class="tag fixed">Fixed</span></td>
     <td><code>ame.release</code></td>
     <td><code>ame.release</code><div class="synopsis">Release the entire AME backend</div></td>
@@ -1178,7 +1268,7 @@
     <td><code>0xa4a0002b</code></td>
   </tr>
 <tr data-format="R1" data-category="State Management">
-    <td class="num">124</td>
+    <td class="num">134</td>
     <td><span class="tag r1">R1</span></td>
     <td><code>fence.ame</code></td>
     <td><code>fence.ame sw, sr, pw, pr</code><div class="synopsis">Order selected AME memory transfers before selected non-AME memory transfers</div></td>
@@ -1186,26 +1276,35 @@
     <td><code>0xfffff87f</code></td>
     <td><code>0xa620002b</code></td>
   </tr>
-<tr data-format="R2" data-category="State Management">
-    <td class="num">125</td>
-    <td><span class="tag r2">R2</span></td>
-    <td><code>mmov.a.m</code></td>
-    <td><code>mmov.a.m md, acc</code><div class="synopsis">Elementwise unconditional move from accumulator to M register</div></td>
-    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x51</small></span><span class="bit fixed w5" title="bits 24:20"><b>xfunct5</b><small>0x1c</small></span><span class="bit operand w5" title="bits 19:15"><b>acc</b><small>acc</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
-    <td><code>0xfff0707f</code></td>
-    <td><code>0xa3c0002b</code></td>
+<tr data-format="R1" data-category="State Management">
+    <td class="num">135</td>
+    <td><span class="tag r1">R1</span></td>
+    <td><code>mcolid.ew</code></td>
+    <td><code>mcolid.ew md</code><div class="synopsis">Write zero-based column index to every element</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x53</small></span><span class="bit fixed w5" title="bits 24:20"><b>xfunct10[9:5]</b><small>0x0</small></span><span class="bit fixed w5" title="bits 19:15"><b>xfunct10[4:0]</b><small>0x2</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfffff07f</code></td>
+    <td><code>0xa601002b</code></td>
   </tr>
 <tr data-format="R2" data-category="State Management">
-    <td class="num">126</td>
+    <td class="num">136</td>
     <td><span class="tag r2">R2</span></td>
-    <td><code>mmov.m.a</code></td>
-    <td><code>mmov.m.a acc, ms</code><div class="synopsis">Elementwise unconditional move from M register to accumulator</div></td>
+    <td><code>mmov.a.m</code></td>
+    <td><code>mmov.a.m acc, ms</code><div class="synopsis">Elementwise unconditional move from M register to accumulator</div></td>
     <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x51</small></span><span class="bit fixed w5" title="bits 24:20"><b>xfunct5</b><small>0x1d</small></span><span class="bit operand w5" title="bits 19:15"><b>ms</b><small>ms</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>acc</b><small>acc</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
     <td><code>0xfff0707f</code></td>
     <td><code>0xa3d0002b</code></td>
   </tr>
 <tr data-format="R2" data-category="State Management">
-    <td class="num">127</td>
+    <td class="num">137</td>
+    <td><span class="tag r2">R2</span></td>
+    <td><code>mmov.m.a</code></td>
+    <td><code>mmov.m.a md, acc</code><div class="synopsis">Elementwise unconditional move from accumulator to M register</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x51</small></span><span class="bit fixed w5" title="bits 24:20"><b>xfunct5</b><small>0x1c</small></span><span class="bit operand w5" title="bits 19:15"><b>acc</b><small>acc</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfff0707f</code></td>
+    <td><code>0xa3c0002b</code></td>
+  </tr>
+<tr data-format="R2" data-category="State Management">
+    <td class="num">138</td>
     <td><span class="tag r2">R2</span></td>
     <td><code>mmov.m.m</code></td>
     <td><code>mmov.m.m md, ms</code><div class="synopsis">Elementwise unconditional move between M registers</div></td>
@@ -1214,7 +1313,16 @@
     <td><code>0xa3e0002b</code></td>
   </tr>
 <tr data-format="R1" data-category="State Management">
-    <td class="num">128</td>
+    <td class="num">139</td>
+    <td><span class="tag r1">R1</span></td>
+    <td><code>mrowid.ew</code></td>
+    <td><code>mrowid.ew md</code><div class="synopsis">Write zero-based row index to every element</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x53</small></span><span class="bit fixed w5" title="bits 24:20"><b>xfunct10[9:5]</b><small>0x0</small></span><span class="bit fixed w5" title="bits 19:15"><b>xfunct10[4:0]</b><small>0x3</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfffff07f</code></td>
+    <td><code>0xa601802b</code></td>
+  </tr>
+<tr data-format="R1" data-category="State Management">
+    <td class="num">140</td>
     <td><span class="tag r1">R1</span></td>
     <td><code>mzero.2d.acc</code></td>
     <td><code>mzero.2d.acc acc</code><div class="synopsis">Clear accumulator tile</div></td>
@@ -1223,7 +1331,7 @@
     <td><code>0xa600002b</code></td>
   </tr>
 <tr data-format="R1" data-category="State Management">
-    <td class="num">129</td>
+    <td class="num">141</td>
     <td><span class="tag r1">R1</span></td>
     <td><code>mzero.2d.m</code></td>
     <td><code>mzero.2d.m md</code><div class="synopsis">Clear tensor register</div></td>
@@ -1232,7 +1340,7 @@
     <td><code>0xa600802b</code></td>
   </tr></tbody>
   </table></div>
-  <footer>Blue fields are fixed selectors; green fields are register operands. Category counts: Bitwise=16, Compare and Predication=8, Datatype Management=4, Elementwise Arithmetic=31, Elementwise Math Functions=18, Matrix Multiply=8, Memory=10, Permutation=12, Reduction=10, Register move / data conversion=4, Resource Management=2, State Management=6.</footer>
+  <footer>Blue fields are fixed selectors; green fields are register operands. Category counts: Bitwise=16, Compare and Predication=8, Datatype Management=4, Elementwise Arithmetic=31, Elementwise Math Functions=18, Matrix Multiply=8, Memory=10, Permutation=14, Reduction=10, Register move / data conversion=12, Resource Management=2, State Management=8.</footer>
 </main>
 <script>
   const search = document.querySelector('#search'); const fmt = document.querySelector('#format');

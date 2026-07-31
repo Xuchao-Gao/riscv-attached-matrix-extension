@@ -128,13 +128,13 @@ funct3_values = entries.map { |entry| entry[:funct3] }.uniq
 abort "AME instructions must all use funct3=0, found #{funct3_values.sort.join(', ')}" unless funct3_values == [0]
 
 reserved_funct7 = {
-  "R3" => [0x35],
+  "R3" => [],
   "R2" => [],
   "R1" => [],
   "Fixed" => []
 }
 expected_funct7 = {
-  "R3" => ((0x00..0x50).to_a + (0x54..0x57).to_a) - reserved_funct7.fetch("R3"),
+  "R3" => ((0x00..0x50).to_a + (0x54..0x60).to_a) - reserved_funct7.fetch("R3"),
   "R2" => [0x51, 0x52],
   "R1" => [0x53],
   "Fixed" => [0x52]
@@ -218,7 +218,7 @@ end
 reserved_extensions = {
   ["R2", 0x51] => [9],
   ["R2", 0x52] => [10],
-  ["R1", 0x53] => (2..63).to_a
+  ["R1", 0x53] => (4..63).to_a
 }
 [["R2", 32], ["R1", 1024]].each do |format_name, capacity|
   entries.select { |entry| entry[:format] == format_name }
