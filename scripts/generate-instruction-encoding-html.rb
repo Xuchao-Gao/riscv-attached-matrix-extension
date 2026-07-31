@@ -35,9 +35,17 @@ instructions_source.split("\n<<<\n", 2).first.each_line do |line|
 end
 
 entries = []
+unallocated_names = []
 instructions_source.scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, section|
   diagram = section.lines.find { |line| line.start_with?('{"reg":') }
-  abort "#{name} has no WaveDrom encoding" unless diagram
+  unless diagram
+    if section.include?("This specification does not assign an instruction encoding.")
+      unallocated_names << name
+      next
+    end
+
+    abort "#{name} has no WaveDrom encoding"
+  end
 
   mnemonic = section[/Mnemonic::\n`([^`]+)`/, 1]
   synopsis = section[/Synopsis::\n([^\n]+)/, 1].to_s.strip
@@ -69,8 +77,10 @@ instructions_source.scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, sectio
              "R3"
            elsif by_range.fetch([19, 15])[:kind] == :operand
              "R2"
-           else
+           elsif fields.any? { |field| field[:kind] == :operand && field[:hi] <= 11 && field[:lo] >= 7 }
              "R1"
+           else
+             "Fixed"
            end
   category = category_by_instruction.fetch(name) do
     abort "#{name} is missing from the Chapter 2 instruction classification"
@@ -79,7 +89,7 @@ instructions_source.scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, sectio
                mask: mask, value: match_value, format: format, category: category }
 end
 
-extra_classifications = category_by_instruction.keys - entries.map { |entry| entry[:name] }
+extra_classifications = category_by_instruction.keys - entries.map { |entry| entry[:name] } - unallocated_names
 abort "Chapter 2 classifies unknown instructions: #{extra_classifications.join(', ')}" unless extra_classifications.empty?
 
 overlaps = entries.combination(2).select do |left, right|
@@ -92,9 +102,12 @@ role = lambda do |entry, field|
   return field[:name] if field[:kind] == :operand
   case [field[:hi], field[:lo]]
   when [31, 25] then "funct7"
-  when [24, 20] then entry[:format] == "R1" ? "xfunct10[9:5]" : "xfunct5"
-  when [19, 15] then "xfunct10[4:0]"
+  when [24, 20]
+    entry[:format] == "Fixed" ? "xfunct5" :
+      (entry[:format] == "R1" ? "xfunct10[9:5]" : "xfunct5")
+  when [19, 15] then entry[:format] == "Fixed" ? "rs1" : "xfunct10[4:0]"
   when [14, 12] then "funct3"
+  when [11, 7] then entry[:format] == "Fixed" ? "rd" : "fixed"
   when [6, 0] then "opcode"
   else "fixed"
   end
@@ -143,7 +156,7 @@ html = <<~HTML
         font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
       main { max-width:1800px; margin:auto; padding:28px; } h1 { margin:0 0 6px; font-size:28px; }
       h2 { margin:30px 0 12px; } p { color:var(--muted); } code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
-      .cards { display:grid; grid-template-columns:repeat(5,minmax(130px,1fr)); gap:12px; margin:20px 0; }
+      .cards { display:grid; grid-template-columns:repeat(6,minmax(130px,1fr)); gap:12px; margin:20px 0; }
       .card { background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
       .card strong { display:block; font-size:24px; } .card span { color:var(--muted); }
       .formats { display:grid; gap:10px; } .format-row { display:grid; grid-template-columns:54px 1fr; align-items:center;
@@ -159,6 +172,7 @@ html = <<~HTML
       .num { color:var(--muted); text-align:right; } .synopsis { color:var(--muted); font-size:12px; margin-top:3px; }
       .tag { display:inline-block; min-width:32px; text-align:center; padding:3px 6px; border-radius:999px; font-weight:700; }
       .tag.r3 { background:#dff4e7; color:#17653a; } .tag.r2 { background:#e5edff; color:#2b4d9d; } .tag.r1 { background:#fae9d2; color:#895315; }
+      .tag.fixed { background:#f3e6fa; color:#70418c; }
       .bitbar { display:flex; min-width:620px; height:48px; } .bit { display:flex; flex-direction:column; justify-content:center;
         text-align:center; overflow:hidden; border:1px solid; border-right:0; padding:2px 4px; white-space:nowrap; }
       .bit:first-child { border-radius:6px 0 0 6px; } .bit:last-child { border-right:1px solid; border-radius:0 6px 6px 0; }
@@ -168,7 +182,7 @@ html = <<~HTML
       footer { margin:18px 0; color:var(--muted); }
       @media print { body { background:white; } main { max-width:none; padding:10px; } .toolbar { display:none; }
         .table-wrap { overflow:visible; border:0; } table { min-width:0; font-size:9px; } th { position:static; } .bitbar { min-width:360px; height:34px; }
-        .cards { grid-template-columns:repeat(5,1fr); } }
+        .cards { grid-template-columns:repeat(6,1fr); } }
     </style>
   </head>
   <body><main>
@@ -179,12 +193,13 @@ html = <<~HTML
       <div class="card"><strong>#{format_counts.fetch('R3', 0)}</strong><span>R3 encodings</span></div>
       <div class="card"><strong>#{format_counts.fetch('R2', 0)}</strong><span>R2 encodings</span></div>
       <div class="card"><strong>#{format_counts.fetch('R1', 0)}</strong><span>R1 encodings</span></div>
+      <div class="card"><strong>#{format_counts.fetch('Fixed', 0)}</strong><span>fixed encodings</span></div>
       <div class="card"><strong>#{overlaps.length}</strong><span>decode overlaps</span></div>
     </div>
 
     <h2>Encoding formats</h2>
-    <p class="note"><b>Invariant:</b> <code>funct7[31:25]</code>, <code>funct3[14:12]</code>, and <code>opcode[6:0]</code> remain independent fields. Every instruction uses <code>funct3=000</code>; R0 is not defined.</p>
-    <p>R3 occupies <code>funct7=0x00..0x50</code> and <code>funct7=0x58..0x60</code>. R2 uses bank <code>0x51</code> with <code>xfunct5=0..31</code> except reserved value <code>0x09</code>, then continues in bank <code>0x52</code>. R1 uses bank <code>0x53</code> with <code>xfunct10=0..3</code>. The 35 <code>funct7</code> values <code>0x54..0x57</code> and <code>0x61..0x7f</code> remain unallocated.</p>
+    <p class="note"><b>Invariant:</b> <code>funct7[31:25]</code>, <code>funct3[14:12]</code>, and <code>opcode[6:0]</code> remain independent fields. Every instruction uses <code>funct3=000</code>.</p>
+    <p>R3 occupies <code>funct7=0x00..0x50</code> and <code>funct7=0x54..0x60</code>. R2 uses bank <code>0x51</code> with <code>xfunct5=0..31</code> except reserved value <code>0x09</code>, then continues in bank <code>0x52</code>. R1 uses bank <code>0x53</code> with <code>xfunct10=0..3</code> and <code>xfunct10=64..79</code>. The fixed, no-operand <code>ame.release</code> encoding shares the R2 <code>funct7=0x52</code> bank, using <code>xfunct5=0x0a</code> with <code>rs1=rd=0</code>; every other encoding under that selector is reserved. The 31 <code>funct7</code> values <code>0x61..0x7f</code> remain unallocated.</p>
     <div class="formats">
       <div class="format-row"><b>R3</b><div class="bitbar"><span class="bit fixed w7"><b>funct7</b><small>31:25</small></span><span class="bit operand w5"><b>src2</b><small>24:20</small></span><span class="bit operand w5"><b>src1</b><small>19:15</small></span><span class="bit fixed w3"><b>funct3=0</b><small>14:12</small></span><span class="bit operand w5"><b>dest</b><small>11:7</small></span><span class="bit fixed w7"><b>opcode</b><small>6:0</small></span></div></div>
       <div class="format-row"><b>R2</b><div class="bitbar"><span class="bit fixed w7"><b>funct7</b><small>31:25</small></span><span class="bit fixed w5"><b>xfunct5</b><small>24:20</small></span><span class="bit operand w5"><b>src1</b><small>19:15</small></span><span class="bit fixed w3"><b>funct3=0</b><small>14:12</small></span><span class="bit operand w5"><b>dest</b><small>11:7</small></span><span class="bit fixed w7"><b>opcode</b><small>6:0</small></span></div></div>
@@ -194,7 +209,7 @@ html = <<~HTML
     <h2>All instruction encodings</h2>
     <div class="toolbar">
       <input id="search" type="search" placeholder="Search instruction, mnemonic, or description">
-      <select id="format"><option value="">All formats</option><option>R3</option><option>R2</option><option>R1</option></select>
+      <select id="format"><option value="">All formats</option><option>R3</option><option>R2</option><option>R1</option><option>Fixed</option></select>
       <select id="category"><option value="">All categories</option>#{category_options}</select>
       <span id="visible"></span>
     </div>

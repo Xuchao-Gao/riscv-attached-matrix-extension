@@ -15,7 +15,11 @@ end
 entries = []
 File.read(instructions_path).scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, section|
   diagram = section.lines.find { |line| line.start_with?('{"reg":') }
-  abort "#{name} has no WaveDrom encoding" unless diagram
+  unless diagram
+    next if section.include?("This specification does not assign an instruction encoding.")
+
+    abort "#{name} has no WaveDrom encoding"
+  end
 
   mnemonic = section[/Mnemonic::\n`([^`]+)`/, 1]
   abort "#{name} has no mnemonic" unless mnemonic
@@ -47,14 +51,17 @@ File.read(instructions_path).scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |nam
   end
 
   abort "#{name} encoding is #{position} bits, expected 32" unless position == 32
+  dest_operand = fields.any? { |field| field[:kind] == :operand && field[:hi] <= 11 && field[:lo] >= 7 }
   src1 = fields.find { |field| field[:hi] == 19 && field[:lo] == 15 }
   src2 = fields.find { |field| field[:hi] == 24 && field[:lo] == 20 }
   format = if src2[:kind] == :operand
              "R3"
            elsif src1[:kind] == :operand
              "R2"
-           else
+           elsif dest_operand
              "R1"
+           else
+             "Fixed"
            end
   entries << { name: name, mnemonic: mnemonic, fields: fields, mask: mask,
                value: match_value, format: format }
@@ -114,14 +121,19 @@ lines << ""
 lines << "Every encoding retains `funct7[31:25]`, `funct3[14:12]`, and " \
          "`opcode[6:0]`. R2 converts only `src2[24:20]` to `xfunct5`; R1 also " \
          "converts `src1[19:15]`, yielding `xfunct10`. All instructions use " \
-         "`funct3=000`; R0 is not defined."
+         "`funct3=000`. The no-operand `ame.release` encoding uses a reserved " \
+         "R2 selector and fixes both R2 operand fields to zero; it does not " \
+         "define another register format."
 lines << ""
-lines << "A `(funct7, funct3, opcode)` bank belongs to only one format. This rule " \
-         "prevents a more-specific R1/R2 pattern from being hidden inside an R2/R3 decode."
-lines << "R3 uses `funct7=0x00..0x50` and `funct7=0x58..0x60`. R2 uses " \
+lines << "A `(funct7, funct3, opcode)` bank belongs to only one register format. " \
+         "A fixed no-operand instruction may occupy a reserved selector in that " \
+         "bank when every other encoding under the selector is reserved."
+lines << "R3 uses `funct7=0x00..0x50` and `funct7=0x54..0x60`. R2 uses " \
          "`funct7=0x51` with `xfunct5=0..31` except the reserved value `0x09`, " \
          "before continuing at `funct7=0x52`; R1 uses `funct7=0x53` with " \
-         "`xfunct10=0..3`. Values `0x54..0x57` and `0x61..0x7f` remain free."
+         "`xfunct10=0..3` and `xfunct10=64..79`. The fixed `ame.release` encoding " \
+         "shares the R2 `funct7=0x52` bank, using `xfunct5=0x0a` with `rs1=rd=0`. " \
+         "Values `0x61..0x7f` remain free."
 
 lines << ""
 lines << "## All instruction encodings"

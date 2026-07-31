@@ -6,6 +6,7 @@
 
 attributes_path = File.join(__dir__, "..", "src", "instruction-encoding-allocations.adoc")
 instructions_path = File.join(__dir__, "..", "src", "instructions.adoc")
+instructions_source = File.read(instructions_path)
 
 attributes = {}
 File.foreach(attributes_path) do |line|
@@ -68,8 +69,8 @@ File.foreach(instructions_path) do |line|
     abort "#{instruction} must retain fixed funct7[31:25], funct3[14:12], and opcode[6:0] fields"
   end
   abort "#{instruction} must use CUSTOM-1 opcode 0x2b" unless (value & opcode_mask) == 0x2b
-  abort "#{instruction} has no destination operand in bits 11:7; R0 is not defined" unless (mask & dest_mask).zero?
 
+  dest_fixed = (mask & dest_mask) == dest_mask
   src1_fixed = (mask & src1_mask) == src1_mask
   src2_fixed = (mask & src2_mask) == src2_mask
   format = if !src2_fixed
@@ -77,8 +78,10 @@ File.foreach(instructions_path) do |line|
              "R3"
            elsif !src1_fixed
              "R2"
-           else
+           elsif !dest_fixed
              "R1"
+           else
+             "Fixed"
            end
 
   extension = case format
@@ -95,9 +98,17 @@ abort "unused managed encoding attributes: #{unused.sort.join(', ')}" unless unu
 
 # Keep the Chapter 2 instruction list authoritative for classification and
 # guarantee that every detailed instruction appears in exactly one list.
+unallocated_names = []
+instructions_source.scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, section|
+  next unless section.include?("This specification does not assign an instruction encoding.")
+
+  abort "#{name} is marked unallocated but has an encoding diagram" if section.include?('{"reg":')
+  unallocated_names << name
+end
+
 category_by_instruction = {}
 current_category = nil
-File.read(instructions_path).split("\n<<<\n", 2).first.each_line do |line|
+instructions_source.split("\n<<<\n", 2).first.each_line do |line|
   heading = line.match(/^(.+)::$/)
   current_category = heading[1] if heading
   mnemonic = line.match(/^a\| `([^\s`]+)/)
@@ -107,7 +118,7 @@ File.read(instructions_path).split("\n<<<\n", 2).first.each_line do |line|
 
   category_by_instruction[mnemonic[1]] = current_category
 end
-detailed_names = entries.map { |entry| entry[:name] }
+detailed_names = entries.map { |entry| entry[:name] } + unallocated_names
 missing_categories = detailed_names - category_by_instruction.keys
 extra_categories = category_by_instruction.keys - detailed_names
 abort "instructions missing from Chapter 2 categories: #{missing_categories.join(', ')}" unless missing_categories.empty?
@@ -119,12 +130,14 @@ abort "AME instructions must all use funct3=0, found #{funct3_values.sort.join('
 reserved_funct7 = {
   "R3" => [],
   "R2" => [],
-  "R1" => []
+  "R1" => [],
+  "Fixed" => []
 }
 expected_funct7 = {
-  "R3" => (0x00..0x50).to_a + (0x58..0x60).to_a - reserved_funct7.fetch("R3"),
+  "R3" => ((0x00..0x50).to_a + (0x54..0x60).to_a) - reserved_funct7.fetch("R3"),
   "R2" => [0x51, 0x52],
-  "R1" => [0x53]
+  "R1" => [0x53],
+  "Fixed" => [0x52]
 }
 expected_funct7.each do |format_name, expected|
   actual = entries.select { |entry| entry[:format] == format_name }
@@ -132,11 +145,17 @@ expected_funct7.each do |format_name, expected|
   abort "#{format_name} funct7 banks #{actual.inspect}, expected #{expected.inspect}" unless actual == expected
 end
 
+release = entries.find { |entry| entry[:name] == "ame.release" }
+abort "ame.release must have a fully fixed encoding" unless release &&
+  release[:format] == "Fixed" && release[:mask] == 0xffffffff
+abort "ame.release must use funct7=0x52, xfunct5=0x0a, rs1=0, and rd=0" unless
+  release[:value] == 0xa4a0002b
+
 # Keep every WaveDrom operand field synchronized with the normative
 # Decode Variables block.  Collision checking alone cannot detect a diagram
 # that assigns an operand to different bits than the pseudocode reads.
 field_errors = []
-File.read(instructions_path).scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, section|
+instructions_source.scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, section|
   diagram = section.lines.find { |line| line.start_with?('{"reg":') }
   next unless diagram
 
@@ -165,7 +184,7 @@ File.read(instructions_path).scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |nam
   if !mnemonic_match
     field_errors << "#{name} has no parseable Mnemonic line"
   else
-    mnemonic_operands = mnemonic_match[1].to_s.split(',').map(&:strip).reject(&:empty?)
+    mnemonic_operands = mnemonic_match[1].to_s.split(',').map { |op| op.strip.delete('()') }.reject(&:empty?)
     diagram_operands = fields.keys
     unless mnemonic_operands == diagram_operands
       field_errors << "#{name} mnemonic operands #{mnemonic_operands.join(', ')} do not match diagram operands #{diagram_operands.join(', ')}"
@@ -174,11 +193,15 @@ File.read(instructions_path).scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |nam
 end
 abort "managed encoding/decode mismatch:\n  #{field_errors.join("\n  ")}" unless field_errors.empty?
 
-# The same (funct7, funct3, opcode) bank cannot mix arities.  Otherwise a
-# more-specific R1/R2 decode would be a subset of an R2/R3 decode even if the
-# currently allocated xfunct values happened not to collide.
+# A bank normally cannot mix arities. The only exception is ame.release, a
+# fully fixed member of the R2 Resource Management bank whose xfunct5 selector
+# is reserved from ordinary R2 allocation.
 mixed_banks = entries.group_by { |entry| entry[:bank] }.map do |bank, members|
   formats = members.map { |entry| entry[:format] }.uniq
+  fixed_members = members.select { |entry| entry[:format] == "Fixed" }
+  next if formats.sort == ["Fixed", "R2"] &&
+          fixed_members.map { |entry| entry[:name] } == ["ame.release"]
+
   [bank, formats, members] if formats.length > 1
 end.compact
 unless mixed_banks.empty?
@@ -193,7 +216,9 @@ end
 # funct7 bank.  This turns the space-saving policy into a checked invariant
 # rather than a documentation preference.
 reserved_extensions = {
-  ["R2", 0x51] => [9]
+  ["R2", 0x51] => [9],
+  ["R2", 0x52] => [10],
+  ["R1", 0x53] => (4..63).to_a
 }
 [["R2", 32], ["R1", 1024]].each do |format_name, capacity|
   entries.select { |entry| entry[:format] == format_name }
@@ -233,6 +258,7 @@ end
 format_counts = entries.group_by { |entry| entry[:format] }.transform_values(&:length)
 puts "checked #{entries.length} instruction encodings " \
      "(R3=#{format_counts.fetch('R3', 0)}, R2=#{format_counts.fetch('R2', 0)}, " \
-     "R1=#{format_counts.fetch('R1', 0)}): single funct3=0, stable selector skeleton, exclusive format banks, " \
+     "R1=#{format_counts.fetch('R1', 0)}, Fixed=#{format_counts.fetch('Fixed', 0)}): " \
+     "single funct3=0, stable selector skeleton, controlled fixed-form sharing, " \
      "dense xfunct allocation, unique Chapter 2 classification, " \
      "fields match decode variables, no duplicates or overlaps"
