@@ -1087,8 +1087,8 @@ AME permutation operations swizzle data within a single square.
 ==== Register move / data conversion
 
 `<<ame:doc:inst:mmov_m_m,mmov.m.m>>` copies all elements from one `M` register to another.
-`<<ame:doc:inst:mmov_a_m,mmov.a.m>>` copies all elements from an `Acc` register to an `M` register.
-`<<ame:doc:inst:mmov_m_a,mmov.m.a>>` copies all elements from an `M` register to an `Acc` register.
+`<<ame:doc:inst:mmov_m_a,mmov.m.a>>` copies all elements from an `Acc` register to an `M` register.
+`<<ame:doc:inst:mmov_a_m,mmov.a.m>>` copies all elements from an `M` register to an `Acc` register.
 In all three cases, the source and destination datatypes must match; if they differ, `amestatus.UN` is set and the destination is left unchanged.
 
 `<<ame:doc:inst:mzero_2d_acc,mzero.2d.acc>>` writes zero to every element of an `Acc` register,
@@ -1103,14 +1103,14 @@ index, represented in the configured datatype, to every logical element of an `M
 |===
 | Instruction | Operation | Description
 | <<ame:doc:inst:mmov_a_m,mmov.a.m>>
+| `acc[i] = A[i]`
+| Elementwise unconditional move from M register to accumulator
+| <<ame:doc:inst:mmov_m_a,mmov.m.a>>
 | `D[i] = acc[i]`
 | Elementwise unconditional move from accumulator to M register
 | <<ame:doc:inst:mmov_m_m,mmov.m.m>>
 | `D[i] = A[i]`
 | Elementwise unconditional move between M registers
-| <<ame:doc:inst:mmov_m_a,mmov.m.a>>
-| `acc[i] = A[i]`
-| Elementwise unconditional move from M register to accumulator
 | <<ame:doc:inst:mzero_2d_acc,mzero.2d.acc>>
 | `C[i] = zero(Ad[acc])`
 | Clear every logical element of an accumulator tile

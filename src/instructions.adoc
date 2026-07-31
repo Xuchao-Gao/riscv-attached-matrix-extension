@@ -329,10 +329,10 @@ State Management::
 
 a| `mcolid.ew md`
 | <<ame:doc:inst:mcolid_ew,Write zero-based column index to every element>>
-a| `mmov.a.m md, acc`
-| <<ame:doc:inst:mmov_a_m,Elementwise unconditional move from accumulator to M register>>
-a| `mmov.m.a acc, ms`
-| <<ame:doc:inst:mmov_m_a,Elementwise unconditional move from M register to accumulator>>
+a| `mmov.a.m acc, ms`
+| <<ame:doc:inst:mmov_a_m,Elementwise unconditional move from M register to accumulator>>
+a| `mmov.m.a md, acc`
+| <<ame:doc:inst:mmov_m_a,Elementwise unconditional move from accumulator to M register>>
 a| `mmov.m.m md, ms`
 | <<ame:doc:inst:mmov_m_m,Elementwise unconditional move between M registers>>
 a| `mrowid.ew md`
@@ -5298,14 +5298,14 @@ if pass:[(]!<<ame:doc:func:ame_scalar_op_supported,ame_scalar_op_supported>>pass
 
 <<<
 
-[#ame:doc:inst:mmov_a_m]
-=== `mmov.a.m`
+[#ame:doc:inst:mmov_m_a]
+=== `mmov.m.a`
 
 Synopsis::
 Elementwise unconditional move from accumulator to M register
 
 Mnemonic::
-`mmov.a.m md, acc`
+`mmov.m.a md, acc`
 
 Encoding::
 +
@@ -5318,14 +5318,31 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Copies all `AME_NELEM` elements from accumulator `acc` to the M register
-group `md`.
+Copies the source square from the accumulator operand to the M register `md`.
 +
 The element datatype of `acc` (from `Ad[acc]`) and `md` (from `Md[md]`)
 must match; if they differ, `amestatus.UN` is set and `md` is left unchanged.
 +
+Let `N = sqrt(AME_NELEM)`.  For non-packed datatypes
+(`pack_factor = 1`), the single accumulator `acc` holds one `N x N` square.
+All `AME_NELEM` elements are copied to the M register group `md`; a wide
+datatype occupies a group of consecutive M registers.
++
+For packed datatypes
+(`pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[md]) > 1`), the
+`pack_factor` consecutive accumulators starting at `acc` each hold one
+`N x N` square, and all `pack_factor` squares are packed into the single M
+register `md`.  If `pack_factor` exceeds
+<<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>>, `amestatus.UN` is set and
+`md` is left unchanged.
++
 The destination `md` must satisfy the alignment constraint for its datatype:
 `md` must be a multiple of the number of M registers consumed by one element.
++
+The operand datatypes are taken only from the base registers `Ad[acc]` and
+`Md[md]`.  As with any register group, the `Md` and `Ad` values of the
+remaining registers in either group are ignored, and this instruction does
+not modify any `Md` or `Ad` register.
 
 
 NumPy Equivalent::
@@ -5351,19 +5368,35 @@ Bits<32> src_dtype = Ad[acc];
 if pass:[(]dest_dtype != src_dtype) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
-  if pass:[(]AME_NUM_M_REGS == 16) {
-    if pass:[(]md >= 16) {
-      <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-    }
-  }
   U32 element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]dest_dtype);
   if pass:[(]element_size_bits == 0) {
     CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
-  } else {
-    U32 dest_nregs = element_size_bits / AME_UNIT_DATATYPE_SIZE;
-    if pass:[(]dest_nregs == 0) {
-      dest_nregs = 1;
+  } else if pass:[(]<<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]dest_dtype)) {
+    U32 pack_factor = AME_UNIT_DATATYPE_SIZE / element_size_bits;
+    if pass:[(]pack_factor > AME_NUM_ACC_REGS) {
+      CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
+    } else {
+      <<ame:doc:func:ame_check_m_group,ame_check_m_group>>pass:[(]md, 1, 1, $encoding);
+      Bits<AME_MAX_SQUARE_SIZE> packed = 0;
+      for pass:[(]U32 sq = 0; sq < pack_factor; sq++) {
+        <<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc pass:[+] sq, $encoding);
+        for pass:[(]U32 e = 0; e < AME_NELEM; e++) {
+          U32 acc_bit_lo = e * element_size_bits;
+          U32 acc_bit_hi = acc_bit_lo pass:[+] element_size_bits - 1;
+          U32 dst_bit_lo = (sq * AME_NELEM pass:[+] e) * element_size_bits;
+          U32 dst_bit_hi = dst_bit_lo pass:[+] element_size_bits - 1;
+          packed[dst_bit_hi:dst_bit_lo] = <<ame:doc:func:ame_xform_impl_to_rm,ame_xform_impl_to_rm>>pass:[(]Acc[acc pass:[+] sq], src_dtype)[acc_bit_hi:acc_bit_lo];
+        }
+      }
+      M[md] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]packed, dest_dtype);
     }
+  } else {
+    if pass:[(]AME_NUM_M_REGS == 16) {
+      if pass:[(]md >= 16) {
+        <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+      }
+    }
+    U32 dest_nregs = element_size_bits / AME_UNIT_DATATYPE_SIZE;
     U32 elements_per_reg = AME_NELEM / dest_nregs;
     if pass:[(](md % dest_nregs) != 0) {
       <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
@@ -5387,14 +5420,14 @@ if pass:[(]dest_dtype != src_dtype) {
 
 <<<
 
-[#ame:doc:inst:mmov_m_a]
-=== `mmov.m.a`
+[#ame:doc:inst:mmov_a_m]
+=== `mmov.a.m`
 
 Synopsis::
 Elementwise unconditional move from M register to accumulator
 
 Mnemonic::
-`mmov.m.a acc, ms`
+`mmov.a.m acc, ms`
 
 Encoding::
 +
@@ -5407,10 +5440,29 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Copies all `AME_NELEM` elements from the M register group `ms` to accumulator `acc`.
+Copies the source square from the M register operand `ms` to the accumulator
+`acc`.
 +
 The element datatype of `ms` (from `Md[ms]`) and `acc` (from `Ad[acc]`)
 must match; if they differ, `amestatus.UN` is set and `acc` is left unchanged.
++
+Let `N = sqrt(AME_NELEM)`.  For non-packed datatypes
+(`pack_factor = 1`), `ms` holds one `N x N` square; a wide datatype occupies
+a group of consecutive M registers.  All `AME_NELEM` elements are copied to
+the single accumulator `acc`.
++
+For packed datatypes
+(`pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[ms]) > 1`), the single
+register `ms` holds `pack_factor` `N x N` squares.  Each square is copied to
+a consecutive accumulator starting at `acc`, so the instruction writes the
+`pack_factor` accumulators `acc`, `acc+1`, ..., `acc + pack_factor - 1`.  If
+`pack_factor` exceeds <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>>,
+`amestatus.UN` is set and no accumulator is written.
++
+The operand datatypes are taken only from the base registers `Md[ms]` and
+`Ad[acc]`.  As with any register group, the `Md` and `Ad` values of the
+remaining registers in either group are ignored, and this instruction does
+not modify any `Md` or `Ad` register.
 
 
 NumPy Equivalent::
@@ -5436,19 +5488,34 @@ Bits<32> src_dtype = Md[ms];
 if pass:[(]dest_dtype != src_dtype) {
   CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
 } else {
-  if pass:[(]AME_NUM_M_REGS == 16) {
-    if pass:[(]ms >= 16) {
-      <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
-    }
-  }
   U32 element_size_bits = <<ame:doc:func:ame_dtype_val_to_size,ame_dtype_val_to_size>>pass:[(]src_dtype);
   if pass:[(]element_size_bits == 0) {
     CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
-  } else {
-    U32 src_nregs = element_size_bits / AME_UNIT_DATATYPE_SIZE;
-    if pass:[(]src_nregs == 0) {
-      src_nregs = 1;
+  } else if pass:[(]<<ame:doc:func:ame_dtype_is_packed,ame_dtype_is_packed>>pass:[(]src_dtype)) {
+    U32 pack_factor = AME_UNIT_DATATYPE_SIZE / element_size_bits;
+    if pass:[(]pack_factor > AME_NUM_ACC_REGS) {
+      CSR[<<ame:doc:csr:amestatus,amestatus>>].<<ame:doc:csr_field:amestatus:UN,UN>> = 1;
+    } else {
+      <<ame:doc:func:ame_check_m_group,ame_check_m_group>>pass:[(]ms, 1, 1, $encoding);
+      for pass:[(]U32 sq = 0; sq < pack_factor; sq++) {
+        <<ame:doc:func:ame_check_acc_index,ame_check_acc_index>>pass:[(]acc pass:[+] sq, $encoding);
+        Bits<AME_MAX_SQUARE_SIZE> square = 0;
+        for pass:[(]U32 e = 0; e < AME_NELEM; e++) {
+          U32 reg_bit_lo = e * element_size_bits;
+          U32 reg_bit_hi = reg_bit_lo pass:[+] element_size_bits - 1;
+          Bits<AME_MAX_DTYPE_SIZE> element = <<ame:doc:func:ame_read_m_element,ame_read_m_element>>pass:[(]ms, src_dtype, sq * AME_NELEM pass:[+] e);
+          square[reg_bit_hi:reg_bit_lo] = element[element_size_bits - 1:0];
+        }
+        Acc[acc pass:[+] sq] = <<ame:doc:func:ame_xform_rm_to_impl,ame_xform_rm_to_impl>>pass:[(]square, src_dtype);
+      }
     }
+  } else {
+    if pass:[(]AME_NUM_M_REGS == 16) {
+      if pass:[(]ms >= 16) {
+        <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);
+      }
+    }
+    U32 src_nregs = element_size_bits / AME_UNIT_DATATYPE_SIZE;
     U32 elements_per_reg = AME_NELEM / src_nregs;
     if pass:[(](ms % src_nregs) != 0) {
       <<ame:doc:func:raise,raise>>pass:[(]ExceptionCode::IllegalInstruction, <<ame:doc:func:mode,mode>>pass:[(]), $encoding);

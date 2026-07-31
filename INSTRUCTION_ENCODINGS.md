@@ -81,8 +81,8 @@ R3 uses `funct7=0x00..0x50` and `funct7=0x54..0x60`. R2 uses `funct7=0x51` with 
 | 52 | R3 | `mmean.ew.x` | `mmean.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x09`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x1200002b` |
 | 53 | R3 | `mmin.ew` | `mmin.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x0a`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x1400002b` |
 | 54 | R3 | `mmin.ew.x` | `mmin.ew.x md, xs1, ms2` | `ms2[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x0b`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x1600002b` |
-| 55 | R2 | `mmov.a.m` | `mmov.a.m md, acc` | `acc[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x1c`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa3c0002b` |
-| 56 | R2 | `mmov.m.a` | `mmov.m.a acc, ms` | `ms[19:15]`; `acc[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x1d`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa3d0002b` |
+| 55 | R2 | `mmov.m.a` | `mmov.m.a md, acc` | `acc[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x1c`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa3c0002b` |
+| 56 | R2 | `mmov.a.m` | `mmov.a.m acc, ms` | `ms[19:15]`; `acc[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x1d`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa3d0002b` |
 | 57 | R2 | `mmov.m.m` | `mmov.m.m md, ms` | `ms[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x1e`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa3e0002b` |
 | 58 | R3 | `mmove8.m.x` | `mmove8.m.x md, xs2, xs1` | `xs1[24:20]`; `xs2[19:15]`; `md[11:7]` | `[31:25]=0x59`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0xb200002b` |
 | 59 | R3 | `mmove16.m.x` | `mmove16.m.x md, xs2, xs1` | `xs1[24:20]`; `xs2[19:15]`; `md[11:7]` | `[31:25]=0x5a`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0xb400002b` |
