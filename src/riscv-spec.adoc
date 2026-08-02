@@ -1,5 +1,5 @@
 = Attached Matrix Extension (Ztt)
-Authors: Derek Hower, Luca Maroncelli, Eric Mahurin, Siqi Zhao, Qiu Jing, Xiang Xiaoyan, Xuchao Gao <gaoxuchao.gxc@alibaba-inc.com>, Ruiqi Xie <yunshu.xrq@alibaba-inc.com>, Lei Kang <kl414406@alibaba-inc.com>, Peng Wu <pengwu.wp@alibaba-inc.com>, Zhong Su <suzhong.sz@alibaba-inc.com>
+Authors: Derek Hower, Luca Maroncelli, Eric Mahurin, Siqi Zhao, Qiu Jing, Xiang Xiaoyan, Xuchao Gao, Ruiqi Xie, Lei Kang, Peng Wu, Zhong Su
 include::../docs-resources/global-config.adoc[]
 :docgroup: AME TG
 :description: Attached Matrix Extension (Ztt)
