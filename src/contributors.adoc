@@ -9,3 +9,8 @@ This RISC-V specification has been contributed to directly or indirectly by:
 * Siqi Zhao <zhaosiqi.zsq@alibaba-inc.com>
 * Qiu Jing <duojing.qj@alibaba-inc.com>
 * Xiang Xiaoyan <xxy194829@alibaba-inc.com>
+* Xuchao Gao <gaoxuchao.gxc@alibaba-inc.com>
+* Ruiqi Xie <yunshu.xrq@alibaba-inc.com>
+* Lei Kang <kl414406@alibaba-inc.com>
+* Peng Wu <pengwu.wp@alibaba-inc.com>
+* Zhong Su <suzhong.sz@alibaba-inc.com>
