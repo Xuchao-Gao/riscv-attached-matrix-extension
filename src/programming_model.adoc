@@ -1354,24 +1354,24 @@ contribution to the same destination; updates occur in ascending source order.
 
 | `msin.ew`, `mcos.ew`
 | A NaN or infinity produces the destination datatype's canonical quiet NaN.
-`sin(+/-0)` preserves the signed zero; `cos(+/-0)` produces `+1`.
+`sin(±0)` preserves the signed zero; `cos(±0)` produces `+1`.
 | Implementation-defined.  The implementation shall document its maximum
 error in ulp for every supported operation/datatype tuple.
 
 | `mtanh.ew`
-| A NaN produces the destination datatype's canonical quiet NaN.  `tanh(+/-0)`
-preserves the signed zero and `tanh(+/-infinity)` produces `+/-1`.
+| A NaN produces the destination datatype's canonical quiet NaN.  `tanh(±0)`
+preserves the signed zero and `tanh(±infinity)` produces `±1`.
 | Implementation-defined, with the same documented maximum-error requirement.
 
 | `mexp2.ew`
 | A NaN produces the destination datatype's canonical quiet NaN.
 `exp2(+infinity)` produces `+infinity`, `exp2(-infinity)` produces `+0`, and
-`exp2(+/-0)` produces `+1`.
+`exp2(±0)` produces `+1`.
 | Implementation-defined, with the same documented maximum-error requirement.
 
 | `mlog2.ew`
 | A NaN, a negative finite value, or `-infinity` produces the destination
-datatype's canonical quiet NaN.  `log2(+/-0)` produces `-infinity`,
+datatype's canonical quiet NaN.  `log2(±0)` produces `-infinity`,
 `log2(+infinity)` produces `+infinity`, and `log2(1)` produces `+0`.
 | Implementation-defined, with the same documented maximum-error requirement.
 
@@ -1390,8 +1390,8 @@ rules above.
 error and whether the compound expression uses an intermediate rounding.
 
 | `mrec.ew`
-| A NaN produces the destination datatype's canonical quiet NaN.  `1/(+/-0)`
-produces the correspondingly signed infinity; `1/(+/-infinity)` produces the
+| A NaN produces the destination datatype's canonical quiet NaN.  `1/(±0)`
+produces the correspondingly signed infinity; `1/(±infinity)` produces the
 correspondingly signed zero.
 | Implementation-defined, with the same documented maximum-error requirement.
 
@@ -1403,7 +1403,7 @@ destination datatype's canonical quiet NaN.  `rsqrt(+0)` produces `+infinity`,
 
 | `msqrt.ew`
 | A NaN, `-infinity`, or a negative finite value other than `-0` produces the
-destination datatype's canonical quiet NaN.  `sqrt(+/-0)` preserves the signed
+destination datatype's canonical quiet NaN.  `sqrt(±0)` preserves the signed
 zero and `sqrt(+infinity)` produces `+infinity`.
 | Correctly rounded using the destination datatype's rounding mode.
 
@@ -1431,7 +1431,7 @@ after rounding:
   a quiet NaN alone does not set `NV`.
 * `DZ` is set when an exact infinite result arises from finite inputs because
   of a pole at zero, including reciprocal or reciprocal-square-root of zero
-  and `log2(+/-0)`.
+  and `log2(±0)`.
 * `OF` is set when the rounded result's magnitude exceeds the destination's
   finite range.  Such a result also sets `NX`.
 * `UF` is set when the result is tiny after rounding and inexact.  Such a

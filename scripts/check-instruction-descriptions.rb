@@ -405,6 +405,7 @@ if active_published.match?(/\b[A-Z][A-Z0-9]*1D\b/) ||
   errors << "published document contains a retired internal 1D operation name"
 end
 errors << "published document contains a retired conceptual NumPy marker" if active_published.include?("conceptual:")
+errors << "published document uses +/-, which breaks inline AsciiDoc rendering; use ±" if active_published.include?("+/-")
 
 archive_hashes = {
   "instructions-idl.adoc" => "7e103b393e5e6e7e762757b890d7afa9a51eca3b4a046567803e807070d49680",
