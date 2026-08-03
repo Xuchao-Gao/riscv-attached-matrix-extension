@@ -26,12 +26,15 @@ baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 audit_path = File.join(root, "docs", "migration", "ame-prose-migration-audit.md")
 errors = []
 
-expected_baseline_hash = "bb2cf4dec5e42f23be13bae25fa7f3fd95c45231647ffb17f46cfc580268999f"
+expected_baseline_hash = "e495764bbf98d89afd2c6c40261962af20e3cf33181206f2a58a8811d7a7934c"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
 end
 baseline_document = JSON.parse(File.read(baseline_path))
+unless baseline_document["prose_operation_baseline"] == "reviewed traditional-vector-style cutover"
+  errors << "baseline snapshot does not identify the reviewed prose operation baseline"
+end
 expected_commit = "b97c6c4656525ee06aeb9600021b1debc0a76233"
 unless baseline_document["baseline_commit"] == expected_commit
   errors << "baseline snapshot identifies #{baseline_document['baseline_commit']}, expected #{expected_commit}"
@@ -179,6 +182,7 @@ sections.each_with_index do |(anchor, name, section), index|
     "category" => category,
     "synopsis" => section[/^Synopsis::\n([^\n]+)/, 1],
     "mnemonic" => section[/^Mnemonic::\n`([^`]+)`/, 1],
+    "operation" => active_section[/^Operation::\n\+\n\[source\]\n----\n(.+?)\n----/m, 1]&.lines&.map(&:strip)&.reject(&:empty?)&.join("\n"),
     "wavedrom" => raw,
     "resolved_wavedrom" => resolved,
     "format" => format_name,
@@ -193,6 +197,7 @@ end
   "ame.acquire" => [/descriptor = X\[xs\]/, "acquisition-descriptor interpretation"],
   "mgettyp" => [/zero_extend_XLEN\(Md\[ms1\]\)/, "zero-extended M datatype read"],
   "msettyp" => [/new_dtype = X\[xs1\]\[31:0\].*raw_bits\(M\[md \.\. md\+group_size-1\]\) = 0/m, "32-bit datatype write and whole-group raw M-register clear"],
+  "mbcast.m.x" => [/greater than XLEN.*zero-extended/m, "explicit scalar-ingress widening rule"],
   "mls" => [/AME_MATRIX_REGISTER_SIZE \/ 8/, "raw M-register byte count"],
   "mss" => [/AME_MATRIX_REGISTER_SIZE \/ 8/, "raw M-register byte count"],
   "mls.cm" => [/total_bytes = ceil\(pack_factor \* AME_NELEM \* sizeof\(Md\[md\]\) \/ 8\)/, "column-major byte-rounded transfer size"],
@@ -240,13 +245,15 @@ end
   /prefix or reduction fold is seeded from the first source element/ => "prefix/reduction seed rule",
   /transposes each `N x N` logical square/ => "dimensionally valid transposed matrix formation",
   /seeds each dot product with the accumulator datatype's semantic\s+additive zero/m => "overwriting matrix semantic-zero seed",
+  /`NV` is set for a signaling NaN or an invalid operation/ => "floating-point invalid-flag rule",
+  /`UF` is set when the result is tiny after rounding and inexact/ => "floating-point underflow-flag rule",
   /`mhdiff\.ew\.x`, `mmean\.ew`/ => "scalar half-difference/mean integer rounding rule"
 }.each do |pattern, description|
   errors << "programming_model.adoc: missing #{description}" unless programming_model.match?(pattern)
 end
 
 if current_identity != baseline
-  keys = %w[order name anchor category synopsis mnemonic wavedrom resolved_wavedrom format mask match]
+  keys = %w[order name anchor category synopsis mnemonic operation wavedrom resolved_wavedrom format mask match]
   [current_identity.length, baseline.length].min.times do |index|
     keys.each do |key|
       next if current_identity[index][key] == baseline[index][key]
@@ -309,6 +316,10 @@ required_norm_anchors = %w[
   norm:ame_nsq_1d
   norm:ame_nsq_structural
   norm:ame_nsq_matmul
+  norm:ame_register_group_overlap
+  norm:ame_source_snapshot
+  norm:ame_atomic_register_writeback
+  norm:ame_register_exception_atomicity
   norm:ame_op_supported_contract
   norm:ame_op_supported_defined_result
   norm:ame_op_precondition
@@ -361,10 +372,10 @@ end
 audit = File.read(audit_path)
 errors << "migration audit does not record 141/141 instructions" unless audit.include?("Instruction coverage (141/141)")
 errors << "migration audit does not record 90/90 helpers" unless audit.include?("Helper coverage (90/90)")
-errors << "migration audit does not record 5/5 normative anchors" unless audit.include?("Normative-anchor coverage (5/5)")
+errors << "migration audit does not record 12/12 published normative anchors" unless audit.include?("Published normative-anchor coverage (12/12)")
 instruction_audit = audit[/## Instruction coverage.*?(?=^## Helper coverage)/m].to_s
-helper_audit = audit[/## Helper coverage.*?(?=^## Normative-anchor coverage)/m].to_s
-norm_audit = audit[/## Normative-anchor coverage.*?(?=^## Corrections)/m].to_s
+helper_audit = audit[/## Helper coverage.*?(?=^## Published normative-anchor coverage)/m].to_s
+norm_audit = audit[/## Published normative-anchor coverage.*?(?=^## Corrections)/m].to_s
 audited_instruction_names = instruction_audit.scan(/^\| `([^`]+)` \|/).flatten
 audited_helper_names = helper_audit.scan(/^\| `([^`]+)` \|/).flatten
 audited_norm_anchors = norm_audit.scan(/^\| `(norm:[^`]+)` \|/).flatten
@@ -372,19 +383,23 @@ expected_instruction_names = baseline.map { |entry| entry.fetch("name") }
 archive_functions = File.read(File.join(root, "formal", archive_dir, "functions-idl.adoc"))
 expected_helper_names = archive_functions.scan(/^=== `([^`]+)`/).flatten
 expected_legacy_norm_anchors = archive_functions.scan(/^\[#(norm:[^\]]+)\]/).flatten
+expected_published_norm_anchors = required_norm_anchors
 errors << "migration audit instruction rows do not exactly match the 141-entry baseline" unless audited_instruction_names == expected_instruction_names
 errors << "migration audit has a non-Ready instruction row" unless instruction_audit.scan(/^\| `[^`]+` .*$/).all? { |line| line.end_with?("| Ready |") }
 errors << "migration audit helper rows do not exactly match the 90-entry archive" unless audited_helper_names == expected_helper_names
-errors << "migration audit normative-anchor rows do not exactly match the 5-entry archive" unless audited_norm_anchors == expected_legacy_norm_anchors
+errors << "migration audit normative-anchor rows do not exactly match the 12 published anchors" unless audited_norm_anchors == expected_published_norm_anchors
+unless expected_legacy_norm_anchors.all? { |anchor| audited_norm_anchors.include?(anchor) }
+  errors << "migration audit omits a normative anchor from the legacy helper archive"
+end
 correction_expectations = expected_instruction_names.to_h { |name| [name, "-"] }
 correction_expectations.merge!(
   "madd.ew" => "AME-MIG-001",
-  "mls" => "AME-MIG-002",
+  "mls" => "AME-MIG-002, AME-MIG-007",
   "mls.cm" => "AME-MIG-002",
   "mls.rm" => "AME-MIG-002",
   "mls.st" => "AME-MIG-002",
   "mls.tst" => "AME-MIG-002",
-  "mss" => "AME-MIG-002",
+  "mss" => "AME-MIG-002, AME-MIG-007",
   "mss.cm" => "AME-MIG-002",
   "mss.rm" => "AME-MIG-002",
   "mss.st" => "AME-MIG-002",
@@ -405,7 +420,7 @@ correction_expectations.each do |name, correction|
   actual = row&.match(/\| ([^|]+) \| Ready \|\s*$/)&.[](1)
   errors << "migration audit row #{name} correction is #{actual.inspect}, expected #{correction.inspect}" unless actual == correction
 end
-%w[AME-MIG-001 AME-MIG-002 AME-MIG-003 AME-MIG-004 AME-MIG-005 AME-MIG-006].each do |correction|
+%w[AME-MIG-001 AME-MIG-002 AME-MIG-003 AME-MIG-004 AME-MIG-005 AME-MIG-006 AME-MIG-007].each do |correction|
   errors << "migration audit does not record correction #{correction}" unless audit.include?("### #{correction}:")
 end
 
@@ -413,4 +428,4 @@ abort "instruction-description validation failed:\n  #{errors.join("\n  ")}" unl
 
 puts "checked 141/141 prose instruction pages against baseline #{expected_commit[0, 12]}: " \
      "stable anchors/order/categories/synopses/mnemonics/encodings, complete common contracts and operand classes, " \
-     "5/5 migrated normative anchors plus 3 shape anchors, frozen archive, and no IDL/NumPy markers in the include closure"
+     "operation semantics, 12/12 published normative anchors, frozen archive, and no IDL/NumPy markers in the include closure"

@@ -51,7 +51,7 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 | `mlog2.ew` | 4016 | `ame:doc:inst:mlog2_ew` | Elementwise Math Functions | `mlog2.ew md, ms1` | `D[i] = log~2~(A[i])` | `ame-common-arithmetic` | - | Ready |
 | `mlog2sub.ew` | 4099 | `ame:doc:inst:mlog2sub_ew` | Elementwise Math Functions | `mlog2sub.ew md, ms1, ms2` | `D[i] = log~2~(\\|A[i]\\|) - B[i]` | `ame-common-arithmetic` | - | Ready |
 | `mlog2sub.ew.x` | 4202 | `ame:doc:inst:mlog2sub_ew_x` | Elementwise Math Functions | `mlog2sub.ew.x md, xs1, ms2` | `D[i] = log~2~(\\|B[i]\\|) - c` | `ame-common-arithmetic` | - | Ready |
-| `mls` | 4298 | `ame:doc:inst:mls` | Memory | `mls md, xs1` | `md <= mem[xs1]` | `ame-common-memory` | AME-MIG-002 | Ready |
+| `mls` | 4298 | `ame:doc:inst:mls` | Memory | `mls md, xs1` | `md <= mem[xs1]` | `ame-common-memory` | AME-MIG-002, AME-MIG-007 | Ready |
 | `mls.cm` | 4364 | `ame:doc:inst:mls_cm` | Memory | `mls.cm md, xs1` | `md <= mem[xs1]` | `ame-common-memory` | AME-MIG-002 | Ready |
 | `mls.rm` | 4446 | `ame:doc:inst:mls_rm` | Memory | `mls.rm md, xs1` | `md <= mem[xs1]` | `ame-common-memory` | AME-MIG-002 | Ready |
 | `mls.st` | 4528 | `ame:doc:inst:mls_st` | Memory | `mls.st md, (xs1), xs2` | `md <= mem[xs1, stride=xs2]` | `ame-common-memory` | AME-MIG-002 | Ready |
@@ -133,7 +133,7 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 | `msra.ew.x` | 12115 | `ame:doc:inst:msra_ew_x` | Bitwise | `msra.ew.x md, xs1, ms2` | `D[i] = B[i] >>s (c mod EW)` | `ame-common-arithmetic` | - | Ready |
 | `msrl.ew` | 12214 | `ame:doc:inst:msrl_ew` | Bitwise | `msrl.ew md, ms1, ms2` | `D[i] = A[i] >>u (B[i] mod EW)` | `ame-common-arithmetic` | - | Ready |
 | `msrl.ew.x` | 12324 | `ame:doc:inst:msrl_ew_x` | Bitwise | `msrl.ew.x md, xs1, ms2` | `D[i] = B[i] >>u (c mod EW)` | `ame-common-arithmetic` | - | Ready |
-| `mss` | 12423 | `ame:doc:inst:mss` | Memory | `mss ms1, xs1` | `mem[xs1] <= ms1` | `ame-common-memory` | AME-MIG-002 | Ready |
+| `mss` | 12423 | `ame:doc:inst:mss` | Memory | `mss ms1, xs1` | `mem[xs1] <= ms1` | `ame-common-memory` | AME-MIG-002, AME-MIG-007 | Ready |
 | `mss.cm` | 12488 | `ame:doc:inst:mss_cm` | Memory | `mss.cm ms1, xs1` | `mem[xs1] <= ms1` | `ame-common-memory` | AME-MIG-002 | Ready |
 | `mss.rm` | 12571 | `ame:doc:inst:mss_rm` | Memory | `mss.rm ms1, xs1` | `mem[xs1] <= ms1` | `ame-common-memory` | AME-MIG-002 | Ready |
 | `mss.st` | 12654 | `ame:doc:inst:mss_st` | Memory | `mss.st ms1, (xs1), xs2` | `mem[xs1, stride=xs2] <= ms1` | `ame-common-memory` | AME-MIG-002 | Ready |
@@ -245,15 +245,22 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 | `write_physical_memory_64` | Delete | `standard RISC-V execution mechanism` |
 | `write_memory_ame` | Migrate | `ame-common-memory` |
 
-## Normative-anchor coverage (5/5)
+## Published normative-anchor coverage (12/12)
 
-| Legacy normative anchor | Disposition |
-|---|---|
-| `norm:ame_op_supported_contract` | Preserve the anchor on prose under `ame-common-datatype-support` |
-| `norm:ame_op_supported_defined_result` | Preserve the anchor on prose under `ame-common-datatype-support` |
-| `norm:ame_op_precondition` | Preserve the anchor on prose under `ame-common-datatype-support` |
-| `norm:ame_op_result_width` | Preserve the anchor on prose under `ame-common-datatype-support` |
-| `norm:ame_fp_special_values` | Preserve the anchor on prose under `ame-common-arithmetic` |
+| Normative anchor | Origin | Disposition |
+|---|---|---|
+| `norm:ame_nsq_1d` | Baseline programming model | Preserve on the ordinary elementwise operand-formation rule |
+| `norm:ame_nsq_structural` | Baseline programming model | Preserve on the structural per-square rule |
+| `norm:ame_nsq_matmul` | Baseline programming model | Preserve on the matrix-product operand-formation rule |
+| `norm:ame_register_group_overlap` | Baseline programming model | Preserve on register-group overlap prose |
+| `norm:ame_source_snapshot` | Baseline programming model | Preserve on pre-instruction source snapshot prose |
+| `norm:ame_atomic_register_writeback` | Baseline programming model | Preserve on staged atomic writeback prose |
+| `norm:ame_register_exception_atomicity` | Baseline programming model | Preserve on synchronous-exception atomicity prose |
+| `norm:ame_op_supported_contract` | Legacy helper formal text | Preserve on prose under `ame-common-datatype-support` |
+| `norm:ame_op_supported_defined_result` | Legacy helper formal text | Preserve on prose under `ame-common-datatype-support` |
+| `norm:ame_op_precondition` | Legacy helper formal text | Preserve on prose under `ame-common-datatype-support` |
+| `norm:ame_op_result_width` | Legacy helper formal text | Preserve on prose under `ame-common-datatype-support` |
+| `norm:ame_fp_special_values` | Legacy helper formal text | Preserve on prose under `ame-common-arithmetic` |
 
 ## Corrections
 
@@ -298,6 +305,13 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 - After: when integer datatypes are supported, `AME_MAX_INT_DTYPE` selects a greatest-width supported integer encoding and ties are implementation-documented.  With no supported integer datatype, the parameter is absent and all `mldexp.ew.x` and `mldexpacc.ew.x` tuples are unsupported.  X-register bits are zero-extended or low-bit truncated to the selected width before interpretation.
 - Evidence: this makes the instruction text instantiable without imposing a new minimum datatype set, preserves the legacy bit-vector widening/truncation behavior, and leaves the implementation's operation-support freedom intact.
 - Architectural impact: float-only implementations deterministically report `amestatus.UN` for these two forms; implementations with same-width integer encodings must document which encoding supplies signedness and other datatype properties.
+
+### AME-MIG-007: opaque memory transfers do not inspect `Md`
+
+- Before: the baseline programming-model exception paragraph described unsupported-datatype reporting for every AME load and store, while the `mls` and `mss` IDL transferred one raw physical M register without reading `Md`.
+- After: only interoperability and strided typed transfers perform datatype-support checks.  Opaque `mls` and `mss` ignore `Md` and transfer the selected physical register bit-for-bit.
+- Evidence: the opaque instruction descriptions define implementation-format save/restore, and the legacy operations directly call the raw memory helper on `M[md]` or `M[ms1]` without a datatype lookup or support predicate.
+- Architectural impact: an uninitialized or unsupported `Md` value cannot cause `amestatus.UN` for opaque save/restore; index, alignment, and ordinary memory faults still apply.
 
 ## Legacy-check disposition
 

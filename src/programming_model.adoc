@@ -1417,9 +1417,29 @@ that cannot represent a required NaN result is unsupported.
 
 Floating-point exceptional conditions are ordinary data results after the
 datatype tuple has been accepted: they do not raise an exception or set
-`amestatus.UN`.  The precise conditions for setting each `amefflags` bit remain
-reserved for a future revision together with the finalized standard datatype
-set.
+`amestatus.UN`.  For standard floating-point datatypes, `amefflags` uses the
+same five accrued exception classes as RISC-V `fflags`, with tininess detected
+after rounding:
+
+* `NV` is set for a signaling NaN or an invalid operation, including an
+  infinity-minus-itself form, zero multiplied by infinity, a finite negative
+  square root, or an invalid floating-point-to-integer conversion.  Propagating
+  a quiet NaN alone does not set `NV`.
+* `DZ` is set when an exact infinite result arises from finite inputs because
+  of a pole at zero, including reciprocal or reciprocal-square-root of zero
+  and `log2(+/-0)`.
+* `OF` is set when the rounded result's magnitude exceeds the destination's
+  finite range.  Such a result also sets `NX`.
+* `UF` is set when the result is tiny after rounding and inexact.  Such a
+  result also sets `NX`.
+* `NX` is set whenever the delivered finite result differs from the exact
+  mathematical result because of rounding, including an implementation-defined
+  approximation that is not exact.
+
+Exact operations and exact conversions set none of these flags.  A custom
+floating-point datatype definition must specify equivalent flag conditions
+for every supported tuple that can update `amefflags`; otherwise that tuple is
+unsupported.
 
 [[ame-common-structural]]
 ==== Reduction operations

@@ -13,7 +13,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"xd\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs\",\"type\":4},{\"bits\":5,\"name\": 0x9,\"type\":2},{\"bits\":7,\"name\": 0x52,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa490002b"
+      "match": "0xa490002b",
+      "operation": "X[xd] = acquire_backend(descriptor = X[xs])"
     },
     {
       "order": 2,
@@ -26,7 +27,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": 0x0,\"type\":2},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": 0xa,\"type\":2},{\"bits\":7,\"name\": 0x52,\"type\":2}]}",
       "format": "Fixed",
       "mask": "0xffffffff",
-      "match": "0xa4a0002b"
+      "match": "0xa4a0002b",
+      "operation": "release the backend held by this hart"
     },
     {
       "order": 3,
@@ -39,7 +41,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"xd\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ad\",\"type\":4},{\"bits\":5,\"name\": 0x0,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa200002b"
+      "match": "0xa200002b",
+      "operation": "X[xd] = zero_extend_XLEN(Ad[ad])"
     },
     {
       "order": 4,
@@ -52,7 +55,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"ad\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": 0x1,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa210002b"
+      "match": "0xa210002b",
+      "operation": "Ad[ad] = X[xs1][31:0]; raw_bits(Acc[ad]) = 0"
     },
     {
       "order": 5,
@@ -65,7 +69,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x4,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa240002b"
+      "match": "0xa240002b",
+      "operation": "D[i] = \\|A[i]\\|"
     },
     {
       "order": 6,
@@ -78,7 +83,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x0,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x0000002b"
+      "match": "0x0000002b",
+      "operation": "D[i] = \\|A[i] - B[i]\\|"
     },
     {
       "order": 7,
@@ -91,7 +97,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x1,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x0200002b"
+      "match": "0x0200002b",
+      "operation": "D[i] = \\|c - B[i]\\|"
     },
     {
       "order": 8,
@@ -104,7 +111,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x2,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x0400002b"
+      "match": "0x0400002b",
+      "operation": "D[i] = A[i] + B[i]"
     },
     {
       "order": 9,
@@ -117,7 +125,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x3,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x0600002b"
+      "match": "0x0600002b",
+      "operation": "D[i] = c + B[i]"
     },
     {
       "order": 10,
@@ -130,7 +139,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x1a,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x3400002b"
+      "match": "0x3400002b",
+      "operation": "D[i] = A[i] & B[i]"
     },
     {
       "order": 11,
@@ -143,7 +153,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x1b,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x3600002b"
+      "match": "0x3600002b",
+      "operation": "D[i] = c & B[i]"
     },
     {
       "order": 12,
@@ -156,7 +167,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x1c,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x3800002b"
+      "match": "0x3800002b",
+      "operation": "D[i] = A[i] & ~B[i]"
     },
     {
       "order": 13,
@@ -169,7 +181,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x1d,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x3a00002b"
+      "match": "0x3a00002b",
+      "operation": "D[i] = c & ~B[i]"
     },
     {
       "order": 14,
@@ -182,7 +195,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x2a,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x5400002b"
+      "match": "0x5400002b",
+      "operation": "D[i] = (A[i] >= 0) ? B[i] : D[i]"
     },
     {
       "order": 15,
@@ -195,7 +209,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x2b,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x5600002b"
+      "match": "0x5600002b",
+      "operation": "D[i] = (A[i] < 0) ? B[i] : D[i]"
     },
     {
       "order": 16,
@@ -208,7 +223,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x2c,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x5800002b"
+      "match": "0x5800002b",
+      "operation": "D[i] = (A[i] >= B[i]) ? -1 : 0"
     },
     {
       "order": 17,
@@ -221,7 +237,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x2d,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x5a00002b"
+      "match": "0x5a00002b",
+      "operation": "D[i] = (c >= B[i]) ? -1 : 0"
     },
     {
       "order": 18,
@@ -234,7 +251,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x2e,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x5c00002b"
+      "match": "0x5c00002b",
+      "operation": "D[i] = (A[i] < B[i]) ? -1 : 0"
     },
     {
       "order": 19,
@@ -247,7 +265,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x2f,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x5e00002b"
+      "match": "0x5e00002b",
+      "operation": "D[i] = (c < B[i]) ? -1 : 0"
     },
     {
       "order": 20,
@@ -260,7 +279,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":7,\"name\": 0x32,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x6400002b"
+      "match": "0x6400002b",
+      "operation": "D[i,j] = A[i,c]"
     },
     {
       "order": 21,
@@ -273,7 +293,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x33,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x6600002b"
+      "match": "0x6600002b",
+      "operation": "D[i,j] = A[i, B[i,j]]"
     },
     {
       "order": 22,
@@ -286,7 +307,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": 0x2,\"type\":2},{\"bits\":5,\"name\": 0x0,\"type\":2},{\"bits\":7,\"name\": 0x53,\"type\":2}]}",
       "format": "R1",
       "mask": "0xfffff07f",
-      "match": "0xa601002b"
+      "match": "0xa601002b",
+      "operation": "D[i,j] = j"
     },
     {
       "order": 23,
@@ -299,7 +321,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":7,\"name\": 0x34,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x6800002b"
+      "match": "0x6800002b",
+      "operation": "D[i,j] = A[i, j+c]"
     },
     {
       "order": 24,
@@ -312,7 +335,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0xa,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa2a0002b"
+      "match": "0xa2a0002b",
+      "operation": "D[i,j] = A[i,2j]\nD[i,N/2+j] = A[i,2j+1]"
     },
     {
       "order": 25,
@@ -325,7 +349,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0xb,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa2b0002b"
+      "match": "0xa2b0002b",
+      "operation": "D[i,2j] = A[i,j]\nD[i,2j+1] = A[i,N/2+j]"
     },
     {
       "order": 26,
@@ -338,7 +363,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0xd,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa2d0002b"
+      "match": "0xa2d0002b",
+      "operation": "D = convert(A) over every element of the formed logical operands"
     },
     {
       "order": 27,
@@ -351,7 +377,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\":0x2b,\"type\":2},{\"bits\":5,\"name\":\"md\",\"type\":4},{\"bits\":3,\"name\":0x0,\"type\":2},{\"bits\":5,\"name\":\"xs1\",\"type\":4},{\"bits\":5,\"name\":\"xtyp\",\"type\":4},{\"bits\":7,\"name\":0x58,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xb000002b"
+      "match": "0xb000002b",
+      "operation": "D[i] = convert(X[xs1], source datatype X[xtyp], destination datatype Md[md])"
     },
     {
       "order": 28,
@@ -364,7 +391,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0xe,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa2e0002b"
+      "match": "0xa2e0002b",
+      "operation": "D[i] = cos(A[i])"
     },
     {
       "order": 29,
@@ -377,7 +405,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0xf,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa2f0002b"
+      "match": "0xa2f0002b",
+      "operation": "D[i] = 2^A[i]^"
     },
     {
       "order": 30,
@@ -390,7 +419,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x5,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa250002b"
+      "match": "0xa250002b",
+      "operation": "D[i] = floor(A[i])"
     },
     {
       "order": 31,
@@ -403,7 +433,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x6,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa260002b"
+      "match": "0xa260002b",
+      "operation": "D[i] = roundTiesToEven(A[i])"
     },
     {
       "order": 32,
@@ -416,7 +447,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x7,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa270002b"
+      "match": "0xa270002b",
+      "operation": "D[i] = ceil(A[i])"
     },
     {
       "order": 33,
@@ -429,7 +461,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x8,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa280002b"
+      "match": "0xa280002b",
+      "operation": "D[i] = trunc(A[i])"
     },
     {
       "order": 34,
@@ -442,7 +475,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"xd\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x2,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa220002b"
+      "match": "0xa220002b",
+      "operation": "X[xd] = zero_extend_XLEN(Md[ms1])"
     },
     {
       "order": 35,
@@ -455,7 +489,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x0800002b"
+      "match": "0x0800002b",
+      "operation": "D[i] = (B[i] - A[i]) / 2"
     },
     {
       "order": 36,
@@ -468,7 +503,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x5,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x0a00002b"
+      "match": "0x0a00002b",
+      "operation": "D[i] = (c - B[i]) / 2"
     },
     {
       "order": 37,
@@ -481,7 +517,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x3f,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x7e00002b"
+      "match": "0x7e00002b",
+      "operation": "D[i] = A[i] × 2^B[i]^"
     },
     {
       "order": 38,
@@ -494,7 +531,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x40,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x8000002b"
+      "match": "0x8000002b",
+      "operation": "D[i] = B[i] × 2^c^"
     },
     {
       "order": 39,
@@ -507,7 +545,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x41,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x8200002b"
+      "match": "0x8200002b",
+      "operation": "D[i] = D[i] + A[i] × 2^B[i]^"
     },
     {
       "order": 40,
@@ -520,7 +559,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x42,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x8400002b"
+      "match": "0x8400002b",
+      "operation": "D[i] = D[i] + B[i] × 2^c^"
     },
     {
       "order": 41,
@@ -533,7 +573,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x10,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa300002b"
+      "match": "0xa300002b",
+      "operation": "D[i] = log~2~(A[i])"
     },
     {
       "order": 42,
@@ -546,7 +587,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x43,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x8600002b"
+      "match": "0x8600002b",
+      "operation": "D[i] = log~2~(\\|A[i]\\|) - B[i]"
     },
     {
       "order": 43,
@@ -559,7 +601,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x44,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x8800002b"
+      "match": "0x8800002b",
+      "operation": "D[i] = log~2~(\\|B[i]\\|) - c"
     },
     {
       "order": 44,
@@ -572,7 +615,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": 0x16,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa360002b"
+      "match": "0xa360002b",
+      "operation": "md <= mem[xs1]"
     },
     {
       "order": 45,
@@ -585,7 +629,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": 0x17,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa370002b"
+      "match": "0xa370002b",
+      "operation": "md <= mem[xs1]"
     },
     {
       "order": 46,
@@ -598,7 +643,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": 0x18,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa380002b"
+      "match": "0xa380002b",
+      "operation": "md <= mem[xs1]"
     },
     {
       "order": 47,
@@ -611,7 +657,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"xs2\",\"type\":4},{\"bits\":7,\"name\": 0x54,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xa800002b"
+      "match": "0xa800002b",
+      "operation": "md <= mem[xs1, stride=xs2]"
     },
     {
       "order": 48,
@@ -624,7 +671,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"xs2\",\"type\":4},{\"bits\":7,\"name\": 0x55,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xaa00002b"
+      "match": "0xaa00002b",
+      "operation": "md <= mem[xs1, stride=xs2]"
     },
     {
       "order": 49,
@@ -637,7 +685,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x6,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x0c00002b"
+      "match": "0x0c00002b",
+      "operation": "D[i] = max(A[i], B[i])"
     },
     {
       "order": 50,
@@ -650,7 +699,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x7,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x0e00002b"
+      "match": "0x0e00002b",
+      "operation": "D[i] = max(c, B[i])"
     },
     {
       "order": 51,
@@ -663,7 +713,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x8,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x1000002b"
+      "match": "0x1000002b",
+      "operation": "D[i] = (A[i] + B[i]) / 2"
     },
     {
       "order": 52,
@@ -676,7 +727,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x9,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x1200002b"
+      "match": "0x1200002b",
+      "operation": "D[i] = (c + B[i]) / 2"
     },
     {
       "order": 53,
@@ -689,7 +741,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0xa,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x1400002b"
+      "match": "0x1400002b",
+      "operation": "D[i] = min(A[i], B[i])"
     },
     {
       "order": 54,
@@ -702,7 +755,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0xb,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x1600002b"
+      "match": "0x1600002b",
+      "operation": "D[i] = min(c, B[i])"
     },
     {
       "order": 55,
@@ -715,7 +769,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":5,\"name\": 0x1c,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa3c0002b"
+      "match": "0xa3c0002b",
+      "operation": "D[i] = acc[i]"
     },
     {
       "order": 56,
@@ -728,7 +783,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms\",\"type\":4},{\"bits\":5,\"name\": 0x1d,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa3d0002b"
+      "match": "0xa3d0002b",
+      "operation": "acc[i] = A[i]"
     },
     {
       "order": 57,
@@ -741,7 +797,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms\",\"type\":4},{\"bits\":5,\"name\": 0x1e,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa3e0002b"
+      "match": "0xa3e0002b",
+      "operation": "D[i] = A[i]"
     },
     {
       "order": 58,
@@ -754,7 +811,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\":0x2b,\"type\":2},{\"bits\":5,\"name\":\"md\",\"type\":4},{\"bits\":3,\"name\":0x0,\"type\":2},{\"bits\":5,\"name\":\"xs2\",\"type\":4},{\"bits\":5,\"name\":\"xs1\",\"type\":4},{\"bits\":7,\"name\":0x59,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xb200002b"
+      "match": "0xb200002b",
+      "operation": "D.rm[pos, 8] = X[xs2][7:0]"
     },
     {
       "order": 59,
@@ -767,7 +825,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\":0x2b,\"type\":2},{\"bits\":5,\"name\":\"md\",\"type\":4},{\"bits\":3,\"name\":0x0,\"type\":2},{\"bits\":5,\"name\":\"xs2\",\"type\":4},{\"bits\":5,\"name\":\"xs1\",\"type\":4},{\"bits\":7,\"name\":0x5a,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xb400002b"
+      "match": "0xb400002b",
+      "operation": "D.rm[pos, 16] = X[xs2][15:0]"
     },
     {
       "order": 60,
@@ -780,7 +839,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\":0x2b,\"type\":2},{\"bits\":5,\"name\":\"md\",\"type\":4},{\"bits\":3,\"name\":0x0,\"type\":2},{\"bits\":5,\"name\":\"xs2\",\"type\":4},{\"bits\":5,\"name\":\"xs1\",\"type\":4},{\"bits\":7,\"name\":0x5b,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xb600002b"
+      "match": "0xb600002b",
+      "operation": "D.rm[pos, 32] = X[xs2][31:0]"
     },
     {
       "order": 61,
@@ -793,7 +853,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\":0x2b,\"type\":2},{\"bits\":5,\"name\":\"md\",\"type\":4},{\"bits\":3,\"name\":0x0,\"type\":2},{\"bits\":5,\"name\":\"xs2\",\"type\":4},{\"bits\":5,\"name\":\"xs1\",\"type\":4},{\"bits\":7,\"name\":0x5c,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xb800002b"
+      "match": "0xb800002b",
+      "operation": "D.rm[pos, 64] = X[xs2][63:0]"
     },
     {
       "order": 62,
@@ -806,7 +867,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\":0x2b,\"type\":2},{\"bits\":5,\"name\":\"xd\",\"type\":4},{\"bits\":3,\"name\":0x0,\"type\":2},{\"bits\":5,\"name\":\"ms2\",\"type\":4},{\"bits\":5,\"name\":\"xs1\",\"type\":4},{\"bits\":7,\"name\":0x5d,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xba00002b"
+      "match": "0xba00002b",
+      "operation": "X[xd] = zero_extend(A.rm[pos, 8])"
     },
     {
       "order": 63,
@@ -819,7 +881,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\":0x2b,\"type\":2},{\"bits\":5,\"name\":\"xd\",\"type\":4},{\"bits\":3,\"name\":0x0,\"type\":2},{\"bits\":5,\"name\":\"ms2\",\"type\":4},{\"bits\":5,\"name\":\"xs1\",\"type\":4},{\"bits\":7,\"name\":0x5e,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xbc00002b"
+      "match": "0xbc00002b",
+      "operation": "X[xd] = zero_extend(A.rm[pos, 16])"
     },
     {
       "order": 64,
@@ -832,7 +895,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\":0x2b,\"type\":2},{\"bits\":5,\"name\":\"xd\",\"type\":4},{\"bits\":3,\"name\":0x0,\"type\":2},{\"bits\":5,\"name\":\"ms2\",\"type\":4},{\"bits\":5,\"name\":\"xs1\",\"type\":4},{\"bits\":7,\"name\":0x5f,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xbe00002b"
+      "match": "0xbe00002b",
+      "operation": "X[xd] = zero_extend(A.rm[pos, 32])"
     },
     {
       "order": 65,
@@ -845,7 +909,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\":0x2b,\"type\":2},{\"bits\":5,\"name\":\"xd\",\"type\":4},{\"bits\":3,\"name\":0x0,\"type\":2},{\"bits\":5,\"name\":\"ms2\",\"type\":4},{\"bits\":5,\"name\":\"xs1\",\"type\":4},{\"bits\":7,\"name\":0x60,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xc000002b"
+      "match": "0xc000002b",
+      "operation": "X[xd] = zero_extend(A.rm[pos, 64])"
     },
     {
       "order": 66,
@@ -858,7 +923,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x49,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x9200002b"
+      "match": "0x9200002b",
+      "operation": "C = A × B"
     },
     {
       "order": 67,
@@ -871,7 +937,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0xc,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x1800002b"
+      "match": "0x1800002b",
+      "operation": "D[i] = A[i] × B[i]"
     },
     {
       "order": 68,
@@ -884,7 +951,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0xd,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x1a00002b"
+      "match": "0x1a00002b",
+      "operation": "D[i] = c × B[i]"
     },
     {
       "order": 69,
@@ -897,7 +965,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4a,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x9400002b"
+      "match": "0x9400002b",
+      "operation": "C = C + A × B"
     },
     {
       "order": 70,
@@ -910,7 +979,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0xe,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x1c00002b"
+      "match": "0x1c00002b",
+      "operation": "D[i] = D[i] + A[i] × B[i]"
     },
     {
       "order": 71,
@@ -923,7 +993,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0xf,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x1e00002b"
+      "match": "0x1e00002b",
+      "operation": "D[i] = D[i] + c × B[i]"
     },
     {
       "order": 72,
@@ -936,7 +1007,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4b,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x9600002b"
+      "match": "0x9600002b",
+      "operation": "C = C - A × B"
     },
     {
       "order": 73,
@@ -949,7 +1021,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x10,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x2000002b"
+      "match": "0x2000002b",
+      "operation": "D[i] = D[i] - A[i] × B[i]"
     },
     {
       "order": 74,
@@ -962,7 +1035,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x11,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x2200002b"
+      "match": "0x2200002b",
+      "operation": "D[i] = D[i] - c × B[i]"
     },
     {
       "order": 75,
@@ -975,7 +1049,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x12,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x2400002b"
+      "match": "0x2400002b",
+      "operation": "D[i] = A[i] + B[i] × D[i]"
     },
     {
       "order": 76,
@@ -988,7 +1063,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x13,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x2600002b"
+      "match": "0x2600002b",
+      "operation": "D[i] = c + B[i] × D[i]"
     },
     {
       "order": 77,
@@ -1001,7 +1077,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4c,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x9800002b"
+      "match": "0x9800002b",
+      "operation": "C = Σ~s~ A_s^T^ × B_s"
     },
     {
       "order": 78,
@@ -1014,7 +1091,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4d,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x9a00002b"
+      "match": "0x9a00002b",
+      "operation": "C = C + Σ~s~ A_s^T^ × B_s"
     },
     {
       "order": 79,
@@ -1027,7 +1105,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4e,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x9c00002b"
+      "match": "0x9c00002b",
+      "operation": "C = Σ~s~ A_s × B_s^T^"
     },
     {
       "order": 80,
@@ -1040,7 +1119,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4f,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x9e00002b"
+      "match": "0x9e00002b",
+      "operation": "C = C + Σ~s~ A_s × B_s^T^"
     },
     {
       "order": 81,
@@ -1053,7 +1133,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x50,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xa000002b"
+      "match": "0xa000002b",
+      "operation": "C = -(A × B)"
     },
     {
       "order": 82,
@@ -1066,7 +1147,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x14,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x2800002b"
+      "match": "0x2800002b",
+      "operation": "D[i] = -(A[i] × B[i])"
     },
     {
       "order": 83,
@@ -1079,7 +1161,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x15,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x2a00002b"
+      "match": "0x2a00002b",
+      "operation": "D[i] = -(c × B[i])"
     },
     {
       "order": 84,
@@ -1092,7 +1175,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x16,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x2c00002b"
+      "match": "0x2c00002b",
+      "operation": "D[i] = A[i] - B[i] × D[i]"
     },
     {
       "order": 85,
@@ -1105,7 +1189,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x17,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x2e00002b"
+      "match": "0x2e00002b",
+      "operation": "D[i] = c - B[i] × D[i]"
     },
     {
       "order": 86,
@@ -1118,7 +1203,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x1e,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x3c00002b"
+      "match": "0x3c00002b",
+      "operation": "D[i] = A[i] \\| B[i]"
     },
     {
       "order": 87,
@@ -1131,7 +1217,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x1f,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x3e00002b"
+      "match": "0x3e00002b",
+      "operation": "D[i] = c \\| B[i]"
     },
     {
       "order": 88,
@@ -1144,7 +1231,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x20,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x4000002b"
+      "match": "0x4000002b",
+      "operation": "D[i] = A[i] \\| ~B[i]"
     },
     {
       "order": 89,
@@ -1157,7 +1245,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x21,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x4200002b"
+      "match": "0x4200002b",
+      "operation": "D[i] = c \\| ~B[i]"
     },
     {
       "order": 90,
@@ -1170,7 +1259,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":7,\"name\": 0x3d,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x7a00002b"
+      "match": "0x7a00002b",
+      "operation": "D[k] = convert(A)"
     },
     {
       "order": 91,
@@ -1183,7 +1273,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x1f,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa3f0002b"
+      "match": "0xa3f0002b",
+      "operation": "D[i,j] = Σ~k≤i~ A[k,j]"
     },
     {
       "order": 92,
@@ -1196,7 +1287,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x0,\"type\":2},{\"bits\":7,\"name\": 0x52,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa400002b"
+      "match": "0xa400002b",
+      "operation": "D[i,j] = Σ~k≤j~ A[i,k]"
     },
     {
       "order": 93,
@@ -1209,7 +1301,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x1,\"type\":2},{\"bits\":7,\"name\": 0x52,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa410002b"
+      "match": "0xa410002b",
+      "operation": "D[i,j] = max~k≤i~(A[k,j])"
     },
     {
       "order": 94,
@@ -1222,7 +1315,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x2,\"type\":2},{\"bits\":7,\"name\": 0x52,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa420002b"
+      "match": "0xa420002b",
+      "operation": "D[i,j] = max~k≤j~(A[i,k])"
     },
     {
       "order": 95,
@@ -1235,7 +1329,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x45,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x8a00002b"
+      "match": "0x8a00002b",
+      "operation": "D[i] = A[i] × 2^-B[i]^"
     },
     {
       "order": 96,
@@ -1248,7 +1343,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x46,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x8c00002b"
+      "match": "0x8c00002b",
+      "operation": "D[i] = D[i] + A[i] × 2^-B[i]^"
     },
     {
       "order": 97,
@@ -1261,7 +1357,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x11,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa310002b"
+      "match": "0xa310002b",
+      "operation": "D[i] = 1 / A[i]"
     },
     {
       "order": 98,
@@ -1274,7 +1371,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x3,\"type\":2},{\"bits\":7,\"name\": 0x52,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa430002b"
+      "match": "0xa430002b",
+      "operation": "D[:,j] = Σ~k~ A[k,j]"
     },
     {
       "order": 99,
@@ -1287,7 +1385,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x4,\"type\":2},{\"bits\":7,\"name\": 0x52,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa440002b"
+      "match": "0xa440002b",
+      "operation": "D[i,:] = Σ~k~ A[i,k]"
     },
     {
       "order": 100,
@@ -1300,7 +1399,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x5,\"type\":2},{\"bits\":7,\"name\": 0x52,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa450002b"
+      "match": "0xa450002b",
+      "operation": "D[:,j] = max~k~(A[k,j])"
     },
     {
       "order": 101,
@@ -1313,7 +1413,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x6,\"type\":2},{\"bits\":7,\"name\": 0x52,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa460002b"
+      "match": "0xa460002b",
+      "operation": "D[i,:] = max~k~(A[i,k])"
     },
     {
       "order": 102,
@@ -1326,7 +1427,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x7,\"type\":2},{\"bits\":7,\"name\": 0x52,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa470002b"
+      "match": "0xa470002b",
+      "operation": "D[:,j] = min~k~(A[k,j])"
     },
     {
       "order": 103,
@@ -1339,7 +1441,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x8,\"type\":2},{\"bits\":7,\"name\": 0x52,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa480002b"
+      "match": "0xa480002b",
+      "operation": "D[i,:] = min~k~(A[i,k])"
     },
     {
       "order": 104,
@@ -1352,7 +1455,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":7,\"name\": 0x35,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x6a00002b"
+      "match": "0x6a00002b",
+      "operation": "D[i,j] = A[c,j]"
     },
     {
       "order": 105,
@@ -1365,7 +1469,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x36,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x6c00002b"
+      "match": "0x6c00002b",
+      "operation": "D[i,j] = A[B[i,j],j]"
     },
     {
       "order": 106,
@@ -1378,7 +1483,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": 0x3,\"type\":2},{\"bits\":5,\"name\": 0x0,\"type\":2},{\"bits\":7,\"name\": 0x53,\"type\":2}]}",
       "format": "R1",
       "mask": "0xfffff07f",
-      "match": "0xa601802b"
+      "match": "0xa601802b",
+      "operation": "D[i,j] = i"
     },
     {
       "order": 107,
@@ -1391,7 +1497,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":7,\"name\": 0x37,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x6e00002b"
+      "match": "0x6e00002b",
+      "operation": "D[i,j] = A[i+c,j]"
     },
     {
       "order": 108,
@@ -1404,7 +1511,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0xc,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa2c0002b"
+      "match": "0xa2c0002b",
+      "operation": "D^0^[i,:] = A[2i,:]\nD^1^[i,:] = A[2i+1,:]"
     },
     {
       "order": 109,
@@ -1417,7 +1525,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x38,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x7000002b"
+      "match": "0x7000002b",
+      "operation": "D[2i,:] = A[i,:]\nD[2i+1,:] = B[i,:]"
     },
     {
       "order": 110,
@@ -1430,7 +1539,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x12,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa320002b"
+      "match": "0xa320002b",
+      "operation": "D[i] = 1 / sqrt(A[i])"
     },
     {
       "order": 111,
@@ -1443,7 +1553,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x39,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x7200002b"
+      "match": "0x7200002b",
+      "operation": "D[B[i,j], j] += A[i,j]"
     },
     {
       "order": 112,
@@ -1456,7 +1567,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x3a,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x7400002b"
+      "match": "0x7400002b",
+      "operation": "D[i, B[i,j]] += A[i,j]"
     },
     {
       "order": 113,
@@ -1469,7 +1581,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x3b,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x7600002b"
+      "match": "0x7600002b",
+      "operation": "D[B[i,j], j] = max(D[B[i,j],j], A[i,j])"
     },
     {
       "order": 114,
@@ -1482,7 +1595,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x3c,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x7800002b"
+      "match": "0x7800002b",
+      "operation": "D[i, B[i,j]] = max(D[i,B[i,j]], A[i,j])"
     },
     {
       "order": 115,
@@ -1495,7 +1609,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x30,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x6000002b"
+      "match": "0x6000002b",
+      "operation": "D[i] = (A[i] >= 0) ? B[i] : 0"
     },
     {
       "order": 116,
@@ -1508,7 +1623,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x31,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x6200002b"
+      "match": "0x6200002b",
+      "operation": "D[i] = (A[i] < 0) ? B[i] : 0"
     },
     {
       "order": 117,
@@ -1521,7 +1637,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": 0x3,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa230002b"
+      "match": "0xa230002b",
+      "operation": "new_dtype = X[xs1][31:0]\ngroup_size = max(1, ceil(sizeof(new_dtype) / AME_UNIT_DATATYPE_SIZE))\nMd[md] = new_dtype; raw_bits(M[md .. md+group_size-1]) = 0"
     },
     {
       "order": 118,
@@ -1534,7 +1651,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x13,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa330002b"
+      "match": "0xa330002b",
+      "operation": "D[i] = sin(A[i])"
     },
     {
       "order": 119,
@@ -1547,7 +1665,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x22,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x4400002b"
+      "match": "0x4400002b",
+      "operation": "D[i] = A[i] << (B[i] mod EW)"
     },
     {
       "order": 120,
@@ -1560,7 +1679,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x23,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x4600002b"
+      "match": "0x4600002b",
+      "operation": "D[i] = B[i] << (c mod EW)"
     },
     {
       "order": 121,
@@ -1573,7 +1693,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x14,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa340002b"
+      "match": "0xa340002b",
+      "operation": "D[i] = sqrt(A[i])"
     },
     {
       "order": 122,
@@ -1586,7 +1707,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x24,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x4800002b"
+      "match": "0x4800002b",
+      "operation": "D[i] = A[i] >>s (B[i] mod EW)"
     },
     {
       "order": 123,
@@ -1599,7 +1721,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x25,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x4a00002b"
+      "match": "0x4a00002b",
+      "operation": "D[i] = B[i] >>s (c mod EW)"
     },
     {
       "order": 124,
@@ -1612,7 +1735,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x26,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x4c00002b"
+      "match": "0x4c00002b",
+      "operation": "D[i] = A[i] >>u (B[i] mod EW)"
     },
     {
       "order": 125,
@@ -1625,7 +1749,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x27,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x4e00002b"
+      "match": "0x4e00002b",
+      "operation": "D[i] = B[i] >>u (c mod EW)"
     },
     {
       "order": 126,
@@ -1638,7 +1763,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": 0x19,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa390002b"
+      "match": "0xa390002b",
+      "operation": "mem[xs1] <= ms1"
     },
     {
       "order": 127,
@@ -1651,7 +1777,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": 0x1a,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa3a0002b"
+      "match": "0xa3a0002b",
+      "operation": "mem[xs1] <= ms1"
     },
     {
       "order": 128,
@@ -1664,7 +1791,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": 0x1b,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa3b0002b"
+      "match": "0xa3b0002b",
+      "operation": "mem[xs1] <= ms1"
     },
     {
       "order": 129,
@@ -1677,7 +1805,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"xs2\",\"type\":4},{\"bits\":7,\"name\": 0x56,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xac00002b"
+      "match": "0xac00002b",
+      "operation": "mem[xs1, stride=xs2] <= ms1"
     },
     {
       "order": 130,
@@ -1690,7 +1819,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"xs2\",\"type\":4},{\"bits\":7,\"name\": 0x57,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0xae00002b"
+      "match": "0xae00002b",
+      "operation": "mem[xs1, stride=xs2] <= ms1"
     },
     {
       "order": 131,
@@ -1703,7 +1833,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x18,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x3000002b"
+      "match": "0x3000002b",
+      "operation": "D[i] = B[i] - A[i]"
     },
     {
       "order": 132,
@@ -1716,7 +1847,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x19,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x3200002b"
+      "match": "0x3200002b",
+      "operation": "D[i] = c - B[i]"
     },
     {
       "order": 133,
@@ -1729,7 +1861,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x47,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x8e00002b"
+      "match": "0x8e00002b",
+      "operation": "D[i] = B[i] - log~2~(\\|A[i]\\|)"
     },
     {
       "order": 134,
@@ -1742,7 +1875,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x48,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x9000002b"
+      "match": "0x9000002b",
+      "operation": "D[i] = c - log~2~(\\|B[i]\\|)"
     },
     {
       "order": 135,
@@ -1755,7 +1889,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": 0x15,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
       "mask": "0xfff0707f",
-      "match": "0xa350002b"
+      "match": "0xa350002b",
+      "operation": "D[i] = tanh(A[i])"
     },
     {
       "order": 136,
@@ -1768,7 +1903,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":7,\"name\": 0x3e,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x7c00002b"
+      "match": "0x7c00002b",
+      "operation": "D = convert(A[k])"
     },
     {
       "order": 137,
@@ -1781,7 +1917,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x28,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x5000002b"
+      "match": "0x5000002b",
+      "operation": "D[i] = A[i] ^ B[i]"
     },
     {
       "order": 138,
@@ -1794,7 +1931,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"xs1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x29,\"type\":2}]}",
       "format": "R3",
       "mask": "0xfe00707f",
-      "match": "0x5200002b"
+      "match": "0x5200002b",
+      "operation": "D[i] = c ^ B[i]"
     },
     {
       "order": 139,
@@ -1807,7 +1945,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": 0x0,\"type\":2},{\"bits\":7,\"name\": 0x53,\"type\":2}]}",
       "format": "R1",
       "mask": "0xfffff07f",
-      "match": "0xa600002b"
+      "match": "0xa600002b",
+      "operation": "C[i] = zero(Ad[acc])"
     },
     {
       "order": 140,
@@ -1820,7 +1959,8 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": 0x1,\"type\":2},{\"bits\":5,\"name\": 0x0,\"type\":2},{\"bits\":7,\"name\": 0x53,\"type\":2}]}",
       "format": "R1",
       "mask": "0xfffff07f",
-      "match": "0xa600802b"
+      "match": "0xa600802b",
+      "operation": "D[i] = zero(Md[md])"
     },
     {
       "order": 141,
@@ -1833,7 +1973,9 @@
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":1,\"name\": \"sw\",\"type\":4},{\"bits\":1,\"name\": \"sr\",\"type\":4},{\"bits\":1,\"name\": \"pw\",\"type\":4},{\"bits\":1,\"name\": \"pr\",\"type\":4},{\"bits\":1,\"name\": 0,\"type\":2},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": 0x2,\"type\":2},{\"bits\":7,\"name\": 0x53,\"type\":2}]}",
       "format": "R1",
       "mask": "0xfffff87f",
-      "match": "0xa620002b"
+      "match": "0xa620002b",
+      "operation": "order AME predecessors selected by pr/pw before non-AME successors selected by sr/sw"
     }
-  ]
+  ],
+  "prose_operation_baseline": "reviewed traditional-vector-style cutover"
 }

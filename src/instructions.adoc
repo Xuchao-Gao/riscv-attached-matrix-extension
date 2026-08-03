@@ -1465,8 +1465,11 @@ This encoding is provisional and is not a final RISC-V allocation.
 
 Description::
 Interprets the low 32 bits of `X[xtyp]` as an AME datatype encoding and the
-low `ame_dtype_val_to_size(src_dtype)` bits of `X[xs1]` as one scalar of that datatype, where
-`src_dtype = X[xtyp][31:0]`.  The
+X-register bit pattern as one scalar of that datatype, where
+`src_dtype = X[xtyp][31:0]`.  If `sizeof(src_dtype)` is less than XLEN, only
+the low `sizeof(src_dtype)` bits are used and higher X-register bits are
+ignored; if it is greater than XLEN, `X[xs1]` is zero-extended to that width.
+The
 scalar is converted once to the destination datatype `Md[md]` using the
 common scalar conversion rules, then the converted value is written to every
 logical element of `M[md]`.  Packed destinations receive the value in every
