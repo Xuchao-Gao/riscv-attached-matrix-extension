@@ -26,7 +26,7 @@ baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 audit_path = File.join(root, "docs", "migration", "ame-prose-migration-audit.md")
 errors = []
 
-expected_baseline_hash = "4b627ca63624b88972acbe84cd8ca3234b986db493c83c195edaaab631a45c4f"
+expected_baseline_hash = "212c854c6fc143674ea84fd94584d14212d3d2f582a3f97723b31be4abae488b"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
@@ -114,6 +114,15 @@ sections.each_with_index do |(anchor, name, section), index|
   end
   errors << "#{name}: Operation is not a language-neutral source block" unless active_section.match?(/^Operation::\n\+\n\[source\]\n----\n.+?\n----/m)
 
+  description_raw = active_section[/^Description::\n(.*?)(?=^Operation::$)/m, 1]
+  operation_raw = active_section[/^Operation::\n\+\n\[source\]\n----\n(.+?)\n----/m, 1]
+  if description_raw&.match?(/^\s+.*`/)
+    errors << "#{name}: indented description pseudocode contains literal inline-code delimiters"
+  end
+  if operation_raw&.match?(/`|\\|\^[^\n^]+\^|~[^\n~]+~/)
+    errors << "#{name}: Operation source block contains AsciiDoc presentation markup"
+  end
+
   contract = name == "fence.ame" ? "ame-common-ordering" : primary_contract[category]
   if contract.nil?
     errors << "#{name}: category #{category.inspect} has no common-contract mapping"
@@ -177,8 +186,8 @@ sections.each_with_index do |(anchor, name, section), index|
     "category" => category,
     "synopsis" => section[/^Synopsis::\n([^\n]+)/, 1],
     "mnemonic" => section[/^Mnemonic::\n`([^`]+)`/, 1],
-    "description" => active_section[/^Description::\n(.*?)(?=^Operation::$)/m, 1]&.lines&.map(&:strip)&.reject(&:empty?)&.join("\n"),
-    "operation" => active_section[/^Operation::\n\+\n\[source\]\n----\n(.+?)\n----/m, 1]&.lines&.map(&:strip)&.reject(&:empty?)&.join("\n"),
+    "description" => description_raw&.lines&.map(&:strip)&.reject(&:empty?)&.join("\n"),
+    "operation" => operation_raw&.lines&.map(&:strip)&.reject(&:empty?)&.join("\n"),
     "wavedrom" => raw,
     "resolved_wavedrom" => resolved,
     "format" => format_name,

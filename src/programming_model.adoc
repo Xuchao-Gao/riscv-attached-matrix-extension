@@ -891,11 +891,12 @@ When operand formation produces `N_sq > 1`, the operation pairs logical squares
 `A_s` and `B_s` by their zero-based square index.  The accumulator output C is
 always `N x N`, and each output element sums `N_sq * N` scalar products.
 
-The untransposed form computes `sum_s(A_s x B_s)`.  This is equivalently the
-product of an `N x (N_sq * N)` A matrix formed by laying `A_s` side by side and
-an `(N_sq * N) x N` B matrix formed by stacking `B_s`.  The transpose-A form
-computes `sum_s(A_s^T^ x B_s)`, and the transpose-B form computes
-`sum_s(A_s x B_s^T^)`.  The transposes therefore apply within each logical
+The untransposed form computes `sum(A[s] x B[s], s = 0 .. N_sq-1)`.  This is
+equivalently the product of an `N x (N_sq * N)` A matrix formed by laying the
+`A[s]` squares side by side and an `(N_sq * N) x N` B matrix formed by stacking
+the `B[s]` squares.  The transpose-A form computes
+`sum(transpose(A[s]) x B[s], s = 0 .. N_sq-1)`, and the transpose-B form
+computes `sum(A[s] x transpose(B[s]), s = 0 .. N_sq-1)`.  The transposes therefore apply within each logical
 square and remain dimensionally valid for every `N_sq`.
 
 The accumulation order for additions inside each dot product is implementation-defined.
@@ -960,16 +961,16 @@ and whether or not they negate a result.
 | `C = C - A × B`
 | Negated matrix multiply accumulate
 | <<ame:doc:inst:mmulat_2d,mmulat.2d>>
-| `C = Σ~s~ A_s^T^ × B_s`
+| `C = sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)`
 | Matrix multiply with transposed A
 | <<ame:doc:inst:mmulatacc_2d,mmulatacc.2d>>
-| `C = C + Σ~s~ A_s^T^ × B_s`
+| `C = C + sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)`
 | Matrix multiply with transposed A, accumulate
 | <<ame:doc:inst:mmulbt_2d,mmulbt.2d>>
-| `C = Σ~s~ A_s × B_s^T^`
+| `C = sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)`
 | Matrix multiply with transposed B
 | <<ame:doc:inst:mmulbtacc_2d,mmulbtacc.2d>>
-| `C = C + Σ~s~ A_s × B_s^T^`
+| `C = C + sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)`
 | Matrix multiply with transposed B, accumulate
 | <<ame:doc:inst:mmulneg_2d,mmulneg.2d>>
 | `C = -(A × B)`
@@ -1164,40 +1165,40 @@ Nonlinear::
 |===
 | Instruction | Operation | Description
 | <<ame:doc:inst:mexp2_ew,mexp2.ew>>
-| `D[i] = 2^A[i]^`
+| `D[i] = pow2(A[i])`
 | Elementwise base-2 exponentiation
 | <<ame:doc:inst:mldexp_ew,mldexp.ew>>
-| `D[i] = A[i] × 2^B[i]^`
+| `D[i] = A[i] × pow2(B[i])`
 | Elementwise left-shift scale (ldexp)
 | <<ame:doc:inst:mldexp_ew_x,mldexp.ew.x>>
-| `D[i] = B[i] × 2^c^`
+| `D[i] = B[i] × pow2(c)`
 | Elementwise scalar left-shift scale (ldexp)
 | <<ame:doc:inst:mldexpacc_ew,mldexpacc.ew>>
-| `D[i] = D[i] + A[i] × 2^B[i]^`
+| `D[i] = D[i] + A[i] × pow2(B[i])`
 | Elementwise left-shift scale accumulate
 | <<ame:doc:inst:mldexpacc_ew_x,mldexpacc.ew.x>>
-| `D[i] = D[i] + B[i] × 2^c^`
+| `D[i] = D[i] + B[i] × pow2(c)`
 | Elementwise scalar left-shift scale accumulate
 | <<ame:doc:inst:mlog2_ew,mlog2.ew>>
-| `D[i] = log~2~(A[i])`
+| `D[i] = log2(A[i])`
 | Elementwise base-2 logarithm
 | <<ame:doc:inst:mlog2sub_ew,mlog2sub.ew>>
-| `D[i] = log~2~(\|A[i]\|) - B[i]`
+| `D[i] = log2(abs(A[i])) - B[i]`
 | Elementwise log2 minus bias
 | <<ame:doc:inst:mlog2sub_ew_x,mlog2sub.ew.x>>
-| `D[i] = log~2~(\|B[i]\|) - c`
+| `D[i] = log2(abs(B[i])) - c`
 | Elementwise log2 minus scalar bias
 | <<ame:doc:inst:mrdexp_ew,mrdexp.ew>>
-| `D[i] = A[i] × 2^-B[i]^`
+| `D[i] = A[i] × pow2(-B[i])`
 | Elementwise right-shift scale
 | <<ame:doc:inst:mrdexpacc_ew,mrdexpacc.ew>>
-| `D[i] = D[i] + A[i] × 2^-B[i]^`
+| `D[i] = D[i] + A[i] × pow2(-B[i])`
 | Elementwise right-shift scale accumulate
 | <<ame:doc:inst:msublog2_ew,msublog2.ew>>
-| `D[i] = B[i] - log~2~(\|A[i]\|)`
+| `D[i] = B[i] - log2(abs(A[i]))`
 | Elementwise bias minus log2
 | <<ame:doc:inst:msublog2_ew_x,msublog2.ew.x>>
-| `D[i] = c - log~2~(\|B[i]\|)`
+| `D[i] = c - log2(abs(B[i]))`
 | Elementwise scalar bias minus log2
 | <<ame:doc:inst:mcos_ew,mcos.ew>>
 | `D[i] = cos(A[i])`
@@ -1455,34 +1456,34 @@ Reduction and permutation datatype combinations are constrained by
 |===
 | Instruction | Operation | Description
 | <<ame:doc:inst:mprefixadd_col,mprefixadd.col>>
-| `D[i,j] = Σ~k≤i~ A[k,j]`
+| `D[i,j] = sum(A[k,j], k = 0 .. i)`
 | Elementwise column prefix-sum (inclusive scan)
 | <<ame:doc:inst:mprefixadd_row,mprefixadd.row>>
-| `D[i,j] = Σ~k≤j~ A[i,k]`
+| `D[i,j] = sum(A[i,k], k = 0 .. j)`
 | Elementwise row prefix-sum (inclusive scan)
 | <<ame:doc:inst:mprefixmax_col,mprefixmax.col>>
-| `D[i,j] = max~k≤i~(A[k,j])`
+| `D[i,j] = max(A[k,j], k = 0 .. i)`
 | Elementwise column prefix-max (running maximum scan)
 | <<ame:doc:inst:mprefixmax_row,mprefixmax.row>>
-| `D[i,j] = max~k≤j~(A[i,k])`
+| `D[i,j] = max(A[i,k], k = 0 .. j)`
 | Elementwise row prefix-max (running maximum scan)
 | <<ame:doc:inst:mreduceadd_col,mreduceadd.col>>
-| `D[:,j] = Σ~k~ A[k,j]`
+| `D[:,j] = sum(A[k,j], k = 0 .. N-1)`
 | Elementwise column reduce (add)
 | <<ame:doc:inst:mreduceadd_row,mreduceadd.row>>
-| `D[i,:] = Σ~k~ A[i,k]`
+| `D[i,:] = sum(A[i,k], k = 0 .. N-1)`
 | Elementwise row reduce (add)
 | <<ame:doc:inst:mreducemax_col,mreducemax.col>>
-| `D[:,j] = max~k~(A[k,j])`
+| `D[:,j] = max(A[k,j], k = 0 .. N-1)`
 | Elementwise column reduce (max)
 | <<ame:doc:inst:mreducemax_row,mreducemax.row>>
-| `D[i,:] = max~k~(A[i,k])`
+| `D[i,:] = max(A[i,k], k = 0 .. N-1)`
 | Elementwise row reduce (max)
 | <<ame:doc:inst:mreducemin_col,mreducemin.col>>
-| `D[:,j] = min~k~(A[k,j])`
+| `D[:,j] = min(A[k,j], k = 0 .. N-1)`
 | Elementwise column reduce (min)
 | <<ame:doc:inst:mreducemin_row,mreducemin.row>>
-| `D[i,:] = min~k~(A[i,k])`
+| `D[i,:] = min(A[i,k], k = 0 .. N-1)`
 | Elementwise row reduce (min)
 |===
 
@@ -1520,8 +1521,8 @@ AME permutation operations swizzle data within a single square.
 | `D[i,j] = A[i, B[i,j]]`
 | Elementwise gather (take)
 | <<ame:doc:inst:mrowunzip_ew,mrowunzip.ew>>
-| `D^0^[i,:] = A[2i,:] +
- D^1^[i,:] = A[2i+1,:]`
+| `D0[i,:] = A[2i,:] +
+ D1[i,:] = A[2i+1,:]`
 | Row unzip (de-interleave rows)
 | <<ame:doc:inst:mrowzip_ew,mrowzip.ew>>
 | `D[2i,:] = A[i,:] +
