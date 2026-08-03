@@ -643,9 +643,12 @@ row-major or column-major order.  The base-address alignment is
 `min(total_bytes, 4096)` bytes.
 
 For a strided transfer, `element_bytes = ceil(E / 8)` is used only for the
-base-address alignment, which is `min(element_bytes, 4096)` bytes.  Each
-segment begins at `base + seg * stride` and is a separately byte-rounded bit
-string:
+base-address alignment, which is `min(element_bytes, 4096)` bytes.  `base` is
+the unsigned XLEN-bit value `X[xs1]`, and `stride` is the unsigned XLEN-bit
+value `X[xs2]`.  Each segment begins at
+`(base + seg * stride) modulo 2^XLEN`; the resulting XLEN-bit address is then
+subject to the ordinary translation, protection, and access checks described
+above.  Each segment is a separately byte-rounded bit string:
 
 * `.st` has `N` segments.  Segment `i` contains `P * N * E` bits and
   `seg_bytes = ceil(P * N * E / 8)`; element `(sq,i,j)` starts at bit offset

@@ -26,14 +26,14 @@ baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 audit_path = File.join(root, "docs", "migration", "ame-prose-migration-audit.md")
 errors = []
 
-expected_baseline_hash = "e495764bbf98d89afd2c6c40261962af20e3cf33181206f2a58a8811d7a7934c"
+expected_baseline_hash = "a88b26b945a1b553f698832871d552f0b376991d3f4863f0c0a52de5b6086090"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
 end
 baseline_document = JSON.parse(File.read(baseline_path))
-unless baseline_document["prose_operation_baseline"] == "reviewed traditional-vector-style cutover"
-  errors << "baseline snapshot does not identify the reviewed prose operation baseline"
+unless baseline_document["prose_semantics_baseline"] == "reviewed traditional-vector-style cutover"
+  errors << "baseline snapshot does not identify the reviewed prose semantics baseline"
 end
 expected_commit = "b97c6c4656525ee06aeb9600021b1debc0a76233"
 unless baseline_document["baseline_commit"] == expected_commit
@@ -47,7 +47,7 @@ File.foreach(allocations_path) do |line|
   attributes[match[1]] = match[2] if match
 end
 
-instructions = File.read(instructions_path)
+instructions = active_asciidoc(File.read(instructions_path))
 categories = {}
 current_category = nil
 instructions.split("\n<<<\n", 2).first.each_line do |line|
@@ -182,6 +182,7 @@ sections.each_with_index do |(anchor, name, section), index|
     "category" => category,
     "synopsis" => section[/^Synopsis::\n([^\n]+)/, 1],
     "mnemonic" => section[/^Mnemonic::\n`([^`]+)`/, 1],
+    "description" => active_section[/^Description::\n(.*?)(?=^Operation::$)/m, 1]&.lines&.map(&:strip)&.reject(&:empty?)&.join("\n"),
     "operation" => active_section[/^Operation::\n\+\n\[source\]\n----\n(.+?)\n----/m, 1]&.lines&.map(&:strip)&.reject(&:empty?)&.join("\n"),
     "wavedrom" => raw,
     "resolved_wavedrom" => resolved,
@@ -230,6 +231,8 @@ end
   /load ignores the unused high bits.*store writes those unused high bits as zero/m => "partial-byte load/store rule",
   /Segment `i` contains `P \* N \* E` bits/ => "strided segment size rule",
   /Segment `sq \* N \+ j` contains `N \* E` bits/ => "transposed-strided segment size rule",
+  /`base` is\s+the unsigned XLEN-bit value `X\[xs1\]`, and `stride` is the unsigned XLEN-bit\s+value `X\[xs2\]`/m => "strided address operand widths",
+  /`\(base \+ seg \* stride\) modulo 2\^XLEN`/ => "strided modulo-XLEN address arithmetic",
   /segments\s+in ascending segment-number order.*later segment therefore wins/m => "overlapping strided-store ordering",
   /lowest-addressed\s+byte transfers physical bits 7:0/m => "opaque memory byte order",
   /Checks occur in the following architectural order/ => "memory exception-priority rule",
@@ -253,7 +256,7 @@ end
 end
 
 if current_identity != baseline
-  keys = %w[order name anchor category synopsis mnemonic operation wavedrom resolved_wavedrom format mask match]
+  keys = %w[order name anchor category synopsis mnemonic description operation wavedrom resolved_wavedrom format mask match]
   [current_identity.length, baseline.length].min.times do |index|
     keys.each do |key|
       next if current_identity[index][key] == baseline[index][key]
@@ -262,6 +265,50 @@ if current_identity != baseline
                 "#{current_identity[index][key].inspect} != #{baseline[index][key].inspect}"
     end
   end
+end
+
+root_document_path = File.join(root, "src", "riscv-spec.adoc")
+required_root_includes = %w[
+  contributors.adoc
+  intro.adoc
+  programming_model.adoc
+  state.adoc
+  datatypes.adoc
+  parameters.adoc
+  examples.adoc
+  instructions.adoc
+  glossary.adoc
+  base-isa-anchors.adoc
+]
+root_include_counts = Hash.new(0)
+conditional_depth = 0
+active_asciidoc(File.read(root_document_path)).each_line.with_index(1) do |line, line_number|
+  if line.match?(/^\s*(?:ifdef|ifndef|ifeval)::/)
+    conditional_depth += 1
+    next
+  end
+  if line.match?(/^\s*endif::/)
+    conditional_depth -= 1
+    errors << "riscv-spec.adoc: unmatched endif at line #{line_number}" if conditional_depth.negative?
+    conditional_depth = 0 if conditional_depth.negative?
+    next
+  end
+
+  match = line.match(/^\s*include::([^\[]+)\[[^\]]*\]/)
+  next unless match
+
+  include_name = match[1]
+  next unless required_root_includes.include?(include_name)
+
+  root_include_counts[include_name] += 1
+  if conditional_depth.positive?
+    errors << "riscv-spec.adoc: required include #{include_name} is conditional at line #{line_number}"
+  end
+end
+errors << "riscv-spec.adoc: unterminated conditional directive" unless conditional_depth.zero?
+required_root_includes.each do |include_name|
+  count = root_include_counts[include_name]
+  errors << "riscv-spec.adoc: required include #{include_name} must appear exactly once, found #{count}" unless count == 1
 end
 
 def include_closure(path, seen, errors)
@@ -428,4 +475,5 @@ abort "instruction-description validation failed:\n  #{errors.join("\n  ")}" unl
 
 puts "checked 141/141 prose instruction pages against baseline #{expected_commit[0, 12]}: " \
      "stable anchors/order/categories/synopses/mnemonics/encodings, complete common contracts and operand classes, " \
-     "operation semantics, 12/12 published normative anchors, frozen archive, and no IDL/NumPy markers in the include closure"
+     "description/operation semantics, unconditional root publication, 12/12 published normative anchors, " \
+     "frozen archive, and no IDL/NumPy markers in the include closure"
