@@ -26,7 +26,7 @@ baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 audit_path = File.join(root, "docs", "migration", "ame-prose-migration-audit.md")
 errors = []
 
-expected_baseline_hash = "a88b26b945a1b553f698832871d552f0b376991d3f4863f0c0a52de5b6086090"
+expected_baseline_hash = "4b627ca63624b88972acbe84cd8ca3234b986db493c83c195edaaab631a45c4f"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
@@ -40,6 +40,7 @@ unless baseline_document["baseline_commit"] == expected_commit
   errors << "baseline snapshot identifies #{baseline_document['baseline_commit']}, expected #{expected_commit}"
 end
 baseline = baseline_document.fetch("instructions")
+expected_audit_operations = baseline_document.fetch("audit_operations", {})
 
 attributes = {}
 File.foreach(allocations_path) do |line|
@@ -63,12 +64,6 @@ sections = instructions.scan(/^\[#(ame:doc:inst:[^\]]+)\]\n=== `([^`]+)`\n(.*?)(
 errors << "instruction coverage is #{sections.length}/141" unless sections.length == 141
 
 programming_model = active_asciidoc(File.read(File.join(root, "src", "programming_model.adoc")))
-[instructions, programming_model].each_with_index do |text, index|
-  next unless text.match?(/^\s*(?:ifdef|ifndef|ifeval|endif)::/)
-
-  filename = index.zero? ? "instructions.adoc" : "programming_model.adoc"
-  errors << "#{filename}: conditional directives are not permitted in instruction/common-contract material"
-end
 operand_class_table = programming_model[/\[\[ame-common-operand-classes\]\].*?^\|===\n(.*?)^\|===/m, 1]
 if operand_class_table.nil?
   errors << "missing shared operand-class requirements table"
@@ -294,13 +289,16 @@ active_asciidoc(File.read(root_document_path)).each_line.with_index(1) do |line,
     next
   end
 
-  match = line.match(/^\s*include::([^\[]+)\[[^\]]*\]/)
+  match = line.match(/^\s*include::([^\[]+)\[([^\]]*)\]/)
   next unless match
 
   include_name = match[1]
   next unless required_root_includes.include?(include_name)
 
   root_include_counts[include_name] += 1
+  unless match[2].strip.empty?
+    errors << "riscv-spec.adoc: required include #{include_name} must not select or filter content at line #{line_number}"
+  end
   if conditional_depth.positive?
     errors << "riscv-spec.adoc: required include #{include_name} is conditional at line #{line_number}"
   end
@@ -309,6 +307,14 @@ errors << "riscv-spec.adoc: unterminated conditional directive" unless condition
 required_root_includes.each do |include_name|
   count = root_include_counts[include_name]
   errors << "riscv-spec.adoc: required include #{include_name} must appear exactly once, found #{count}" unless count == 1
+
+  include_path = File.join(root, "src", include_name)
+  next unless File.file?(include_path)
+
+  include_text = active_asciidoc(File.read(include_path))
+  if include_text.match?(/^\s*(?:ifdef|ifndef|ifeval|else|endif)::/)
+    errors << "#{include_name}: conditional directives are not permitted in required AME publication material"
+  end
 end
 
 def include_closure(path, seen, errors)
@@ -423,16 +429,32 @@ errors << "migration audit does not record 12/12 published normative anchors" un
 instruction_audit = audit[/## Instruction coverage.*?(?=^## Helper coverage)/m].to_s
 helper_audit = audit[/## Helper coverage.*?(?=^## Published normative-anchor coverage)/m].to_s
 norm_audit = audit[/## Published normative-anchor coverage.*?(?=^## Corrections)/m].to_s
-audited_instruction_names = instruction_audit.scan(/^\| `([^`]+)` \|/).flatten
+instruction_row_pattern = /^\| `(?<name>[^`]+)` \| (?<legacy_line>\d+) \| `(?<anchor>[^`]+)` \| (?<category>[^|]+?) \| `(?<mnemonic>[^`]+)` \| `(?<operation>[^`]*)` \| `(?<contract>[^`]+)` \| (?<correction>[^|]+?) \| (?<status>[^|]+?) \|\s*$/
+audited_instruction_rows = {}
+instruction_audit.each_line do |line|
+  next unless line.start_with?("| `")
+
+  match = line.match(instruction_row_pattern)
+  unless match
+    errors << "migration audit has a malformed instruction row: #{line.strip}"
+    next
+  end
+  name = match[:name]
+  errors << "migration audit has duplicate instruction row #{name}" if audited_instruction_rows.key?(name)
+  audited_instruction_rows[name] = match.named_captures
+end
+audited_instruction_names = audited_instruction_rows.keys
 audited_helper_names = helper_audit.scan(/^\| `([^`]+)` \|/).flatten
 audited_norm_anchors = norm_audit.scan(/^\| `(norm:[^`]+)` \|/).flatten
 expected_instruction_names = baseline.map { |entry| entry.fetch("name") }
+unless expected_audit_operations.keys == expected_instruction_names
+  errors << "baseline audit-operation rows do not exactly match the 141-entry instruction baseline"
+end
 archive_functions = File.read(File.join(root, "formal", archive_dir, "functions-idl.adoc"))
 expected_helper_names = archive_functions.scan(/^=== `([^`]+)`/).flatten
 expected_legacy_norm_anchors = archive_functions.scan(/^\[#(norm:[^\]]+)\]/).flatten
 expected_published_norm_anchors = required_norm_anchors
 errors << "migration audit instruction rows do not exactly match the 141-entry baseline" unless audited_instruction_names == expected_instruction_names
-errors << "migration audit has a non-Ready instruction row" unless instruction_audit.scan(/^\| `[^`]+` .*$/).all? { |line| line.end_with?("| Ready |") }
 errors << "migration audit helper rows do not exactly match the 90-entry archive" unless audited_helper_names == expected_helper_names
 errors << "migration audit normative-anchor rows do not exactly match the 12 published anchors" unless audited_norm_anchors == expected_published_norm_anchors
 unless expected_legacy_norm_anchors.all? { |anchor| audited_norm_anchors.include?(anchor) }
@@ -462,10 +484,31 @@ correction_expectations.merge!(
   "mrowunzip.ew" => "AME-MIG-004",
   "mrowzip.ew" => "AME-MIG-004"
 )
+legacy_instruction_lines = {}
+legacy_instructions_path = File.join(root, "formal", archive_dir, "instructions-idl.adoc")
+File.foreach(legacy_instructions_path).with_index(1) do |line, line_number|
+  match = line.match(/^\[#(ame:doc:inst:[^\]]+)\]$/)
+  legacy_instruction_lines[match[1]] = line_number.to_s if match
+end
 correction_expectations.each do |name, correction|
-  row = instruction_audit.lines.find { |line| line.start_with?("| `#{name}` |") }
-  actual = row&.match(/\| ([^|]+) \| Ready \|\s*$/)&.[](1)
-  errors << "migration audit row #{name} correction is #{actual.inspect}, expected #{correction.inspect}" unless actual == correction
+  row = audited_instruction_rows[name]
+  baseline_entry = baseline.find { |entry| entry.fetch("name") == name }
+  next unless row && baseline_entry
+
+  expected_contract = name == "fence.ame" ? "ame-common-ordering" : primary_contract[baseline_entry.fetch("category")]
+  {
+    "legacy_line" => legacy_instruction_lines[baseline_entry.fetch("anchor")],
+    "anchor" => baseline_entry.fetch("anchor"),
+    "category" => baseline_entry.fetch("category"),
+    "mnemonic" => baseline_entry.fetch("mnemonic"),
+    "operation" => expected_audit_operations[name],
+    "contract" => expected_contract,
+    "correction" => correction,
+    "status" => "Ready"
+  }.each do |field, expected|
+    actual = row[field]
+    errors << "migration audit row #{name} #{field} is #{actual.inspect}, expected #{expected.inspect}" unless actual == expected
+  end
 end
 %w[AME-MIG-001 AME-MIG-002 AME-MIG-003 AME-MIG-004 AME-MIG-005 AME-MIG-006 AME-MIG-007].each do |correction|
   errors << "migration audit does not record correction #{correction}" unless audit.include?("### #{correction}:")
@@ -475,5 +518,6 @@ abort "instruction-description validation failed:\n  #{errors.join("\n  ")}" unl
 
 puts "checked 141/141 prose instruction pages against baseline #{expected_commit[0, 12]}: " \
      "stable anchors/order/categories/synopses/mnemonics/encodings, complete common contracts and operand classes, " \
-     "description/operation semantics, unconditional root publication, 12/12 published normative anchors, " \
+     "description/operation semantics, fully cross-checked migration audit, unconditional root publication, " \
+     "12/12 published normative anchors, " \
      "frozen archive, and no IDL/NumPy markers in the include closure"
