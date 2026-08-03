@@ -10,6 +10,7 @@ AME memory operations are not guaranteed to appear in program order relative to 
 without an ordering fence (see <<ame-consistency-model>>).
 
 [[ame-state-enablement]]
+[[ame-common-state-access]]
 ==== AME state enablement
 
 AME adds a two-bit matrix context status field, `MS[1:0]`, to `mstatus`.
@@ -234,6 +235,7 @@ madd.ew m3, m2, m2  # raises Illegal Instruction
 ----
 
 [[operand-formation]]
+[[ame-common-register-groups]]
 ==== Operand formation
 
 When a compute instruction references multiple tensor operands, all operands must contain
@@ -280,42 +282,39 @@ precedence over `N_sq = max(pack_factor)`.
 
 [#norm:ame_nsq_1d]#For an ordinary 1D element-wise instruction, the logical
 element count is `N_sq * AME_NELEM`.  The operator is applied to corresponding
-logical elements of every operand over that entire range.# An expanded
-Operation block whose outer loop is written as `e < AME_NELEM` is shorthand
-for this complete range; the register and bit slicing shown in such a block is
-replaced by the common logical element read/write builtins.
+logical elements of every operand over that entire range.# Instruction
+operation formulas that use a single element index apply over this complete
+range, including every packed or wide logical square.
 
 [#norm:ame_nsq_structural]#A row/column, gather/scatter, prefix, or reduction
 instruction applies its documented `N x N` transformation independently to
 each of the `N_sq` logical squares.# A row or column index is local to its
-square and cannot address another logical square.  An expanded Operation block
-that shows only one `N x N` iteration is shorthand for an outer
-`sq = 0 .. N_sq-1` loop, with every logical element index offset by
+square and cannot address another logical square.  A formula showing one
+`N x N` transformation therefore applies independently for
+`sq = 0 .. N_sq-1`, with logical element indices offset by
 `sq * AME_NELEM`.
 
 [#norm:ame_nsq_matmul]#For a 2D matrix multiply, `K = N_sq * N`.  Operand A is
 formed as an `N x K` matrix by placing its logical squares side by side, and
 operand B is formed as a `K x N` matrix by stacking its logical squares.  Each
-accumulator result remains one `N x N` square.# An expanded Operation block
-whose inner loop is written as `j < N` is shorthand for `j < K` with source
-elements selected from the corresponding logical square and local coordinate.
+accumulator result remains one `N x N` square.# Matrix-multiply formulas use
+this complete `K` dimension, with source elements selected from the
+corresponding logical square and local coordinate.
 
 ==== Operand validation and exception priority
 
-Every encoded `M` or `Md` register specifier is validated with
-`<<ame:doc:func:ame_check_m_index,ame_check_m_index>>` immediately after decode
-and before any `Md` or `M` state is read.  Thus an index greater than or equal
-to `AME_NUM_M_REGS` raises an Illegal Instruction exception even when the
-individual instruction's Operation block shows its range check later.
+Every encoded `M` or `Md` register specifier is validated immediately after
+decode and before any `Md` or `M` state is read.  Thus an index greater than or
+equal to `AME_NUM_M_REGS` raises an Illegal Instruction exception before any
+datatype-dependent validation.
 
 After the required datatypes and operation tuple have been found to be
 supported, but before any `M` data access or architectural write, each tensor
 operand is formed according to <<operand-formation>>.  Its base, per-square
-alignment, and complete physical-register span are then validated with
-`<<ame:doc:func:ame_check_m_group,ame_check_m_group>>`.  The complete span,
-rather than only the first square's group size, is checked.  A misaligned group
-or a group whose final register would be outside the implemented register file
-raises an Illegal Instruction exception.
+alignment, and complete physical-register span are then validated.  The
+complete span, rather than only the first square's group size, is checked.  A
+zero-sized span, a misaligned group, or a group whose final register would be
+outside the implemented register file raises an Illegal Instruction exception.
 
 For an instruction that does not use the multi-operand `N_sq` rule, the same
 validation applies using the physical span explicitly defined by that
@@ -325,16 +324,13 @@ priority.  An unsupported datatype or operation sets `amestatus.UN` only after
 all encoded base indices have passed the first-stage index check; group
 alignment and span are not interpreted for an unsupported datatype.
 
-All logical source-element reads in instruction Operation blocks are
-semantically calls to
-`<<ame:doc:func:ame_read_m_element,ame_read_m_element>>`.  Older expanded
-pseudocode that calculates a physical register number and slices the result of
-`ame_xform_impl_to_rm(M[base + regno], dtype)` is shorthand for this builtin;
-the builtin definition controls if that expansion would transform only part of
-a wide square or would otherwise produce an invalid bit index.  In particular,
-a wide square is assembled from its complete register group before layout
-conversion, and `element_index` is not divided using truncated
-`AME_NELEM / group_size` arithmetic.
+Every logical source element is read from the complete formed operand in
+logical row-major order.  A wide square is assembled from its complete
+register group before the implementation-defined register layout is converted
+to logical row-major order.  Packed slots and `N_sq` squares participate in
+the logical element sequence defined in <<operand-formation>>; implementations
+must not derive element locations using a truncated per-register element
+count.
 
 [[register-group-overlap]]
 ==== Register group overlap and atomic writeback
@@ -353,8 +349,8 @@ scalar operands, and index operands are read from the architectural state that
 exists immediately before the instruction begins.# Consequently, an
 instruction such as a gather, broadcast, shift, or reduction produces the same
 result when its destination overlaps a source as it does when the destination
-is disjoint.  Pseudocode assignments to a destination do not change the source
-snapshot observed by later pseudocode statements.
+is disjoint.  Writes performed by the instruction do not change the source
+snapshot used by later element operations.
 
 [#norm:ame_atomic_register_writeback]#For register-only AME instructions, all
 destination `M`, `Md`, `Acc`, and `Ad` writes are staged and become visible
@@ -386,6 +382,7 @@ AME instructions do not encode operand datatypes; instead, datatypes are determi
 This feature makes AME analogous to polymorphic programming languages
 – a single function (instruction) is defined for all datatype combinations (polymorphic argument types).
 
+[[ame-common-datatype-support]]
 === Datatypes
 
 AME supports up to `2^32 - 1` unique datatypes, half of which are reserved for custom use.
@@ -404,6 +401,34 @@ Standard datatypes and encoding rules are listed in <<datatypes>>.
 
 Implementations may choose which standard datatypes are supported and which custom datatypes
 are supported.
+
+[#norm:ame_op_supported_contract]#An instruction datatype tuple is unsupported
+when a required datatype is zero or unknown, the operation is not implemented,
+the datatype classes do not meet the instruction requirements, or the
+implementation does not support that exact operation/datatype combination.#
+An unsupported tuple sets `amestatus.UN` and leaves every destination register
+unchanged; it does not raise a synchronous exception.
+
+[#norm:ame_op_supported_defined_result]#Once an implementation accepts an
+operation/datatype tuple, the result is the mathematical operation stated by
+the instruction, interpreted and converted according to the common datatype
+rules in this chapter.#
+
+[#norm:ame_op_precondition]#No source data is consumed and no destination data
+is produced until the encoded indices and required datatype tuple have passed
+their common validation checks.#
+
+[#norm:ame_op_result_width]#An element result is represented in the destination
+datatype.  Bits outside that datatype representation are not architectural
+state and cannot affect a later AME operation.#
+
+Data-scalar `.ew.x` instructions interpret the low bits of the X-register
+operand using `ame_scalar_dtype`, convert that value to the tensor source
+datatype, and then perform the ordinary same-datatype element operation.  A
+failed scalar conversion is an unsupported datatype tuple.  Control scalars,
+including indices, offsets, shift amounts, strides, and packed-slot selectors,
+are unsigned or signed integer quantities defined by their instruction; they
+do not use `ame_scalar_dtype`.
 
 A legal implementation may support either zero standard datatypes or zero custom datatypes (i.e.,
 all custom or all standard).
@@ -435,11 +460,16 @@ AME does not define data movement operations between AME register files and the 
 register file.
 Performance-sensitive AME code should use AME 1D operations on matrix data rather than RISC-V Vector.
 
+[[ame-common-memory]]
 === Memory
 
 AME uses the same address space as the host hart.
 In systems with virtual memory, AME loads and stores go through (H)S-mode translation and,
 if applicable, G-stage translation when run within a hypervisor.
+They are subject to the same address translation, protection, physical-memory
+attribute, and access-fault checks as ordinary RISC-V memory accesses.  Within
+each element, increasing byte addresses correspond to successively more
+significant groups of eight bits; the lowest-addressed byte contains bits 7:0.
 
 ==== Square memory access
 
@@ -648,6 +678,7 @@ that preserves `MS`.
 
 
 
+[[ame-common-matmul]]
 ==== 2-dimensional matrix multiply operations
 
 AME matrix multiplication instructions calculate the matrix product `C = A x B`.
@@ -667,11 +698,11 @@ The accumulation order for additions inside each dot product is implementation-d
 That order is fixed within a given implementation, so repeated runs on the same implementation
 produce the same result.
 
-The expanded instruction Operation blocks use an ascending inner loop for
-readability.  That loop is shorthand for the implementation's fixed
-permutation and each step is a call to
-`<<ame:doc:func:ame_matmul_accumulate,ame_matmul_accumulate>>`; a `Bits` value
-must not be accumulated with raw bit-vector integer addition.
+Each dot product accumulates numeric products interpreted according to the
+source and accumulator datatypes.  The implementation uses its fixed
+permutation of the `K` terms and applies the documented overflow, saturation,
+floating-point, rounding, and optional fused-product behavior.  Encoded
+register bits are never accumulated as untyped bit-vector integers.
 
 [NOTE]
 Different implementations may use different accumulation orders, and therefore may produce
@@ -731,6 +762,7 @@ and whether or not they negate a result.
 | Negated matrix multiply
 |===
 
+[[ame-common-arithmetic]]
 ==== 1-dimensional elementwise operations
 
 AME defines 1-dimensional (elementwise/vector) operations that use the `M` registers.
@@ -985,8 +1017,171 @@ Nonlinear::
 |===
 
 The floating-point special-value and accuracy behavior of these operations is
-defined by the shared `ame_op` contract in <<norm:ame_fp_special_values>>.
+defined in <<norm:ame_fp_special_values>>.
 
+For standard integer arithmetic, the mathematical expression is evaluated
+without intermediate truncation and converted once to the destination integer
+datatype.  A saturating destination clamps an out-of-range result and sets
+`amexsat.SAT`; a non-saturating destination retains the low destination-width
+bits.  `mhdiff.ew` and `mmean.ew` round fraction bits below the destination LSB
+using the destination datatype's rounding mode before that conversion.  Custom
+datatype tuples may define different conversion rules.
+
+Standard floating-point operations accrue their IEEE exception flags in
+`amefflags`; they do not modify `fflags`.  Updates to `amefflags` and `amexsat`
+are accumulated locally for the whole instruction and OR-ed into the
+architectural CSRs only when destination writes commit.  An instruction that
+raises a synchronous exception commits neither destination writes nor status
+flag updates.
+
+Floating-point comparisons are ordered: a NaN operand makes the comparison
+false, and `-0` compares equal to `+0`.  An unselected comparison result is the
+destination datatype's semantic zero, including its canonical zero sign.
+Shift amounts are reduced modulo the destination element width.  `mzero.ew`
+produces the datatype's semantic zero; its encoding need not be all zero bits.
+`mrowid.ew` and `mcolid.ew` represent the zero-based coordinate exactly in the
+destination datatype.
+
+[#norm:ame_fp_special_values]
+.Floating-point special values and accuracy
+[cols="2,4,4",options="header"]
+|===
+| Instruction family | Required special-value result | Finite-result accuracy
+
+| `mmin.ew`, `mreducemin.*`
+| A NaN operand produces the destination datatype's canonical quiet NaN.
+Otherwise numerical ordering is used, with `-0` selected for a tie between
+`-0` and `+0`.
+| Exact selection of one operand.  Reductions apply the binary operation in
+ascending source-element order.
+
+| `mmax.ew`, `mprefixmax.*`, `mreducemax.*`
+| A NaN operand produces the destination datatype's canonical quiet NaN.
+Otherwise numerical ordering is used, with `+0` selected for a tie between
+`-0` and `+0`.
+| Exact selection of one operand.  Prefix and reduction instructions apply the
+binary operation in ascending source-element order.
+
+| `mscattermax.*`
+| A NaN operand produces the destination datatype's canonical quiet NaN.
+Operands are compared numerically after each is interpreted in its own
+datatype; a `-0`/`+0` tie produces `+0`.
+| Each selected destination is updated in ascending source-element order.
+
+| `madd.ew`
+| A NaN operand or the addition of opposite-signed infinities produces the
+destination datatype's canonical quiet NaN.  An infinity plus a finite value,
+or two same-signed infinities, produces that infinity.
+| Correctly rounded once using the destination datatype's rounding mode.
+
+| `msub.ew`
+| A NaN operand or subtraction of same-signed infinities produces the
+destination datatype's canonical quiet NaN.  Other infinite differences
+produce the mathematically signed infinity.
+| Correctly rounded once using the destination datatype's rounding mode.
+
+| `mabs.ew`
+| A NaN produces the destination datatype's canonical quiet NaN.  Either signed
+zero produces `+0`; either infinity produces `+infinity`.
+| Exact for every representable finite result.
+
+| `mabsdiff.ew`
+| A NaN operand or subtraction of same-signed infinities produces the
+destination datatype's canonical quiet NaN.  Any other infinite difference
+produces `+infinity`.
+| Correctly rounded once using the destination datatype's rounding mode.
+
+| `mmul.ew`, `mmulneg.ew`
+| A NaN operand or multiplication of zero by infinity produces the destination
+datatype's canonical quiet NaN.  Other infinite products have the mathematical
+sign; `mmulneg.ew` then negates that sign.
+| Correctly rounded once using the destination datatype's rounding mode.
+
+| `mprefixadd.*`, `mreduceadd.*`
+| NaN and infinity behavior is the same as for `madd.ew`.
+| These are unordered reduction additions.  Each binary addition is correctly
+rounded, but association order is implementation-defined and results may vary
+between implementations.
+
+| `mscatteradd.*`
+| NaN and infinity behavior is the same as for `madd.ew`.
+| Each contribution is rounded to the destination datatype before the next
+contribution to the same destination; updates occur in ascending source order.
+
+| `msin.ew`, `mcos.ew`
+| A NaN or infinity produces the destination datatype's canonical quiet NaN.
+`sin(+/-0)` preserves the signed zero; `cos(+/-0)` produces `+1`.
+| Implementation-defined.  The implementation shall document its maximum
+error in ulp for every supported operation/datatype tuple.
+
+| `mtanh.ew`
+| A NaN produces the destination datatype's canonical quiet NaN.  `tanh(+/-0)`
+preserves the signed zero and `tanh(+/-infinity)` produces `+/-1`.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `mexp2.ew`
+| A NaN produces the destination datatype's canonical quiet NaN.
+`exp2(+infinity)` produces `+infinity`, `exp2(-infinity)` produces `+0`, and
+`exp2(+/-0)` produces `+1`.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `mlog2.ew`
+| A NaN, a negative finite value, or `-infinity` produces the destination
+datatype's canonical quiet NaN.  `log2(+/-0)` produces `-infinity`,
+`log2(+infinity)` produces `+infinity`, and `log2(1)` produces `+0`.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `mldexp.ew`, `mrdexp.ew`
+| A NaN data operand produces the destination datatype's canonical quiet NaN.
+A signed zero or signed infinity preserves its sign.  Destination conversion
+handles scaling overflow and underflow.
+| The exact power-of-two-scaled result is rounded once using the destination
+datatype's rounding mode.
+
+| `mlog2sub.ew`, `msublog2.ew`
+| NaN inputs and invalid infinity combinations produce the destination
+datatype's canonical quiet NaN.  The logarithm term follows the `mlog2.ew`
+rules above.
+| Implementation-defined.  The implementation shall document the maximum
+error and whether the compound expression uses an intermediate rounding.
+
+| `mrec.ew`
+| A NaN produces the destination datatype's canonical quiet NaN.  `1/(+/-0)`
+produces the correspondingly signed infinity; `1/(+/-infinity)` produces the
+correspondingly signed zero.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `mrsqrt.ew`
+| A NaN, `-infinity`, or a negative finite value other than `-0` produces the
+destination datatype's canonical quiet NaN.  `rsqrt(+0)` produces `+infinity`,
+`rsqrt(-0)` produces `-infinity`, and `rsqrt(+infinity)` produces `+0`.
+| Implementation-defined, with the same documented maximum-error requirement.
+
+| `msqrt.ew`
+| A NaN, `-infinity`, or a negative finite value other than `-0` produces the
+destination datatype's canonical quiet NaN.  `sqrt(+/-0)` preserves the signed
+zero and `sqrt(+infinity)` produces `+infinity`.
+| Correctly rounded using the destination datatype's rounding mode.
+
+| `mfrintm.ew`, `mfrintn.ew`, `mfrintp.ew`, `mfrintz.ew`
+| A NaN produces the destination datatype's canonical quiet NaN.  An infinity
+is unchanged and a zero preserves its sign.
+| Exact when the integral value is representable.  The instruction-specific
+rounding direction overrides the destination datatype's rounding-mode field.
+|===
+
+A signaling NaN is treated as a NaN and the result is quieted.  If a required
+mathematical infinity is not representable by the destination datatype, the
+result saturates to the signed minimum or maximum, as appropriate.  A tuple
+that cannot represent a required NaN result is unsupported.
+
+Floating-point exceptional conditions are ordinary data results after the
+datatype tuple has been accepted: they do not raise an exception or set
+`amestatus.UN`.  The precise conditions for setting each `amefflags` bit remain
+reserved for a future revision together with the finalized standard datatype
+set.
+
+[[ame-common-structural]]
 ==== Reduction operations
 
 AME reduction operations reduce values across a row of a square.
@@ -1149,7 +1344,7 @@ register for it.
 
 `mbcast.m.x` is the explicit scalar ingress instruction. It interprets an X-register
 bit pattern using a datatype encoding supplied in another X register, converts the
-value to the destination `Md` datatype with `CONV1D`, and broadcasts the converted
+value to the destination `Md` datatype using the common conversion rules, and broadcasts the converted
 value to every logical element of the destination M operand.
 
 Data scalar `.ew.x` instructions use `CSR[ame_scalar_dtype]` for the source scalar
@@ -1165,7 +1360,7 @@ integer values defined by their instruction. They do not read
 |===
 | Instruction | Operation | Description
 | <<ame:doc:inst:mbcast_m_x,mbcast.m.x>>
-| `D[i] = CONV1D(X[xs1], X[xtyp], Md[md])`
+| `D[i] = convert(X[xs1], source datatype X[xtyp], destination datatype Md[md])`
 | Convert one X scalar and broadcast it to an M operand
 |===
 
@@ -1310,12 +1505,14 @@ two further classes of exception:
   This is not a synchronous exception; it is an unsupported-operation report as described
   in <<datatypes>>.
 
-* **Memory fault (precise):** When a load or store encounters a page fault, access fault, or
-  PMA violation, the precise exception is reported in the standard RISC-V trap CSRs.
+* **Memory fault (precise):** When a load or store encounters a page fault, access fault,
+  protection failure, or PMA violation, the precise exception is reported in the standard
+  RISC-V trap CSRs.
   No partial completion is permitted: the faulting instruction does not modify any memory or
   register locations, and the reported fault address is the base address of the instruction
   (the value in the integer register operand), not the address of a specific segment.
 
+[[ame-common-ordering]]
 ==== Memory ordering
 
 AME provides the `<<ame:doc:inst:fence_ame,fence.ame>>` instruction to enforce ordering

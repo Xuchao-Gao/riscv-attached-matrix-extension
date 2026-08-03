@@ -16,14 +16,14 @@ h| <<ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR,AME_UNIMPL_ACC_BEHAVIOR>> | Behavior 
 h| <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> | The datatype size, in bits, at which exactly one square fits in an M register
 |===
 
-The formal pseudocode uses the following derived constants:
+The architectural descriptions use the following derived constants:
 
 * `AME_MATRIX_REGISTER_SIZE = AME_NELEM * AME_UNIT_DATATYPE_SIZE` bits.
   This value must be an integer number of bytes.
 * `AME_MAX_DTYPE_SIZE = 255` bits, the largest nonzero size representable by
   the datatype size field.  An implementation need not support that size.
-* `AME_MAX_SQUARE_SIZE = AME_NELEM * AME_MAX_DTYPE_SIZE` bits, used only as a
-  conservative temporary-value width in the pseudocode.
+* `AME_MAX_SQUARE_SIZE = AME_NELEM * AME_MAX_DTYPE_SIZE` bits, an upper bound
+  used when describing a logical square.
 
 
 <<<
