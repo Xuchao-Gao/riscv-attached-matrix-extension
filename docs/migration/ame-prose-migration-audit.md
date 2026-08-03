@@ -8,10 +8,10 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 
 | Instruction | Legacy line | Anchor | Category | Mnemonic | Architectural operation | Required common contract | Correction | Status |
 |---|---:|---|---|---|---|---|---|---|
-| `ame.acquire` | 401 | `ame:doc:inst:ame_acquire` | Resource Management | `ame.acquire xd, xs` | `X[xd] = request_backend(X[xs])` | `ame-common-state-access` | - | Ready |
+| `ame.acquire` | 401 | `ame:doc:inst:ame_acquire` | Resource Management | `ame.acquire xd, xs` | `X[xd] = acquire_backend(descriptor = X[xs])` | `ame-common-state-access` | - | Ready |
 | `ame.release` | 438 | `ame:doc:inst:ame_release` | Resource Management | `ame.release` | `release_backend()` | `ame-common-state-access` | - | Ready |
-| `agettyp` | 469 | `ame:doc:inst:agettyp` | Datatype Management | `agettyp xd, ad` | `X[xd] = Ad[ad]` | `ame-common-datatype-support` | - | Ready |
-| `asettyp` | 511 | `ame:doc:inst:asettyp` | Datatype Management | `asettyp ad, xs1` | `Ad[ad] = X[xs1]; Acc[ad] = zero(Ad[ad])` | `ame-common-datatype-support` | - | Ready |
+| `agettyp` | 469 | `ame:doc:inst:agettyp` | Datatype Management | `agettyp xd, ad` | `X[xd] = zero_extend_XLEN(Ad[ad])` | `ame-common-datatype-support` | - | Ready |
+| `asettyp` | 511 | `ame:doc:inst:asettyp` | Datatype Management | `asettyp ad, xs1` | `Ad[ad] = X[xs1][31:0]; raw_bits(Acc[ad]) = 0` | `ame-common-datatype-support` | - | Ready |
 | `mabs.ew` | 564 | `ame:doc:inst:mabs_ew` | Elementwise Arithmetic | `mabs.ew md, ms1` | `D[i] = \\|A[i]\\|` | `ame-common-arithmetic` | - | Ready |
 | `mabsdiff.ew` | 645 | `ame:doc:inst:mabsdiff_ew` | Elementwise Arithmetic | `mabsdiff.ew md, ms1, ms2` | `D[i] = \\|A[i] - B[i]\\|` | `ame-common-arithmetic` | - | Ready |
 | `mabsdiff.ew.x` | 743 | `ame:doc:inst:mabsdiff_ew_x` | Elementwise Arithmetic | `mabsdiff.ew.x md, xs1, ms2` | `D[i] = \\|c - B[i]\\|` | `ame-common-arithmetic` | - | Ready |
@@ -41,21 +41,21 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 | `mfrintn.ew` | 3102 | `ame:doc:inst:mfrintn_ew` | Elementwise Arithmetic | `mfrintn.ew md, ms1` | `D[i] = roundTiesToEven(A[i])` | `ame-common-arithmetic` | - | Ready |
 | `mfrintp.ew` | 3191 | `ame:doc:inst:mfrintp_ew` | Elementwise Arithmetic | `mfrintp.ew md, ms1` | `D[i] = ceil(A[i])` | `ame-common-arithmetic` | - | Ready |
 | `mfrintz.ew` | 3280 | `ame:doc:inst:mfrintz_ew` | Elementwise Arithmetic | `mfrintz.ew md, ms1` | `D[i] = trunc(A[i])` | `ame-common-arithmetic` | - | Ready |
-| `mgettyp` | 3369 | `ame:doc:inst:mgettyp` | Datatype Management | `mgettyp xd, ms1` | `X[xd] = Md[ms1]` | `ame-common-datatype-support` | - | Ready |
+| `mgettyp` | 3369 | `ame:doc:inst:mgettyp` | Datatype Management | `mgettyp xd, ms1` | `X[xd] = zero_extend_XLEN(Md[ms1])` | `ame-common-datatype-support` | - | Ready |
 | `mhdiff.ew` | 3415 | `ame:doc:inst:mhdiff_ew` | Elementwise Arithmetic | `mhdiff.ew md, ms1, ms2` | `D[i] = (B[i] - A[i]) / 2` | `ame-common-arithmetic` | - | Ready |
 | `mhdiff.ew.x` | 3513 | `ame:doc:inst:mhdiff_ew_x` | Elementwise Arithmetic | `mhdiff.ew.x md, xs1, ms2` | `D[i] = (c - B[i]) / 2` | `ame-common-arithmetic` | - | Ready |
 | `mldexp.ew` | 3606 | `ame:doc:inst:mldexp_ew` | Elementwise Math Functions | `mldexp.ew md, ms1, ms2` | `D[i] = A[i] × 2^B[i]^` | `ame-common-arithmetic` | - | Ready |
-| `mldexp.ew.x` | 3708 | `ame:doc:inst:mldexp_ew_x` | Elementwise Math Functions | `mldexp.ew.x md, xs1, ms2` | `D[i] = B[i] × 2^c^` | `ame-common-arithmetic` | - | Ready |
+| `mldexp.ew.x` | 3708 | `ame:doc:inst:mldexp_ew_x` | Elementwise Math Functions | `mldexp.ew.x md, xs1, ms2` | `D[i] = B[i] × 2^c^` | `ame-common-arithmetic` | AME-MIG-006 | Ready |
 | `mldexpacc.ew` | 3809 | `ame:doc:inst:mldexpacc_ew` | Elementwise Math Functions | `mldexpacc.ew md, ms1, ms2` | `D[i] = D[i] + A[i] × 2^B[i]^` | `ame-common-arithmetic` | - | Ready |
-| `mldexpacc.ew.x` | 3913 | `ame:doc:inst:mldexpacc_ew_x` | Elementwise Math Functions | `mldexpacc.ew.x md, xs1, ms2` | `D[i] = D[i] + B[i] × 2^c^` | `ame-common-arithmetic` | - | Ready |
+| `mldexpacc.ew.x` | 3913 | `ame:doc:inst:mldexpacc_ew_x` | Elementwise Math Functions | `mldexpacc.ew.x md, xs1, ms2` | `D[i] = D[i] + B[i] × 2^c^` | `ame-common-arithmetic` | AME-MIG-006 | Ready |
 | `mlog2.ew` | 4016 | `ame:doc:inst:mlog2_ew` | Elementwise Math Functions | `mlog2.ew md, ms1` | `D[i] = log~2~(A[i])` | `ame-common-arithmetic` | - | Ready |
 | `mlog2sub.ew` | 4099 | `ame:doc:inst:mlog2sub_ew` | Elementwise Math Functions | `mlog2sub.ew md, ms1, ms2` | `D[i] = log~2~(\\|A[i]\\|) - B[i]` | `ame-common-arithmetic` | - | Ready |
 | `mlog2sub.ew.x` | 4202 | `ame:doc:inst:mlog2sub_ew_x` | Elementwise Math Functions | `mlog2sub.ew.x md, xs1, ms2` | `D[i] = log~2~(\\|B[i]\\|) - c` | `ame-common-arithmetic` | - | Ready |
-| `mls` | 4298 | `ame:doc:inst:mls` | Memory | `mls md, xs1` | `md <= mem[xs1]` | `ame-common-memory` | - | Ready |
-| `mls.cm` | 4364 | `ame:doc:inst:mls_cm` | Memory | `mls.cm md, xs1` | `md <= mem[xs1]` | `ame-common-memory` | - | Ready |
-| `mls.rm` | 4446 | `ame:doc:inst:mls_rm` | Memory | `mls.rm md, xs1` | `md <= mem[xs1]` | `ame-common-memory` | - | Ready |
-| `mls.st` | 4528 | `ame:doc:inst:mls_st` | Memory | `mls.st md, (xs1), xs2` | `md <= mem[xs1, stride=xs2]` | `ame-common-memory` | - | Ready |
-| `mls.tst` | 4629 | `ame:doc:inst:mls_tst` | Memory | `mls.tst md, (xs1), xs2` | `md <= mem[xs1, stride=xs2]` | `ame-common-memory` | - | Ready |
+| `mls` | 4298 | `ame:doc:inst:mls` | Memory | `mls md, xs1` | `md <= mem[xs1]` | `ame-common-memory` | AME-MIG-002 | Ready |
+| `mls.cm` | 4364 | `ame:doc:inst:mls_cm` | Memory | `mls.cm md, xs1` | `md <= mem[xs1]` | `ame-common-memory` | AME-MIG-002 | Ready |
+| `mls.rm` | 4446 | `ame:doc:inst:mls_rm` | Memory | `mls.rm md, xs1` | `md <= mem[xs1]` | `ame-common-memory` | AME-MIG-002 | Ready |
+| `mls.st` | 4528 | `ame:doc:inst:mls_st` | Memory | `mls.st md, (xs1), xs2` | `md <= mem[xs1, stride=xs2]` | `ame-common-memory` | AME-MIG-002 | Ready |
+| `mls.tst` | 4629 | `ame:doc:inst:mls_tst` | Memory | `mls.tst md, (xs1), xs2` | `md <= mem[xs1, stride=xs2]` | `ame-common-memory` | AME-MIG-002 | Ready |
 | `mmax.ew` | 4728 | `ame:doc:inst:mmax_ew` | Elementwise Arithmetic | `mmax.ew md, ms1, ms2` | `D[i] = max(A[i], B[i])` | `ame-common-arithmetic` | - | Ready |
 | `mmax.ew.x` | 4826 | `ame:doc:inst:mmax_ew_x` | Elementwise Arithmetic | `mmax.ew.x md, xs1, ms2` | `D[i] = max(c, B[i])` | `ame-common-arithmetic` | - | Ready |
 | `mmean.ew` | 4919 | `ame:doc:inst:mmean_ew` | Elementwise Arithmetic | `mmean.ew md, ms1, ms2` | `D[i] = (A[i] + B[i]) / 2` | `ame-common-arithmetic` | - | Ready |
@@ -73,7 +73,7 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 | `mmove16.x.m` | 6043 | `ame:doc:inst:mmove16_x_m` | Register move / data conversion | `mmove16.x.m xd, ms2, xs1` | `X[xd] = zero_extend(A.rm[pos, 16])` | `ame-common-register-groups` | - | Ready |
 | `mmove32.x.m` | 6126 | `ame:doc:inst:mmove32_x_m` | Register move / data conversion | `mmove32.x.m xd, ms2, xs1` | `X[xd] = zero_extend(A.rm[pos, 32])` | `ame-common-register-groups` | - | Ready |
 | `mmove64.x.m` | 6209 | `ame:doc:inst:mmove64_x_m` | Register move / data conversion | `mmove64.x.m xd, ms2, xs1` | `X[xd] = zero_extend(A.rm[pos, 64])` | `ame-common-register-groups` | - | Ready |
-| `mmul.2d` | 6298 | `ame:doc:inst:mmul_2d` | Matrix Multiply | `mmul.2d acc, ms1, ms2` | `C = A × B` | `ame-common-matmul` | - | Ready |
+| `mmul.2d` | 6298 | `ame:doc:inst:mmul_2d` | Matrix Multiply | `mmul.2d acc, ms1, ms2` | `C = A × B` | `ame-common-matmul` | AME-MIG-003 | Ready |
 | `mmul.ew` | 6399 | `ame:doc:inst:mmul_ew` | Elementwise Arithmetic | `mmul.ew md, ms1, ms2` | `D[i] = A[i] × B[i]` | `ame-common-arithmetic` | - | Ready |
 | `mmul.ew.x` | 6496 | `ame:doc:inst:mmul_ew_x` | Elementwise Arithmetic | `mmul.ew.x md, xs1, ms2` | `D[i] = c × B[i]` | `ame-common-arithmetic` | - | Ready |
 | `mmulacc.2d` | 6589 | `ame:doc:inst:mmulacc_2d` | Matrix Multiply | `mmulacc.2d acc, ms1, ms2` | `C = C + A × B` | `ame-common-matmul` | - | Ready |
@@ -84,11 +84,11 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 | `mmulaccneg.ew.x` | 7108 | `ame:doc:inst:mmulaccneg_ew_x` | Elementwise Arithmetic | `mmulaccneg.ew.x md, xs1, ms2` | `D[i] = D[i] - c × B[i]` | `ame-common-arithmetic` | - | Ready |
 | `mmuladd.ew` | 7204 | `ame:doc:inst:mmuladd_ew` | Elementwise Arithmetic | `mmuladd.ew md, ms1, ms2` | `D[i] = A[i] + B[i] × D[i]` | `ame-common-arithmetic` | - | Ready |
 | `mmuladd.ew.x` | 7309 | `ame:doc:inst:mmuladd_ew_x` | Elementwise Arithmetic | `mmuladd.ew.x md, xs1, ms2` | `D[i] = c + B[i] × D[i]` | `ame-common-arithmetic` | - | Ready |
-| `mmulat.2d` | 7405 | `ame:doc:inst:mmulat_2d` | Matrix Multiply | `mmulat.2d acc, ms1, ms2` | `C = A^T^ × B` | `ame-common-matmul` | - | Ready |
-| `mmulatacc.2d` | 7506 | `ame:doc:inst:mmulatacc_2d` | Matrix Multiply | `mmulatacc.2d acc, ms1, ms2` | `C = C + A^T^ × B` | `ame-common-matmul` | - | Ready |
-| `mmulbt.2d` | 7612 | `ame:doc:inst:mmulbt_2d` | Matrix Multiply | `mmulbt.2d acc, ms1, ms2` | `C = A × B^T^` | `ame-common-matmul` | - | Ready |
-| `mmulbtacc.2d` | 7713 | `ame:doc:inst:mmulbtacc_2d` | Matrix Multiply | `mmulbtacc.2d acc, ms1, ms2` | `C = C + A × B^T^` | `ame-common-matmul` | - | Ready |
-| `mmulneg.2d` | 7819 | `ame:doc:inst:mmulneg_2d` | Matrix Multiply | `mmulneg.2d acc, ms1, ms2` | `C = -(A × B)` | `ame-common-matmul` | - | Ready |
+| `mmulat.2d` | 7405 | `ame:doc:inst:mmulat_2d` | Matrix Multiply | `mmulat.2d acc, ms1, ms2` | `C = Σ~s~ A_s^T^ × B_s` | `ame-common-matmul` | AME-MIG-003, AME-MIG-005 | Ready |
+| `mmulatacc.2d` | 7506 | `ame:doc:inst:mmulatacc_2d` | Matrix Multiply | `mmulatacc.2d acc, ms1, ms2` | `C = C + Σ~s~ A_s^T^ × B_s` | `ame-common-matmul` | AME-MIG-005 | Ready |
+| `mmulbt.2d` | 7612 | `ame:doc:inst:mmulbt_2d` | Matrix Multiply | `mmulbt.2d acc, ms1, ms2` | `C = Σ~s~ A_s × B_s^T^` | `ame-common-matmul` | AME-MIG-003, AME-MIG-005 | Ready |
+| `mmulbtacc.2d` | 7713 | `ame:doc:inst:mmulbtacc_2d` | Matrix Multiply | `mmulbtacc.2d acc, ms1, ms2` | `C = C + Σ~s~ A_s × B_s^T^` | `ame-common-matmul` | AME-MIG-005 | Ready |
+| `mmulneg.2d` | 7819 | `ame:doc:inst:mmulneg_2d` | Matrix Multiply | `mmulneg.2d acc, ms1, ms2` | `C = -(A × B)` | `ame-common-matmul` | AME-MIG-003 | Ready |
 | `mmulneg.ew` | 7920 | `ame:doc:inst:mmulneg_ew` | Elementwise Arithmetic | `mmulneg.ew md, ms1, ms2` | `D[i] = -(A[i] × B[i])` | `ame-common-arithmetic` | - | Ready |
 | `mmulneg.ew.x` | 8021 | `ame:doc:inst:mmulneg_ew_x` | Elementwise Arithmetic | `mmulneg.ew.x md, xs1, ms2` | `D[i] = -(c × B[i])` | `ame-common-arithmetic` | - | Ready |
 | `mmulsub.ew` | 8114 | `ame:doc:inst:mmulsub_ew` | Elementwise Arithmetic | `mmulsub.ew md, ms1, ms2` | `D[i] = A[i] - B[i] × D[i]` | `ame-common-arithmetic` | - | Ready |
@@ -115,8 +115,8 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 | `mrowgather.ew` | 10206 | `ame:doc:inst:mrowgather_ew` | Permutation | `mrowgather.ew md, ms1, ms2` | `D[i,j] = A[B[i,j],j]` | `ame-common-structural` | - | Ready |
 | `mrowid.ew` | 10324 | `ame:doc:inst:mrowid_ew` | State Management | `mrowid.ew md` | `D[i,j] = i` | `ame-common-register-groups` | - | Ready |
 | `mrowshift.ew.x` | 10407 | `ame:doc:inst:mrowshift_ew_x` | Permutation | `mrowshift.ew.x md, ms1, xs1` | `D[i,j] = A[i+c,j]` | `ame-common-structural` | - | Ready |
-| `mrowunzip.ew` | 10518 | `ame:doc:inst:mrowunzip_ew` | Permutation | `mrowunzip.ew md, ms1` | `D^0^[i,:] = A[2i,:] + D^1^[i,:] = A[2i+1,:]` | `ame-common-structural` | - | Ready |
-| `mrowzip.ew` | 10629 | `ame:doc:inst:mrowzip_ew` | Permutation | `mrowzip.ew md, ms1, ms2` | `D[2i,:] = A[i,:] + D[2i+1,:] = B[i,:]` | `ame-common-structural` | - | Ready |
+| `mrowunzip.ew` | 10518 | `ame:doc:inst:mrowunzip_ew` | Permutation | `mrowunzip.ew md, ms1` | `D^0^[i,:] = A[2i,:] + D^1^[i,:] = A[2i+1,:]` | `ame-common-structural` | AME-MIG-004 | Ready |
+| `mrowzip.ew` | 10629 | `ame:doc:inst:mrowzip_ew` | Permutation | `mrowzip.ew md, ms1, ms2` | `D[2i,:] = A[i,:] + D[2i+1,:] = B[i,:]` | `ame-common-structural` | AME-MIG-004 | Ready |
 | `mrsqrt.ew` | 10756 | `ame:doc:inst:mrsqrt_ew` | Elementwise Math Functions | `mrsqrt.ew md, ms1` | `D[i] = 1 / sqrt(A[i])` | `ame-common-arithmetic` | - | Ready |
 | `mscatadd.col` | 10851 | `ame:doc:inst:mscatadd_col` | Permutation | `mscatadd.col md, ms1, ms2` | `D[B[i,j], j] += A[i,j]` | `ame-common-structural` | - | Ready |
 | `mscatadd.row` | 10970 | `ame:doc:inst:mscatadd_row` | Permutation | `mscatadd.row md, ms1, ms2` | `D[i, B[i,j]] += A[i,j]` | `ame-common-structural` | - | Ready |
@@ -124,7 +124,7 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 | `mscatmax.row` | 11208 | `ame:doc:inst:mscatmax_row` | Permutation | `mscatmax.row md, ms1, ms2` | `D[i, B[i,j]] = max(D[i,B[i,j]], A[i,j])` | `ame-common-structural` | - | Ready |
 | `mselge.ew` | 11327 | `ame:doc:inst:mselge_ew` | Compare and Predication | `mselge.ew md, ms1, ms2` | `D[i] = (A[i] >= 0) ? B[i] : 0` | `ame-common-arithmetic` | - | Ready |
 | `msellt.ew` | 11433 | `ame:doc:inst:msellt_ew` | Compare and Predication | `msellt.ew md, ms1, ms2` | `D[i] = (A[i] < 0) ? B[i] : 0` | `ame-common-arithmetic` | - | Ready |
-| `msettyp` | 11539 | `ame:doc:inst:msettyp` | Datatype Management | `msettyp md, xs1` | `Md[md] = X[xs1]; M[md] = zero(Md[md])` | `ame-common-datatype-support` | - | Ready |
+| `msettyp` | 11539 | `ame:doc:inst:msettyp` | Datatype Management | `msettyp md, xs1` | `new_dtype = X[xs1][31:0]; Md[md] = new_dtype; raw_bits(M[md .. md+group_size-1]) = 0` | `ame-common-datatype-support` | - | Ready |
 | `msin.ew` | 11606 | `ame:doc:inst:msin_ew` | Elementwise Math Functions | `msin.ew md, ms1` | `D[i] = sin(A[i])` | `ame-common-arithmetic` | - | Ready |
 | `msll.ew` | 11701 | `ame:doc:inst:msll_ew` | Bitwise | `msll.ew md, ms1, ms2` | `D[i] = A[i] << (B[i] mod EW)` | `ame-common-arithmetic` | - | Ready |
 | `msll.ew.x` | 11811 | `ame:doc:inst:msll_ew_x` | Bitwise | `msll.ew.x md, xs1, ms2` | `D[i] = B[i] << (c mod EW)` | `ame-common-arithmetic` | - | Ready |
@@ -133,11 +133,11 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 | `msra.ew.x` | 12115 | `ame:doc:inst:msra_ew_x` | Bitwise | `msra.ew.x md, xs1, ms2` | `D[i] = B[i] >>s (c mod EW)` | `ame-common-arithmetic` | - | Ready |
 | `msrl.ew` | 12214 | `ame:doc:inst:msrl_ew` | Bitwise | `msrl.ew md, ms1, ms2` | `D[i] = A[i] >>u (B[i] mod EW)` | `ame-common-arithmetic` | - | Ready |
 | `msrl.ew.x` | 12324 | `ame:doc:inst:msrl_ew_x` | Bitwise | `msrl.ew.x md, xs1, ms2` | `D[i] = B[i] >>u (c mod EW)` | `ame-common-arithmetic` | - | Ready |
-| `mss` | 12423 | `ame:doc:inst:mss` | Memory | `mss ms1, xs1` | `mem[xs1] <= ms1` | `ame-common-memory` | - | Ready |
-| `mss.cm` | 12488 | `ame:doc:inst:mss_cm` | Memory | `mss.cm ms1, xs1` | `mem[xs1] <= ms1` | `ame-common-memory` | - | Ready |
-| `mss.rm` | 12571 | `ame:doc:inst:mss_rm` | Memory | `mss.rm ms1, xs1` | `mem[xs1] <= ms1` | `ame-common-memory` | - | Ready |
-| `mss.st` | 12654 | `ame:doc:inst:mss_st` | Memory | `mss.st ms1, (xs1), xs2` | `mem[xs1, stride=xs2] <= ms1` | `ame-common-memory` | - | Ready |
-| `mss.tst` | 12754 | `ame:doc:inst:mss_tst` | Memory | `mss.tst ms1, (xs1), xs2` | `mem[xs1, stride=xs2] <= ms1` | `ame-common-memory` | - | Ready |
+| `mss` | 12423 | `ame:doc:inst:mss` | Memory | `mss ms1, xs1` | `mem[xs1] <= ms1` | `ame-common-memory` | AME-MIG-002 | Ready |
+| `mss.cm` | 12488 | `ame:doc:inst:mss_cm` | Memory | `mss.cm ms1, xs1` | `mem[xs1] <= ms1` | `ame-common-memory` | AME-MIG-002 | Ready |
+| `mss.rm` | 12571 | `ame:doc:inst:mss_rm` | Memory | `mss.rm ms1, xs1` | `mem[xs1] <= ms1` | `ame-common-memory` | AME-MIG-002 | Ready |
+| `mss.st` | 12654 | `ame:doc:inst:mss_st` | Memory | `mss.st ms1, (xs1), xs2` | `mem[xs1, stride=xs2] <= ms1` | `ame-common-memory` | AME-MIG-002 | Ready |
+| `mss.tst` | 12754 | `ame:doc:inst:mss_tst` | Memory | `mss.tst ms1, (xs1), xs2` | `mem[xs1, stride=xs2] <= ms1` | `ame-common-memory` | AME-MIG-002 | Ready |
 | `msub.ew` | 12852 | `ame:doc:inst:msub_ew` | Elementwise Arithmetic | `msub.ew md, ms1, ms2` | `D[i] = B[i] - A[i]` | `ame-common-arithmetic` | - | Ready |
 | `msub.ew.x` | 12949 | `ame:doc:inst:msub_ew_x` | Elementwise Arithmetic | `msub.ew.x md, xs1, ms2` | `D[i] = c - B[i]` | `ame-common-arithmetic` | - | Ready |
 | `msublog2.ew` | 13042 | `ame:doc:inst:msublog2_ew` | Elementwise Math Functions | `msublog2.ew md, ms1, ms2` | `D[i] = B[i] - log~2~(\\|A[i]\\|)` | `ame-common-arithmetic` | - | Ready |
@@ -263,6 +263,41 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 - After: the normative operation is `D[i] = A[i] + B[i]`, writing `md`.
 - Evidence: the mnemonic declares `md` as the destination; the Description says the result is stored in `md`; the programming-model operation table uses `D`; the IDL stages writes to `md`.
 - Architectural impact: none; this corrects a non-normative illustrative typo.
+
+### AME-MIG-002: AME memory-fault atomicity and fault address
+
+- Before: the legacy byte-loop helpers could expose earlier byte stores before a later byte fault and passed the current byte or segment address to ordinary memory helpers.
+- After: the pre-existing normative programming-model rule remains authoritative: a fault commits no memory or register location, and the reported fault address is the instruction base address.
+- Evidence: baseline `src/programming_model.adoc` lines 1313-1317 explicitly require no partial completion and the base fault address; the legacy instruction chapter states that common programming-model rules override shorthand operation detail.
+- Architectural impact: the published architecture is unchanged, but a formal implementation based on the legacy byte loops must stage the whole transfer and report the architectural base address.
+
+### AME-MIG-003: overwriting matrix-multiply seed value
+
+- Before: the legacy IDL initialized each overwriting dot-product partial result from an all-zero raw bit vector, while the normative instruction descriptions and programming model specified an ordinary mathematical matrix product.
+- After: overwriting matrix multiplies seed each dot product with the accumulator datatype's semantic additive zero.  Accumulating forms continue to seed from the pre-instruction accumulator element.
+- Evidence: `C = A x B`, `C = A^T^ x B`, `C = A x B^T^`, and `C = -(A x B)` are mathematical definitions whose sum identity is semantic zero; the raw-bit initialization is the sole conflicting IDL implementation detail.  The distinction is observable only for a custom datatype whose additive-zero encoding is not all-zero bits.
+- Architectural impact: standard integer and IEEE floating-point datatypes are unaffected.  A custom accumulator datatype with a nonzero additive-zero encoding must follow its numeric zero rather than the legacy raw initializer.
+
+### AME-MIG-004: row zip/unzip wide-tuple ambiguity
+
+- Before: the legacy prose and IDL name literal consecutive bases (`base`, `base+1`) for the two squares, while the same IDL permits operation support to be queried for a wide datatype whose square occupies a multi-register aligned group.  The derived `base+1` then overlaps the first wide group and cannot itself satisfy that group's alignment.
+- After: `mrowzip.ew` and `mrowunzip.ew` support only datatypes no wider than `AME_UNIT_DATATYPE_SIZE`.  Unit datatypes use the literal register pair; packed datatypes use slot 0 of each literal register and preserve the other destination slots.
+- Evidence: this retains the literal register selection and element loop of the legacy instruction definitions for every supported case, while excluding the internally contradictory wide case.
+- Architectural impact: an implementation cannot advertise row zip/unzip support for a wide datatype.  A future revision may define a distinct wide encoding or group-stride rule.
+
+### AME-MIG-005: transposed matrix formation when `N_sq > 1`
+
+- Before: the programming model forms aggregate rectangular A and B operands for `N_sq > 1`, but the shorthand `A^T^ x B` and `A x B^T^` is dimensionally undefined for those rectangles.
+- After: transpose-A and transpose-B apply within each paired `N x N` logical square and sum the square products: `sum_s(A_s^T^ x B_s)` or `sum_s(A_s x B_s^T^)`.
+- Evidence: the per-square definition agrees with the instruction behavior for `N_sq = 1`, preserves the `N_sq * N` product terms per output element, and yields the required `N x N` accumulator for every `N_sq`.
+- Architectural impact: packed/mixed-width transposed matrix operations now have one defined association of source coordinates.  Implementations using a different ad hoc interpretation must adopt the per-square mapping.
+
+### AME-MIG-006: fixed scalar-exponent datatype selection
+
+- Before: two instruction descriptions referenced `AME_MAX_INT_DTYPE`, but the parameter was absent from the parameter chapter.  “Maximum supported integer datatype” was undefined when no integer datatype was supported and was non-unique when several encodings shared the greatest width.
+- After: when integer datatypes are supported, `AME_MAX_INT_DTYPE` selects a greatest-width supported integer encoding and ties are implementation-documented.  With no supported integer datatype, the parameter is absent and all `mldexp.ew.x` and `mldexpacc.ew.x` tuples are unsupported.  X-register bits are zero-extended or low-bit truncated to the selected width before interpretation.
+- Evidence: this makes the instruction text instantiable without imposing a new minimum datatype set, preserves the legacy bit-vector widening/truncation behavior, and leaves the implementation's operation-support freedom intact.
+- Architectural impact: float-only implementations deterministically report `amestatus.UN` for these two forms; implementations with same-width integer encodings must document which encoding supplies signedness and other datatype properties.
 
 ## Legacy-check disposition
 

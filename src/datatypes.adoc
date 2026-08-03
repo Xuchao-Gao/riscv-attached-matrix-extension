@@ -71,7 +71,7 @@ Integer types are two's complement binary numbers.
 
 The *Rounding mode* field applies to integer operations whose exact
 mathematical intermediate result has fraction bits below the LSB of the
-destination datatype (for example `MEAN1D` and `HDIFF1D`).  Let `v` be the
+destination datatype (for example `mmean.ew` and `mhdiff.ew`).  Let `v` be the
 exact intermediate result and `d` the number of fraction bits discarded when
 producing the destination-width integer result.  `v` is treated as a two's
 complement value and `>>` denotes an arithmetic right shift.  When `d == 1`,

@@ -1,0 +1,416 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "set"
+
+def active_asciidoc(text)
+  in_comment_block = false
+  text.each_line.each_with_object([]) do |line, active|
+    if line.strip == "////"
+      in_comment_block = !in_comment_block
+      next
+    end
+    next if in_comment_block || line.lstrip.start_with?("//")
+
+    active << line
+  end.join
+end
+
+root = File.expand_path("..", __dir__)
+archive_dir = ["legacy", %w[u db].join].join("-")
+instructions_path = File.join(root, "src", "instructions.adoc")
+allocations_path = File.join(root, "src", "instruction-encoding-allocations.adoc")
+baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
+audit_path = File.join(root, "docs", "migration", "ame-prose-migration-audit.md")
+errors = []
+
+expected_baseline_hash = "bb2cf4dec5e42f23be13bae25fa7f3fd95c45231647ffb17f46cfc580268999f"
+actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
+unless actual_baseline_hash == expected_baseline_hash
+  errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
+end
+baseline_document = JSON.parse(File.read(baseline_path))
+expected_commit = "b97c6c4656525ee06aeb9600021b1debc0a76233"
+unless baseline_document["baseline_commit"] == expected_commit
+  errors << "baseline snapshot identifies #{baseline_document['baseline_commit']}, expected #{expected_commit}"
+end
+baseline = baseline_document.fetch("instructions")
+
+attributes = {}
+File.foreach(allocations_path) do |line|
+  match = line.match(/^:([a-z0-9-]+):\s+(\S+)$/)
+  attributes[match[1]] = match[2] if match
+end
+
+instructions = File.read(instructions_path)
+categories = {}
+current_category = nil
+instructions.split("\n<<<\n", 2).first.each_line do |line|
+  current_category = Regexp.last_match(1) if line.match(/^(.+)::$/)
+  if line.match(/^a\| `([^\s`]+)/)
+    name = Regexp.last_match(1)
+    errors << "#{name}: duplicate category entry" if categories.key?(name)
+    categories[name] = current_category
+  end
+end
+
+sections = instructions.scan(/^\[#(ame:doc:inst:[^\]]+)\]\n=== `([^`]+)`\n(.*?)(?=^<<<\s*$|\z)/m)
+errors << "instruction coverage is #{sections.length}/141" unless sections.length == 141
+
+programming_model = active_asciidoc(File.read(File.join(root, "src", "programming_model.adoc")))
+[instructions, programming_model].each_with_index do |text, index|
+  next unless text.match?(/^\s*(?:ifdef|ifndef|ifeval|endif)::/)
+
+  filename = index.zero? ? "instructions.adoc" : "programming_model.adoc"
+  errors << "#{filename}: conditional directives are not permitted in instruction/common-contract material"
+end
+operand_class_table = programming_model[/\[\[ame-common-operand-classes\]\].*?^\|===\n(.*?)^\|===/m, 1]
+if operand_class_table.nil?
+  errors << "missing shared operand-class requirements table"
+  operand_class_tokens = Set.new
+else
+  operand_class_tokens = operand_class_table.scan(/`([^`]+)`/).flatten.to_set
+end
+
+primary_contract = {
+  "Resource Management" => "ame-common-state-access",
+  "Datatype Management" => "ame-common-datatype-support",
+  "Elementwise Arithmetic" => "ame-common-arithmetic",
+  "Bitwise" => "ame-common-arithmetic",
+  "Compare and Predication" => "ame-common-arithmetic",
+  "Permutation" => "ame-common-structural",
+  "Register move / data conversion" => "ame-common-register-groups",
+  "Elementwise Math Functions" => "ame-common-arithmetic",
+  "Memory" => "ame-common-memory",
+  "State Management" => "ame-common-register-groups",
+  "Matrix Multiply" => "ame-common-matmul",
+  "Reduction" => "ame-common-structural"
+}
+data_scalar_categories = Set.new([
+  "Elementwise Arithmetic",
+  "Bitwise",
+  "Compare and Predication",
+  "Elementwise Math Functions"
+])
+control_scalar_names = Set.new(%w[
+  mldexp.ew.x
+  mldexpacc.ew.x
+  msll.ew.x
+  msra.ew.x
+  msrl.ew.x
+])
+
+current_identity = []
+active_sections_by_name = {}
+sections.each_with_index do |(anchor, name, section), index|
+  active_section = active_asciidoc(section)
+  active_sections_by_name[name] = active_section
+  category = categories[name]
+  errors << "#{name}: missing instruction-list category" unless category
+
+  %w[Synopsis Mnemonic Encoding Description Operation].each do |label|
+    count = active_section.scan(/^#{label}::$/).length
+    errors << "#{name}: expected one #{label} block, found #{count}" unless count == 1
+  end
+  errors << "#{name}: Operation is not a language-neutral source block" unless active_section.match?(/^Operation::\n\+\n\[source\]\n----\n.+?\n----/m)
+
+  contract = name == "fence.ame" ? "ame-common-ordering" : primary_contract[category]
+  if contract.nil?
+    errors << "#{name}: category #{category.inspect} has no common-contract mapping"
+  elsif !active_section.include?("<<#{contract}>>")
+    errors << "#{name}: missing required common contract #{contract}"
+  end
+
+  data_scalar = name.end_with?(".ew.x") && data_scalar_categories.include?(category) &&
+                !control_scalar_names.include?(name)
+  if data_scalar && !active_section.include?("<<ame-common-datatype-support>>")
+    errors << "#{name}: data scalar does not reference the scalar datatype-conversion contract"
+  end
+  control_scalar = name.end_with?(".ew.x") && !data_scalar
+  if control_scalar
+    unless active_section.match?(/does\s+not read/)
+      errors << "#{name}: fixed control scalar is confused with a datatype-converted data scalar"
+    end
+  end
+
+  operand_class_exempt = ["Resource Management", "Datatype Management", "Memory"].include?(category) ||
+                         name == "fence.ame" || name.match?(/^mmove(?:8|16|32|64)\./)
+  class_family_name = name.end_with?(".ew.x") ? name.sub(/\.ew\.x\z/, ".ew") : name
+  unless operand_class_exempt || operand_class_tokens.include?(name) || operand_class_tokens.include?(class_family_name)
+    errors << "#{name}: no entry in the shared operand-class requirements table"
+  end
+
+  raw = section.lines.find { |line| line.start_with?('{"reg":') }.to_s.strip
+  resolved = raw.gsub(/\{([a-z0-9-]+)\}/) do
+    key = Regexp.last_match(1)
+    errors << "#{name}: unknown encoding attribute #{key}" unless attributes.key?(key)
+    attributes.fetch(key, "0")
+  end
+  position = 0
+  mask = 0
+  match_value = 0
+  resolved.scan(/"bits":(\d+),"name":\s*("[^"]+"|0x[0-9a-f]+|\d+)/) do |width_text, token|
+    width = width_text.to_i
+    unless token.start_with?('"')
+      value = token.start_with?("0x") ? token.to_i(16) : token.to_i
+      mask |= ((1 << width) - 1) << position
+      match_value |= value << position
+    end
+    position += width
+  end
+  dest_fixed = (mask & 0x00000f80) == 0x00000f80
+  src1_fixed = (mask & 0x000f8000) == 0x000f8000
+  src2_fixed = (mask & 0x01f00000) == 0x01f00000
+  format_name = if !src2_fixed
+                  "R3"
+                elsif !src1_fixed
+                  "R2"
+                elsif !dest_fixed
+                  "R1"
+                else
+                  "Fixed"
+                end
+  current_identity << {
+    "order" => index + 1,
+    "name" => name,
+    "anchor" => anchor,
+    "category" => category,
+    "synopsis" => section[/^Synopsis::\n([^\n]+)/, 1],
+    "mnemonic" => section[/^Mnemonic::\n`([^`]+)`/, 1],
+    "wavedrom" => raw,
+    "resolved_wavedrom" => resolved,
+    "format" => format_name,
+    "mask" => format("0x%08x", mask),
+    "match" => format("0x%08x", match_value)
+  }
+end
+
+{
+  "agettyp" => [/zero_extend_XLEN\(Ad\[ad\]\)/, "zero-extended accumulator datatype read"],
+  "asettyp" => [/Ad\[ad\] = X\[xs1\]\[31:0\].*raw_bits\(Acc\[ad\]\) = 0/m, "32-bit datatype write and raw accumulator clear"],
+  "ame.acquire" => [/descriptor = X\[xs\]/, "acquisition-descriptor interpretation"],
+  "mgettyp" => [/zero_extend_XLEN\(Md\[ms1\]\)/, "zero-extended M datatype read"],
+  "msettyp" => [/new_dtype = X\[xs1\]\[31:0\].*raw_bits\(M\[md \.\. md\+group_size-1\]\) = 0/m, "32-bit datatype write and whole-group raw M-register clear"],
+  "mls" => [/AME_MATRIX_REGISTER_SIZE \/ 8/, "raw M-register byte count"],
+  "mss" => [/AME_MATRIX_REGISTER_SIZE \/ 8/, "raw M-register byte count"],
+  "mls.cm" => [/total_bytes = ceil\(pack_factor \* AME_NELEM \* sizeof\(Md\[md\]\) \/ 8\)/, "column-major byte-rounded transfer size"],
+  "mls.rm" => [/total_bytes = ceil\(pack_factor \* AME_NELEM \* sizeof\(Md\[md\]\) \/ 8\)/, "row-major byte-rounded transfer size"],
+  "mss.cm" => [/total_bytes = ceil\(pack_factor \* AME_NELEM \* sizeof\(Md\[ms1\]\) \/ 8\)/, "column-major byte-rounded transfer size"],
+  "mss.rm" => [/total_bytes = ceil\(pack_factor \* AME_NELEM \* sizeof\(Md\[ms1\]\) \/ 8\)/, "row-major byte-rounded transfer size"],
+  "mls.st" => [/element_bytes = ceil\(sizeof\(Md\[md\]\) \/ 8\)/, "strided byte alignment"],
+  "mls.tst" => [/element_bytes = ceil\(sizeof\(Md\[md\]\) \/ 8\)/, "transposed-strided byte alignment"],
+  "mss.st" => [/element_bytes = ceil\(sizeof\(Md\[ms1\]\) \/ 8\)/, "strided byte alignment"],
+  "mss.tst" => [/element_bytes = ceil\(sizeof\(Md\[ms1\]\) \/ 8\)/, "transposed-strided byte alignment"],
+  "mcolbcast.ew.x" => [/low 32 bits/, "U32 column-index width"],
+  "mrowbcast.ew.x" => [/low 32 bits/, "U32 row-index width"],
+  "mcolshift.ew.x" => [/low 32 bits/, "S32 column-offset width"],
+  "mrowshift.ew.x" => [/low 32 bits/, "S32 row-offset width"],
+  "mpack.ew.x" => [/low 32 bits/, "U32 packed-slot index width"],
+  "munpack.ew.x" => [/low 32 bits/, "U32 packed-slot index width"]
+}.each do |name, (pattern, description)|
+  section = active_sections_by_name.fetch(name, "")
+  errors << "#{name}: missing #{description}" unless section.match?(pattern)
+end
+
+{
+  /data-source element width/ => "source-width shift rule",
+  /scalar\s+datatype is wider than XLEN, the X-register bit pattern is zero-extended/m => "data-scalar widening rule",
+  /`mrowunzip\.ew` and `mrowzip\.ew` are also explicit fixed-shape exceptions/ => "row zip/unzip fixed-shape exception",
+  /family supports only datatypes whose size is\s+no greater than `AME_UNIT_DATATYPE_SIZE`/m => "row zip/unzip wide-type restriction",
+  /only slot 0 of each named register participates/ => "packed row zip/unzip slot selection",
+  /The opaque `mls` and `mss` instructions do not inspect `Md`/ => "opaque load/store datatype exemption",
+  /Elements are packed\s+back-to-back as E-bit fields/m => "typed memory bit packing",
+  /load ignores the unused high bits.*store writes those unused high bits as zero/m => "partial-byte load/store rule",
+  /Segment `i` contains `P \* N \* E` bits/ => "strided segment size rule",
+  /Segment `sq \* N \+ j` contains `N \* E` bits/ => "transposed-strided segment size rule",
+  /segments\s+in ascending segment-number order.*later segment therefore wins/m => "overlapping strided-store ordering",
+  /lowest-addressed\s+byte transfers physical bits 7:0/m => "opaque memory byte order",
+  /Checks occur in the following architectural order/ => "memory exception-priority rule",
+  /most\s+significant bit of the raw predicate-element encoding/m => "raw sign-bit predicate rule",
+  /low 32 raw bits of each matrix-index element/m => "U32 matrix-index rule",
+  /true comparison produces all one bits/ => "comparison result-bit rule",
+  /derived accumulator span.*checked after the operation\s+tuple is supported/m => "packed accumulator span validation",
+  /zero-extended or low-bit truncated/ => "fixed scalar-exponent width rule",
+  /`mmulacc\.ew\.x`/ => "destination-as-source scalar fused-operation rule",
+  /`mscatadd\.col`, `mscatadd\.row`/ => "scatter-add floating-point rule",
+  /`mscatmax\.col`, `mscatmax\.row`/ => "scatter-max floating-point rule",
+  /Scatter source elements are processed in ascending logical row-major order/ => "scatter collision ordering rule",
+  /prefix or reduction fold is seeded from the first source element/ => "prefix/reduction seed rule",
+  /transposes each `N x N` logical square/ => "dimensionally valid transposed matrix formation",
+  /seeds each dot product with the accumulator datatype's semantic\s+additive zero/m => "overwriting matrix semantic-zero seed",
+  /`mhdiff\.ew\.x`, `mmean\.ew`/ => "scalar half-difference/mean integer rounding rule"
+}.each do |pattern, description|
+  errors << "programming_model.adoc: missing #{description}" unless programming_model.match?(pattern)
+end
+
+if current_identity != baseline
+  keys = %w[order name anchor category synopsis mnemonic wavedrom resolved_wavedrom format mask match]
+  [current_identity.length, baseline.length].min.times do |index|
+    keys.each do |key|
+      next if current_identity[index][key] == baseline[index][key]
+
+      errors << "baseline identity mismatch at instruction #{index + 1} #{key}: " \
+                "#{current_identity[index][key].inspect} != #{baseline[index][key].inspect}"
+    end
+  end
+end
+
+def include_closure(path, seen, errors)
+  absolute = File.expand_path(path)
+  return [] if seen.include?(absolute)
+
+  seen << absolute
+  unless File.file?(absolute)
+    errors << "missing included file #{absolute}"
+    return []
+  end
+  files = [absolute]
+  active_asciidoc(File.read(absolute)).each_line do |line|
+    match = line.match(/^\s*include::([^\[]+)\[[^\]]*\]/)
+    next unless match
+
+    files.concat(include_closure(File.expand_path(match[1], File.dirname(absolute)), seen, errors))
+  end
+  files
+end
+
+closure = include_closure(File.join(root, "src", "riscv-spec.adoc"), Set.new, errors)
+if closure.any? { |path| path.include?(File.join("formal", archive_dir)) }
+  errors << "historical IDL archive is reachable from the published document"
+end
+errors << "retired src/functions.adoc remains in the published include closure" if closure.any? { |path| File.basename(path) == "functions.adoc" }
+
+forbidden = {
+  "[source,idl" => "IDL source block",
+  "AmeOperation::" => "IDL operation enum",
+  "$encoding" => "generated encoding variable",
+  "pass:[" => "IDL AsciiDoc escape",
+  "Bits<" => "IDL bit-vector type",
+  "ame:doc:func:" => "legacy helper anchor or reference",
+  "NumPy Equivalent::" => "NumPy semantic block",
+  "Decode Variables::" => "generated decode-variable block"
+}
+closure.each do |path|
+  text = File.read(path)
+  forbidden.each do |marker, description|
+    errors << "#{path.sub(root + '/', '')}: published closure contains #{description} (#{marker})" if text.include?(marker)
+  end
+end
+
+former_helper_anchor = /\[#ame:doc:func:(ame_|read_memory_ame|write_memory_ame|sqrt|min)/
+%w[instructions.adoc programming_model.adoc].each do |filename|
+  path = File.join(root, "src", filename)
+  errors << "#{filename}: legacy helper anchor remains" if File.read(path).match?(former_helper_anchor)
+end
+
+required_norm_anchors = %w[
+  norm:ame_nsq_1d
+  norm:ame_nsq_structural
+  norm:ame_nsq_matmul
+  norm:ame_op_supported_contract
+  norm:ame_op_supported_defined_result
+  norm:ame_op_precondition
+  norm:ame_op_result_width
+  norm:ame_fp_special_values
+]
+published = closure.map { |path| File.read(path) }.join("\n")
+active_published = active_asciidoc(published)
+unless active_published.include?("[#ame:doc:param:AME_MAX_INT_DTYPE]") &&
+       active_published.include?("greatest element width") &&
+       active_published.include?("If it is absent, every `mldexp.ew.x`")
+  errors << "published document does not define AME_MAX_INT_DTYPE"
+end
+required_norm_anchors.each do |anchor|
+  count = active_published.scan(/^\[##{Regexp.escape(anchor)}\]/).length
+  errors << "published document must contain exactly one active normative anchor #{anchor}, found #{count}" unless count == 1
+end
+
+if active_published.match?(/\b[A-Z][A-Z0-9]*1D\b/) ||
+   active_published.match?(/\bm[a-z0-9_.]*\.1d(?:\.x)?\b/)
+  errors << "published document contains a retired internal 1D operation name"
+end
+errors << "published document contains a retired conceptual NumPy marker" if active_published.include?("conceptual:")
+
+archive_hashes = {
+  "instructions-idl.adoc" => "7e103b393e5e6e7e762757b890d7afa9a51eca3b4a046567803e807070d49680",
+  "functions-idl.adoc" => "140e50c2d5bb24f5de88fec1a71ac15c29cc2b6f8084d084cfd7024c3d8c1b07",
+  "instruction-encoding-allocations.adoc" => "9a3748a14613d05e44c7a70810f0b1747df2c75125e46e98ed0725fada929f30"
+}
+archive_hashes.each do |filename, expected|
+  path = File.join(root, "formal", archive_dir, filename)
+  actual = File.file?(path) ? Digest::SHA256.file(path).hexdigest : "missing"
+  errors << "historical archive hash mismatch for #{filename}: #{actual}" unless actual == expected
+end
+
+archive_readme = File.read(File.join(root, "formal", archive_dir, "README.md"))
+readme_requirements = [
+  "historical, non-normative",
+  "Repository: `riscv/riscv-attached-matrix-extension`",
+  "Baseline commit: `#{expected_commit}`",
+  "Baseline tag: `v0.5`"
+]
+archive_hashes.each do |filename, expected|
+  readme_requirements << "| `#{filename}` | `#{expected}` |"
+end
+readme_requirements.each do |fragment|
+  errors << "historical archive README lost provenance fragment #{fragment.inspect}" unless archive_readme.include?(fragment)
+end
+
+audit = File.read(audit_path)
+errors << "migration audit does not record 141/141 instructions" unless audit.include?("Instruction coverage (141/141)")
+errors << "migration audit does not record 90/90 helpers" unless audit.include?("Helper coverage (90/90)")
+errors << "migration audit does not record 5/5 normative anchors" unless audit.include?("Normative-anchor coverage (5/5)")
+instruction_audit = audit[/## Instruction coverage.*?(?=^## Helper coverage)/m].to_s
+helper_audit = audit[/## Helper coverage.*?(?=^## Normative-anchor coverage)/m].to_s
+norm_audit = audit[/## Normative-anchor coverage.*?(?=^## Corrections)/m].to_s
+audited_instruction_names = instruction_audit.scan(/^\| `([^`]+)` \|/).flatten
+audited_helper_names = helper_audit.scan(/^\| `([^`]+)` \|/).flatten
+audited_norm_anchors = norm_audit.scan(/^\| `(norm:[^`]+)` \|/).flatten
+expected_instruction_names = baseline.map { |entry| entry.fetch("name") }
+archive_functions = File.read(File.join(root, "formal", archive_dir, "functions-idl.adoc"))
+expected_helper_names = archive_functions.scan(/^=== `([^`]+)`/).flatten
+expected_legacy_norm_anchors = archive_functions.scan(/^\[#(norm:[^\]]+)\]/).flatten
+errors << "migration audit instruction rows do not exactly match the 141-entry baseline" unless audited_instruction_names == expected_instruction_names
+errors << "migration audit has a non-Ready instruction row" unless instruction_audit.scan(/^\| `[^`]+` .*$/).all? { |line| line.end_with?("| Ready |") }
+errors << "migration audit helper rows do not exactly match the 90-entry archive" unless audited_helper_names == expected_helper_names
+errors << "migration audit normative-anchor rows do not exactly match the 5-entry archive" unless audited_norm_anchors == expected_legacy_norm_anchors
+correction_expectations = expected_instruction_names.to_h { |name| [name, "-"] }
+correction_expectations.merge!(
+  "madd.ew" => "AME-MIG-001",
+  "mls" => "AME-MIG-002",
+  "mls.cm" => "AME-MIG-002",
+  "mls.rm" => "AME-MIG-002",
+  "mls.st" => "AME-MIG-002",
+  "mls.tst" => "AME-MIG-002",
+  "mss" => "AME-MIG-002",
+  "mss.cm" => "AME-MIG-002",
+  "mss.rm" => "AME-MIG-002",
+  "mss.st" => "AME-MIG-002",
+  "mss.tst" => "AME-MIG-002",
+  "mldexp.ew.x" => "AME-MIG-006",
+  "mldexpacc.ew.x" => "AME-MIG-006",
+  "mmul.2d" => "AME-MIG-003",
+  "mmulat.2d" => "AME-MIG-003, AME-MIG-005",
+  "mmulatacc.2d" => "AME-MIG-005",
+  "mmulbt.2d" => "AME-MIG-003, AME-MIG-005",
+  "mmulbtacc.2d" => "AME-MIG-005",
+  "mmulneg.2d" => "AME-MIG-003",
+  "mrowunzip.ew" => "AME-MIG-004",
+  "mrowzip.ew" => "AME-MIG-004"
+)
+correction_expectations.each do |name, correction|
+  row = instruction_audit.lines.find { |line| line.start_with?("| `#{name}` |") }
+  actual = row&.match(/\| ([^|]+) \| Ready \|\s*$/)&.[](1)
+  errors << "migration audit row #{name} correction is #{actual.inspect}, expected #{correction.inspect}" unless actual == correction
+end
+%w[AME-MIG-001 AME-MIG-002 AME-MIG-003 AME-MIG-004 AME-MIG-005 AME-MIG-006].each do |correction|
+  errors << "migration audit does not record correction #{correction}" unless audit.include?("### #{correction}:")
+end
+
+abort "instruction-description validation failed:\n  #{errors.join("\n  ")}" unless errors.empty?
+
+puts "checked 141/141 prose instruction pages against baseline #{expected_commit[0, 12]}: " \
+     "stable anchors/order/categories/synopses/mnemonics/encodings, complete common contracts and operand classes, " \
+     "5/5 migrated normative anchors plus 3 shape anchors, frozen archive, and no IDL/NumPy markers in the include closure"

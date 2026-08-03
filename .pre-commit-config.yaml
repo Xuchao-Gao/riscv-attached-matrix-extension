@@ -25,8 +25,17 @@ repos:
         name: check-instruction-encodings
         entry: ruby scripts/check-instruction-encodings.rb
         language: system
-        files: ^src/(instruction-encoding-allocations|instructions)\.adoc$
+        files: ^(scripts/check-instruction-encodings\.rb|src/(instruction-encoding-allocations|instructions)\.adoc)$
         pass_filenames: false
+        always_run: true
+
+      - id: check-instruction-descriptions
+        name: check-instruction-descriptions
+        entry: ruby scripts/check-instruction-descriptions.rb
+        language: system
+        files: ^(docs/migration/ame-prose-migration-audit\.md|formal/legacy-udb/.*|ref/ame-instruction-baseline\.json|scripts/check-instruction-descriptions\.rb|src/.*\.adoc)$
+        pass_filenames: false
+        always_run: true
 
       - id: check-instruction-encoding-table
         name: check-instruction-encoding-table
@@ -34,6 +43,7 @@ repos:
         language: system
         files: ^(INSTRUCTION_ENCODINGS\.md|scripts/generate-instruction-encoding-table\.rb|src/(instruction-encoding-allocations|instructions)\.adoc)$
         pass_filenames: false
+        always_run: true
 
       - id: check-instruction-encoding-html
         name: check-instruction-encoding-html
@@ -41,6 +51,7 @@ repos:
         language: system
         files: ^(INSTRUCTION_ENCODINGS\.html|scripts/generate-instruction-encoding-html\.rb|src/(instruction-encoding-allocations|instructions)\.adoc)$
         pass_filenames: false
+        always_run: true
 
       - id: check-legacy-names
         name: check-legacy-names
@@ -48,20 +59,7 @@ repos:
         language: system
         files: ^(Makefile|.*\.(adoc|md)|scripts/.*)$
         pass_filenames: false
-
-      - id: check-managed-operations
-        name: check-managed-operations
-        entry: ruby scripts/check-managed-operations.rb
-        language: system
-        files: ^src/(functions|instruction-encoding-allocations|instructions|programming_model)\.adoc$
-        pass_filenames: false
-
-      - id: check-instruction-semantics
-        name: check-instruction-semantics
-        entry: ruby scripts/check-instruction-semantics.rb
-        language: system
-        files: ^src/(functions|instructions|programming_model)\.adoc$
-        pass_filenames: false
+        always_run: true
 
       # NOTE: check-normative-tags moved to GitHub Actions workflow
       # The workflow comments on PRs and creates issues on merge

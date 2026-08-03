@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Check every instruction encoding for malformed fields, diagram/decode
+# Check every instruction encoding for malformed fields, mnemonic/diagram
 # mismatches, exact duplicates, and partial decode-space overlaps.
 
 attributes_path = File.join(__dir__, "..", "src", "instruction-encoding-allocations.adoc")
@@ -151,9 +151,9 @@ abort "ame.release must have a fully fixed encoding" unless release &&
 abort "ame.release must use funct7=0x52, xfunct5=0x0a, rs1=0, and rd=0" unless
   release[:value] == 0xa4a0002b
 
-# Keep every WaveDrom operand field synchronized with the normative
-# Decode Variables block.  Collision checking alone cannot detect a diagram
-# that assigns an operand to different bits than the pseudocode reads.
+# Keep every WaveDrom operand field synchronized with the assembly mnemonic.
+# The prose-style specification intentionally has no generated decode-variable
+# block; the diagram is the normative bit-field assignment.
 field_errors = []
 instructions_source.scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, section|
   diagram = section.lines.find { |line| line.start_with?('{"reg":') }
@@ -167,19 +167,6 @@ instructions_source.scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, sectio
     position += width
   end
 
-  decoded = {}
-  section.scan(/(?:Bits|UInt|SInt)<\d+>\s+(\w+)\s*=\s*\$encoding\[(\d+)(?::(\d+))?\]/) do |field, hi, lo|
-    decoded[field] = [hi.to_i, (lo || hi).to_i]
-  end
-
-  fields.each do |field, range|
-    if !decoded.key?(field)
-      field_errors << "#{name} does not decode operand #{field} from diagram bits #{range.join(':')}"
-    elsif decoded[field] != range
-      field_errors << "#{name} operand #{field}: diagram #{range.join(':')}, decode #{decoded[field].join(':')}"
-    end
-  end
-
   mnemonic_match = section.match(/^`#{Regexp.escape(name)}(?:\s+([^`]+))?`$/)
   if !mnemonic_match
     field_errors << "#{name} has no parseable Mnemonic line"
@@ -191,7 +178,7 @@ instructions_source.scan(/^=== `([^`]+)`\n(.*?)(?=^=== `|\z)/m) do |name, sectio
     end
   end
 end
-abort "managed encoding/decode mismatch:\n  #{field_errors.join("\n  ")}" unless field_errors.empty?
+abort "managed encoding/mnemonic mismatch:\n  #{field_errors.join("\n  ")}" unless field_errors.empty?
 
 # A bank normally cannot mix arities. The only exception is ame.release, a
 # fully fixed member of the R2 Resource Management bank whose xfunct5 selector
@@ -261,4 +248,4 @@ puts "checked #{entries.length} instruction encodings " \
      "R1=#{format_counts.fetch('R1', 0)}, Fixed=#{format_counts.fetch('Fixed', 0)}): " \
      "single funct3=0, stable selector skeleton, controlled fixed-form sharing, " \
      "dense xfunct allocation, unique Chapter 2 classification, " \
-     "fields match decode variables, no duplicates or overlaps"
+     "fields match assembly mnemonics, no duplicates or overlaps"
