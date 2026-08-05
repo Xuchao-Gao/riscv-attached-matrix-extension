@@ -98,13 +98,14 @@ include::examples.adoc[]
 
 <<<
 
-== Formal description
+== Instruction-set description
 
-The AME specification is formally defined in this specification using
-https://dhower-qc.github.io/riscv-unified-db/docs/idl[ISA Description Language (IDL)].
+The instruction descriptions use the conventional RISC-V specification style:
+an assembly mnemonic and encoding diagram, normative prose, a compact
+architectural operation, and shared programming-model rules.  The published
+prose in this document is the architectural definition.
 
 include::instructions.adoc[]
-include::functions.adoc[]
 
 include::glossary.adoc[]
 

@@ -407,13 +407,3 @@ vstval.VALUE::
 [#ame:doc:csr_field:vstvec:BASE]
 vstvec.BASE::
   See the RISC-V Privileged Specification for details on the `vstvec.BASE` field.
-
-=== Functions
-
-[#ame:doc:func:memory_model_acquire]
-memory_model_acquire::
-  See the RISC-V ISA formal model for details on `memory_model_acquire`.
-
-[#ame:doc:func:memory_model_release]
-memory_model_release::
-  See the RISC-V ISA formal model for details on `memory_model_release`.
