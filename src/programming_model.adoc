@@ -273,30 +273,39 @@ non-packed operand's `N_sq` squares span `N_sq` registers.
 For 2D matrix multiply instructions, the inner product dimension extends to
 `N_sq * N` elements; see <<_2_dimensional_matrix_multiply_operations>>.
 
-The conversion-family instructions are explicit exceptions to this general
-multi-operand rule.  `mconv.ew` forms the complete expand or compress spans
-defined by that instruction, while `mpack.ew.x` and `munpack.ew.x` transfer one
-selected logical square and preserve or ignore the other packed slots as
-specified.  Their instruction-specific operand-formation rules take
-precedence over `N_sq = max(pack_factor)`.
+`mpack.ew.x` and `munpack.ew.x` are explicit exceptions to this general
+multi-operand rule.  They transfer one selected logical square and preserve or
+ignore the other packed slots as specified.  Their instruction-specific
+operand-formation rules take precedence over `N_sq = max(pack_factor)`.
+`mconv.ew`, by contrast, follows the general rule: its source and destination
+datatypes may each be packed or non-packed, and both operands span `N_sq`
+squares like any other elementwise instruction.
 
-`mrowunzip.ew` and `mrowzip.ew` are also explicit fixed-shape exceptions.
+`mcolunzip.ew`, `mcolzip.ew`, `mrowunzip.ew`, and `mrowzip.ew` are also
+explicit fixed-shape exceptions.
 They perform one two-square transformation rather than repeating a one-square
-transformation `N_sq` times.  This family supports only datatypes whose size is
-no greater than `AME_UNIT_DATATYPE_SIZE`; a wider tuple is unsupported and
-follows <<norm:ame_op_supported_contract>>.  Its two-square operands use the
-literal consecutive M-register bases named by the instruction.  For a unit
-datatype, each named register contains its sole square.  For a packed
-datatype, only slot 0 of each named register participates and every other
-destination slot is preserved.  `mrowunzip.ew` consumes (`ms1`, `ms1+1`) and
-produces (`md`, `md+1`); `mrowzip.ew` consumes slot 0 (or the sole square) from
-each of `ms1` and `ms2` and produces (`md`, `md+1`).  Every referenced physical
-register is validated before either destination square is written, and `md`
-must additionally be even-aligned as required by the instruction descriptions.
+transformation `N_sq` times.  Each instruction consumes the sole square from
+each of `ms1` and `ms2` and produces the two destination operands `D0` and
+`D1`.  `D0` is the logical square at `md`, and `D1` occupies the consecutive
+M registers immediately following `D0`, so the pair spans twice as many
+consecutive M registers starting at `md` as each operand requires (that is,
+two registers for a unit datatype, and twice
+`ceil(sizeof(Md[md]) / AME_UNIT_DATATYPE_SIZE)` for wider datatypes).  Every
+referenced physical register is validated before either destination square is
+written, and `md` must be aligned to the combined register span of `D0` and
+`D1`, as required by the instruction descriptions.
+
+All Permutation instructions -- the row/column broadcast, gather, scatter,
+and shift forms together with the fixed-shape zip/unzip forms -- support only
+datatypes whose size is no smaller than `AME_UNIT_DATATYPE_SIZE`; a packed
+datatype follows <<norm:ame_op_supported_contract>>.  The broadcast, gather,
+scatter, and shift operands therefore always form exactly one logical square
+(`N_sq = 1`).
 
 For `mcolgather.ew`, `mrowgather.ew`, and all four scatter instructions, the
 low 32 raw bits of each matrix-index element form an unsigned index; any higher
-element bits are ignored.  That U32 value must be less than
+element bits are ignored, and an element narrower than 32 bits is zero-extended
+to U32.  That U32 value must be less than
 `sqrt(AME_NELEM)`, or the instruction raises an Illegal Instruction exception.
 
 [#norm:ame_nsq_1d]#For an ordinary 1D element-wise instruction, the logical
@@ -305,14 +314,12 @@ logical elements of every operand over that entire range.# Instruction
 operation formulas that use a single element index apply over this complete
 range, including every packed or wide logical square.
 
-[#norm:ame_nsq_structural]#Except for the fixed two-square `mrowunzip.ew` and
-`mrowzip.ew` forms defined above, a row/column, gather/scatter, prefix, or
-reduction instruction applies its documented `N x N` transformation
-independently to each of the `N_sq` logical squares.# A row or column index is local to its
-square and cannot address another logical square.  A formula showing one
-`N x N` transformation therefore applies independently for
-`sq = 0 .. N_sq-1`, with logical element indices offset by
-`sq * AME_NELEM`.
+[#norm:ame_nsq_structural]#Prefix and reduction instructions apply their
+documented `N x N` transformation independently to each of the `N_sq` logical
+squares.# A row or column index is local to its square and cannot address
+another logical square.  A formula showing one `N x N` transformation
+therefore applies independently for `sq = 0 .. N_sq-1`, with logical element
+indices offset by `sq * AME_NELEM`.
 
 [#norm:ame_nsq_matmul]#For a 2D matrix multiply, let `A_s` and `B_s` denote
 logical square `s` of the two formed operands, for `s = 0 .. N_sq-1`.  Every
@@ -488,8 +495,12 @@ datatype.
 | Source and destination datatypes are identical; the operation is a bit-exact
 copy after the instruction-specific source selection and destination placement.
 
-| `mrowunzip.ew`, `mrowzip.ew` (additional fixed-pair restriction)
-| The common datatype size is no greater than `AME_UNIT_DATATYPE_SIZE`.
+| `mcolbcast.ew.x`, `mrowbcast.ew.x`, `mcolgather.ew`, `mrowgather.ew`,
+`mcolshift.ew.x`, `mrowshift.ew.x`, `mcolscatadd.ew`, `mrowscatadd.ew`,
+`mcolscatmax.ew`, `mrowscatmax.ew`, `mcolunzip.ew`, `mcolzip.ew`,
+`mrowunzip.ew`, `mrowzip.ew`
+| The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
 
 | `mexp2.ew`, `mlog2.ew`, `mcos.ew`, `msin.ew`, `mtanh.ew`, `mrec.ew`,
 `mrsqrt.ew`, `msqrt.ew`, `mfrintm.ew`, `mfrintn.ew`, `mfrintp.ew`, `mfrintz.ew`
@@ -534,11 +545,11 @@ datatypes for that matrix operation.
 | `mprefixadd.col`, `mprefixadd.row`, `mreduceadd.col`, `mreduceadd.row`
 | Source and destination datatypes are identical numeric datatypes.
 
-| `mscatadd.col`, `mscatadd.row`
+| `mcolscatadd.ew`, `mrowscatadd.ew`
 | The contribution source is numeric, the matrix index source is integer, and
 the current destination value and result use the destination datatype.
 
-| `mscatmax.col`, `mscatmax.row`
+| `mcolscatmax.ew`, `mrowscatmax.ew`
 | The contribution source is ordered numeric, the matrix index source is
 integer, and the current destination value and result use the destination datatype.
 
@@ -1306,7 +1317,7 @@ Otherwise numerical ordering is used, with `+0` selected for a tie between
 | Exact selection of one operand.  Prefix and reduction instructions apply the
 binary operation in ascending source-element order.
 
-| `mscatmax.col`, `mscatmax.row`
+| `mcolscatmax.ew`, `mrowscatmax.ew`
 | A NaN operand produces the destination datatype's canonical quiet NaN.
 Operands are compared numerically after each is interpreted in its own
 datatype; a `-0`/`+0` tie produces `+0`.
@@ -1347,7 +1358,7 @@ sign; `mmulneg.ew` then negates that sign.
 rounded, but association order is implementation-defined and results may vary
 between implementations.
 
-| `mscatadd.col`, `mscatadd.row`
+| `mcolscatadd.ew`, `mrowscatadd.ew`
 | NaN and infinity behavior is the same as for `madd.ew`.
 | Each contribution is rounded to the destination datatype before the next
 contribution to the same destination; updates occur in ascending source order.
@@ -1501,7 +1512,9 @@ and maximum NaN and signed-zero behavior is also defined there.
 
 ==== Permutation operations
 
-AME permutation operations swizzle data within a single square.
+AME permutation operations swizzle data within logical squares.  The
+row/column broadcast, gather, scatter, and shift forms transform one square
+at a time, while the zip/unzip forms perform one two-square transformation.
 
 [cols="1,2,3",options="header"]
 |===
@@ -1509,49 +1522,57 @@ AME permutation operations swizzle data within a single square.
 | <<ame:doc:inst:mcolbcast_ew_x,mcolbcast.ew.x>>
 | `D[i,j] = A[i,c]`
 | Broadcast one selected column to all columns
-| <<ame:doc:inst:mcolunzip_ew,mcolunzip.ew>>
-| `D[i,j] = A[i,2j] +
- D[i, N/2+j] = A[i,2j+1]`
-| Elementwise column unzip (de-interleave)
-| <<ame:doc:inst:mcolzip_ew,mcolzip.ew>>
-| `D[i,2j] = A[i,j] +
- D[i,2j+1] = A[i, N/2+j]`
-| Elementwise column zip (interleave)
-| <<ame:doc:inst:mcolgather_ew,mcolgather.ew>>
-| `D[i,j] = A[i, B[i,j]]`
-| Elementwise gather (take)
-| <<ame:doc:inst:mrowunzip_ew,mrowunzip.ew>>
-| `D0[i,:] = A[2i,:] +
- D1[i,:] = A[2i+1,:]`
-| Row unzip (de-interleave rows)
-| <<ame:doc:inst:mrowzip_ew,mrowzip.ew>>
-| `D[2i,:] = A[i,:] +
- D[2i+1,:] = B[i,:]`
-| Row zip (interleave rows from two inputs)
-| <<ame:doc:inst:mscatadd_col,mscatadd.col>>
-| `D[B[i,j], j] += A[i,j]`
-| Elementwise column scatter-add
-| <<ame:doc:inst:mscatadd_row,mscatadd.row>>
-| `D[i, B[i,j]] += A[i,j]`
-| Elementwise scatter-add
-| <<ame:doc:inst:mscatmax_col,mscatmax.col>>
-| `D[B[i,j], j] = max(D[B[i,j],j], A[i,j])`
-| Elementwise column scatter-max
-| <<ame:doc:inst:mscatmax_row,mscatmax.row>>
-| `D[i, B[i,j]] = max(D[i,B[i,j]], A[i,j])`
-| Elementwise scatter-max
-| <<ame:doc:inst:mcolshift_ew_x,mcolshift.ew.x>>
-| `D[i,j] = A[i, j+c]`, with `zero(Md[md])` fill
-| Elementwise column shift by scalar offset
 | <<ame:doc:inst:mrowbcast_ew_x,mrowbcast.ew.x>>
 | `D[i,j] = A[c,j]`
 | Broadcast one selected row to all rows
+| <<ame:doc:inst:mcolgather_ew,mcolgather.ew>>
+| `D[i,j] = A[i, B[i,j]]`
+| Elementwise column gather (take)
 | <<ame:doc:inst:mrowgather_ew,mrowgather.ew>>
 | `D[i,j] = A[B[i,j],j]`
-| Elementwise row gather
+| Elementwise row gather (take)
+| <<ame:doc:inst:mcolscatadd_ew,mcolscatadd.ew>>
+| `D[i, B[i,j]] += A[i,j]`
+| Elementwise column scatter-add
+| <<ame:doc:inst:mrowscatadd_ew,mrowscatadd.ew>>
+| `D[B[i,j], j] += A[i,j]`
+| Elementwise row scatter-add
+| <<ame:doc:inst:mcolscatmax_ew,mcolscatmax.ew>>
+| `D[i, B[i,j]] = max(D[i,B[i,j]], A[i,j])`
+| Elementwise column scatter-max
+| <<ame:doc:inst:mrowscatmax_ew,mrowscatmax.ew>>
+| `D[B[i,j], j] = max(D[B[i,j],j], A[i,j])`
+| Elementwise row scatter-max
+| <<ame:doc:inst:mcolshift_ew_x,mcolshift.ew.x>>
+| `D[i,j] = A[i, j+c]`, with `zero(Md[md])` fill
+| Elementwise column shift by scalar offset
 | <<ame:doc:inst:mrowshift_ew_x,mrowshift.ew.x>>
 | `D[i,j] = A[i+c,j]`, with `zero(Md[md])` fill
 | Elementwise row shift by scalar offset
+| <<ame:doc:inst:mcolunzip_ew,mcolunzip.ew>>
+| `D0[i,j] = A[i,2j] +
+ D0[i, N/2+j] = B[i,2j] +
+ D1[i,j] = A[i,2j+1] +
+ D1[i, N/2+j] = B[i,2j+1]`
+| Column unzip (de-interleave columns from two inputs)
+| <<ame:doc:inst:mrowunzip_ew,mrowunzip.ew>>
+| `D0[i,:] = A[2i,:] +
+ D0[i+N/2,:] = B[2i,:] +
+ D1[i,:] = A[2i+1,:] +
+ D1[i+N/2,:] = B[2i+1,:]`
+| Row unzip (de-interleave rows from two inputs)
+| <<ame:doc:inst:mcolzip_ew,mcolzip.ew>>
+| `D0[i,2j] = A[i,j] +
+ D0[i,2j+1] = B[i,j] +
+ D1[i,2j] = A[i, N/2+j] +
+ D1[i,2j+1] = B[i, N/2+j]`
+| Column zip (interleave columns from two inputs)
+| <<ame:doc:inst:mrowzip_ew,mrowzip.ew>>
+| `D0[2i,:] = A[i,:] +
+ D0[2i+1,:] = B[i,:] +
+ D1[2i,:] = A[i+N/2,:] +
+ D1[2i+1,:] = B[i+N/2,:]`
+| Row zip (interleave rows from two inputs)
 |===
 
 Scatter source elements are processed in ascending logical row-major order.
@@ -1603,6 +1624,9 @@ index, represented in the configured datatype, to every logical element of an `M
 | <<ame:doc:inst:mcolid_ew,mcolid.ew>>
 | `D[i,j] = j`
 | Write the zero-based column index to every element
+| <<ame:doc:inst:mconv_ew,mconv.ew>>
+| `D[i] = convert(A[i])`
+| Convert element data between supported datatypes
 | <<ame:doc:inst:mpack_ew_x,mpack.ew.x>>
 | `D[k] = convert(A)`; preserve all `D[n]` for `n != k`
 | Convert and insert one non-packed square into packed slot `k = X[xs1]`
@@ -1612,8 +1636,10 @@ index, represented in the configured datatype, to every logical element of an `M
 |===
 
 `<<ame:doc:inst:mconv_ew,mconv.ew>>` converts element data from one datatype to another.
-An expand converts a single packed `M` register (packed dtype) into `pack_factor` consecutive
-non-packed `M` registers; a compress does the reverse.
+The source and destination datatypes may each be packed or non-packed, and both operands
+are formed by the common operand-formation rules with `N_sq = max(pack_factor)`.
+A packed-to-non-packed conversion expands one packed `M` register into `pack_factor` consecutive
+non-packed `M` registers; a non-packed-to-packed conversion does the reverse.
 The indexed <<ame:doc:inst:mpack_ew_x,mpack.ew.x>> and
 <<ame:doc:inst:munpack_ew_x,munpack.ew.x>> forms convert one selected square at a time,
 reducing register pressure when a full expand or compress is not required.

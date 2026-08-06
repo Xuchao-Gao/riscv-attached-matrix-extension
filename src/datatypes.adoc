@@ -236,7 +236,8 @@ See <<operand-formation>> in the programming model for the complete rules and a 
 
 Because a packed M register holds multiple squares, packed formats increase register
 pressure when combined with wide datatypes — for example, in kernels such as flash
-attention. Explicit pack/unpack instructions (see <<ame:doc:inst:mconv_ew,mconv.ew>>)
+attention. Explicit pack/unpack instructions (see <<ame:doc:inst:mconv_ew,mconv.ew>>,
+<<ame:doc:inst:mpack_ew_x,mpack.ew.x>>, and <<ame:doc:inst:munpack_ew_x,munpack.ew.x>>)
 therefore remain necessary to convert between packed and non-packed layouts and to manage
 that pressure.
 

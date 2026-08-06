@@ -45,8 +45,8 @@
   <p>Standalone review artifact generated from <code>src/instructions.adoc</code>. Decoder rule: <code>(word &amp; mask) == match</code>.</p>
   <div class="cards">
     <div class="card"><strong>141</strong><span>instructions</span></div>
-    <div class="card"><strong>94</strong><span>R3 encodings</span></div>
-    <div class="card"><strong>41</strong><span>R2 encodings</span></div>
+    <div class="card"><strong>97</strong><span>R3 encodings</span></div>
+    <div class="card"><strong>38</strong><span>R2 encodings</span></div>
     <div class="card"><strong>5</strong><span>R1 encodings</span></div>
     <div class="card"><strong>1</strong><span>fixed encodings</span></div>
     <div class="card"><strong>0</strong><span>decode overlaps</span></div>
@@ -946,32 +946,50 @@
 <tr data-format="R3" data-category="Permutation">
     <td class="num">98</td>
     <td><span class="tag r3">R3</span></td>
+    <td><code>mcolscatadd.ew</code></td>
+    <td><code>mcolscatadd.ew md, ms1, ms2</code><div class="synopsis">Elementwise column scatter-add</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x3a</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0x7400002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Permutation">
+    <td class="num">99</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mcolscatmax.ew</code></td>
+    <td><code>mcolscatmax.ew md, ms1, ms2</code><div class="synopsis">Elementwise column scatter-max</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x3c</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0x7800002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Permutation">
+    <td class="num">100</td>
+    <td><span class="tag r3">R3</span></td>
     <td><code>mcolshift.ew.x</code></td>
     <td><code>mcolshift.ew.x md, ms1, xs1</code><div class="synopsis">Elementwise column shift by scalar offset</div></td>
     <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x34</small></span><span class="bit operand w5" title="bits 24:20"><b>xs1</b><small>xs1</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
     <td><code>0xfe00707f</code></td>
     <td><code>0x6800002b</code></td>
   </tr>
-<tr data-format="R2" data-category="Permutation">
-    <td class="num">99</td>
-    <td><span class="tag r2">R2</span></td>
-    <td><code>mcolunzip.ew</code></td>
-    <td><code>mcolunzip.ew md, ms1</code><div class="synopsis">Elementwise column unzip (de-interleave)</div></td>
-    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x51</small></span><span class="bit fixed w5" title="bits 24:20"><b>xfunct5</b><small>0xa</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
-    <td><code>0xfff0707f</code></td>
-    <td><code>0xa2a0002b</code></td>
-  </tr>
-<tr data-format="R2" data-category="Permutation">
-    <td class="num">100</td>
-    <td><span class="tag r2">R2</span></td>
-    <td><code>mcolzip.ew</code></td>
-    <td><code>mcolzip.ew md, ms1</code><div class="synopsis">Elementwise column zip (interleave)</div></td>
-    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x51</small></span><span class="bit fixed w5" title="bits 24:20"><b>xfunct5</b><small>0xb</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
-    <td><code>0xfff0707f</code></td>
-    <td><code>0xa2b0002b</code></td>
-  </tr>
 <tr data-format="R3" data-category="Permutation">
     <td class="num">101</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mcolunzip.ew</code></td>
+    <td><code>mcolunzip.ew md, ms1, ms2</code><div class="synopsis">Column unzip (de-interleave columns from two inputs)</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x61</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0xc200002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Permutation">
+    <td class="num">102</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mcolzip.ew</code></td>
+    <td><code>mcolzip.ew md, ms1, ms2</code><div class="synopsis">Column zip (interleave columns from two inputs)</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x62</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0xc400002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Permutation">
+    <td class="num">103</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mrowbcast.ew.x</code></td>
     <td><code>mrowbcast.ew.x md, ms1, xs1</code><div class="synopsis">Broadcast one row to all rows</div></td>
@@ -980,7 +998,7 @@
     <td><code>0x6a00002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Permutation">
-    <td class="num">102</td>
+    <td class="num">104</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mrowgather.ew</code></td>
     <td><code>mrowgather.ew md, ms1, ms2</code><div class="synopsis">Elementwise row gather (take)</div></td>
@@ -989,7 +1007,25 @@
     <td><code>0x6c00002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Permutation">
-    <td class="num">103</td>
+    <td class="num">105</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mrowscatadd.ew</code></td>
+    <td><code>mrowscatadd.ew md, ms1, ms2</code><div class="synopsis">Elementwise row scatter-add</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x39</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0x7200002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Permutation">
+    <td class="num">106</td>
+    <td><span class="tag r3">R3</span></td>
+    <td><code>mrowscatmax.ew</code></td>
+    <td><code>mrowscatmax.ew md, ms1, ms2</code><div class="synopsis">Elementwise row scatter-max</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x3b</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0x7600002b</code></td>
+  </tr>
+<tr data-format="R3" data-category="Permutation">
+    <td class="num">107</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mrowshift.ew.x</code></td>
     <td><code>mrowshift.ew.x md, ms1, xs1</code><div class="synopsis">Elementwise row shift by scalar offset</div></td>
@@ -997,59 +1033,23 @@
     <td><code>0xfe00707f</code></td>
     <td><code>0x6e00002b</code></td>
   </tr>
-<tr data-format="R2" data-category="Permutation">
-    <td class="num">104</td>
-    <td><span class="tag r2">R2</span></td>
+<tr data-format="R3" data-category="Permutation">
+    <td class="num">108</td>
+    <td><span class="tag r3">R3</span></td>
     <td><code>mrowunzip.ew</code></td>
-    <td><code>mrowunzip.ew md, ms1</code><div class="synopsis">Row unzip (de-interleave rows)</div></td>
-    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x51</small></span><span class="bit fixed w5" title="bits 24:20"><b>xfunct5</b><small>0xc</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
-    <td><code>0xfff0707f</code></td>
-    <td><code>0xa2c0002b</code></td>
+    <td><code>mrowunzip.ew md, ms1, ms2</code><div class="synopsis">Row unzip (de-interleave rows from two inputs)</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x63</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfe00707f</code></td>
+    <td><code>0xc600002b</code></td>
   </tr>
 <tr data-format="R3" data-category="Permutation">
-    <td class="num">105</td>
+    <td class="num">109</td>
     <td><span class="tag r3">R3</span></td>
     <td><code>mrowzip.ew</code></td>
     <td><code>mrowzip.ew md, ms1, ms2</code><div class="synopsis">Row zip (interleave rows from two inputs)</div></td>
     <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x38</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
     <td><code>0xfe00707f</code></td>
     <td><code>0x7000002b</code></td>
-  </tr>
-<tr data-format="R3" data-category="Permutation">
-    <td class="num">106</td>
-    <td><span class="tag r3">R3</span></td>
-    <td><code>mscatadd.col</code></td>
-    <td><code>mscatadd.col md, ms1, ms2</code><div class="synopsis">Elementwise column scatter-add</div></td>
-    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x39</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
-    <td><code>0xfe00707f</code></td>
-    <td><code>0x7200002b</code></td>
-  </tr>
-<tr data-format="R3" data-category="Permutation">
-    <td class="num">107</td>
-    <td><span class="tag r3">R3</span></td>
-    <td><code>mscatadd.row</code></td>
-    <td><code>mscatadd.row md, ms1, ms2</code><div class="synopsis">Elementwise scatter-add</div></td>
-    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x3a</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
-    <td><code>0xfe00707f</code></td>
-    <td><code>0x7400002b</code></td>
-  </tr>
-<tr data-format="R3" data-category="Permutation">
-    <td class="num">108</td>
-    <td><span class="tag r3">R3</span></td>
-    <td><code>mscatmax.col</code></td>
-    <td><code>mscatmax.col md, ms1, ms2</code><div class="synopsis">Elementwise column scatter-max</div></td>
-    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x3b</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
-    <td><code>0xfe00707f</code></td>
-    <td><code>0x7600002b</code></td>
-  </tr>
-<tr data-format="R3" data-category="Permutation">
-    <td class="num">109</td>
-    <td><span class="tag r3">R3</span></td>
-    <td><code>mscatmax.row</code></td>
-    <td><code>mscatmax.row md, ms1, ms2</code><div class="synopsis">Elementwise scatter-max</div></td>
-    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x3c</small></span><span class="bit operand w5" title="bits 24:20"><b>ms2</b><small>ms2</small></span><span class="bit operand w5" title="bits 19:15"><b>ms1</b><small>ms1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
-    <td><code>0xfe00707f</code></td>
-    <td><code>0x7800002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Reduction">
     <td class="num">110</td>
