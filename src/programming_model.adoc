@@ -303,10 +303,11 @@ scatter, and shift operands therefore always form exactly one logical square
 (`N_sq = 1`).
 
 For `mcolgather.ew`, `mrowgather.ew`, and all four scatter instructions, the
-low 32 raw bits of each matrix-index element form an unsigned index; any higher
+low 32 raw bits of each matrix-index element form an unsigned value; any higher
 element bits are ignored, and an element narrower than 32 bits is zero-extended
-to U32.  That U32 value must be less than
-`sqrt(AME_NELEM)`, or the instruction raises an Illegal Instruction exception.
+to U32.  The index is the low `log2(sqrt(AME_NELEM))` bits of that U32 value;
+higher U32 bits are ignored, so an index element never raises an exception
+regardless of its value.
 
 [#norm:ame_nsq_1d]#For an ordinary 1D element-wise instruction, the logical
 element count is `N_sq * AME_NELEM`.  The operator is applied to corresponding
@@ -405,12 +406,6 @@ update.  An
 unsupported datatype or operation is not a synchronous exception: it sets
 `amestatus.UN` and returns without committing any destination write, as
 described in <<datatypes>>.
-
-An out-of-range gather or scatter index is a synchronous Illegal Instruction
-exception, not an unsupported-operation report.  The implementation may
-detect it with a preliminary index scan or while evaluating the operation;
-either way, the source snapshot and atomic writeback rules require that no
-destination register write commits when the exception is raised.
 
 === Polymorphic instructions
 

@@ -26,7 +26,7 @@ baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 audit_path = File.join(root, "docs", "migration", "ame-prose-migration-audit.md")
 errors = []
 
-expected_baseline_hash = "8a7169a803fc2b4618d1d8ef9f652d0b0d02ae51fe590cd11790bfd45bee6072"
+expected_baseline_hash = "02bdace4b8ef64d0cc18d5bbde8126e4cdde42accf9bac5b4ac951126106845d"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
@@ -217,8 +217,8 @@ end
   "mrowbcast.ew.x" => [/low 32 bits/, "U32 row-index width"],
   "mcolshift.ew.x" => [/low 32 bits/, "S32 column-offset width"],
   "mrowshift.ew.x" => [/low 32 bits/, "S32 row-offset width"],
-  "mpack.ew.x" => [/low 32 bits/, "U32 packed-slot index width"],
-  "munpack.ew.x" => [/low 32 bits/, "U32 packed-slot index width"]
+  "mpack.ew.x" => [/the index is the low\s+`log2\(pack_factor\)` bits of `X\[xs1\]`; higher X-register bits are ignored/m, "masked packed-slot index width"],
+  "munpack.ew.x" => [/the index is the low\s+`log2\(pack_factor\)` bits of `X\[xs1\]`; higher X-register bits are ignored/m, "masked packed-slot index width"]
 }.each do |name, (pattern, description)|
   section = active_sections_by_name.fetch(name, "")
   errors << "#{name}: missing #{description}" unless section.match?(pattern)
