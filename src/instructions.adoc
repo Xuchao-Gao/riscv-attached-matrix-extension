@@ -198,31 +198,31 @@ Permutation::
 a| `mcolbcast.ew.x md, ms1, xs1`
 | <<ame:doc:inst:mcolbcast_ew_x,Broadcast one column to all columns>>
 a| `mcolgather.ew md, ms1, ms2`
-| <<ame:doc:inst:mcolgather_ew,Elementwise gather (take)>>
+| <<ame:doc:inst:mcolgather_ew,Elementwise column gather (take)>>
+a| `mcolscatadd.ew md, ms1, ms2`
+| <<ame:doc:inst:mcolscatadd_ew,Elementwise column scatter-add>>
+a| `mcolscatmax.ew md, ms1, ms2`
+| <<ame:doc:inst:mcolscatmax_ew,Elementwise column scatter-max>>
 a| `mcolshift.ew.x md, ms1, xs1`
 | <<ame:doc:inst:mcolshift_ew_x,Elementwise column shift by scalar offset>>
-a| `mcolunzip.ew md, ms1`
-| <<ame:doc:inst:mcolunzip_ew,Elementwise column unzip (de-interleave)>>
-a| `mcolzip.ew md, ms1`
-| <<ame:doc:inst:mcolzip_ew,Elementwise column zip (interleave)>>
+a| `mcolunzip.ew md, ms1, ms2`
+| <<ame:doc:inst:mcolunzip_ew,Column unzip (de-interleave columns from two inputs)>>
+a| `mcolzip.ew md, ms1, ms2`
+| <<ame:doc:inst:mcolzip_ew,Column zip (interleave columns from two inputs)>>
 a| `mrowbcast.ew.x md, ms1, xs1`
 | <<ame:doc:inst:mrowbcast_ew_x,Broadcast one row to all rows>>
 a| `mrowgather.ew md, ms1, ms2`
 | <<ame:doc:inst:mrowgather_ew,Elementwise row gather (take)>>
+a| `mrowscatadd.ew md, ms1, ms2`
+| <<ame:doc:inst:mrowscatadd_ew,Elementwise row scatter-add>>
+a| `mrowscatmax.ew md, ms1, ms2`
+| <<ame:doc:inst:mrowscatmax_ew,Elementwise row scatter-max>>
 a| `mrowshift.ew.x md, ms1, xs1`
 | <<ame:doc:inst:mrowshift_ew_x,Elementwise row shift by scalar offset>>
-a| `mrowunzip.ew md, ms1`
-| <<ame:doc:inst:mrowunzip_ew,Row unzip (de-interleave rows)>>
+a| `mrowunzip.ew md, ms1, ms2`
+| <<ame:doc:inst:mrowunzip_ew,Row unzip (de-interleave rows from two inputs)>>
 a| `mrowzip.ew md, ms1, ms2`
 | <<ame:doc:inst:mrowzip_ew,Row zip (interleave rows from two inputs)>>
-a| `mscatadd.col md, ms1, ms2`
-| <<ame:doc:inst:mscatadd_col,Elementwise column scatter-add>>
-a| `mscatadd.row md, ms1, ms2`
-| <<ame:doc:inst:mscatadd_row,Elementwise scatter-add>>
-a| `mscatmax.col md, ms1, ms2`
-| <<ame:doc:inst:mscatmax_col,Elementwise column scatter-max>>
-a| `mscatmax.row md, ms1, ms2`
-| <<ame:doc:inst:mscatmax_row,Elementwise scatter-max>>
 !===
 
 Register move / data conversion::
@@ -1154,6 +1154,9 @@ If `c` is outside `[0, sqrt(AME_NELEM))`, an `Illegal Instruction` exception is 
 The `xs1` operand is a control scalar: its low 32 bits are interpreted as an
 unsigned integer column index.  It does not read `CSR[ame_scalar_dtype]` and does not undergo
 AME datatype conversion.
++
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
 
 Operation::
 +
@@ -1186,7 +1189,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Elementwise gather: for each element in each row, uses the corresponding index from `ms2`
+Elementwise column gather: for each element in each row, uses the corresponding index from `ms2`
 to select a column from the same row of `ms1`, and stores the result into `md`.
 +
 For each row `i` and column `j`:
@@ -1195,6 +1198,9 @@ For each row `i` and column `j`:
 +
 `ms2` provides integer column indices in the range `[0, sqrt(AME_NELEM))`.
 An out-of-range index raises an `Illegal Instruction` exception.
++
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
 
 Operation::
 +
@@ -1288,6 +1294,9 @@ For each row `i` and column `j`:
 +
 Elements shifted beyond the row boundary are filled with zero (no wrap-around).
 For the row-shift form, see `mrowshift.ew.x`.
++
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
 
 Operation::
 +
@@ -1304,10 +1313,10 @@ This operation uses the common rules in <<ame-common-structural>>.
 === `mcolunzip.ew`
 
 Synopsis::
-Elementwise column unzip (de-interleave)
+Column unzip (de-interleave columns from two inputs)
 
 Mnemonic::
-`mcolunzip.ew md, ms1`
+`mcolunzip.ew md, ms1, ms2`
 
 Encoding::
 +
@@ -1316,26 +1325,45 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": 0xa,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x61,"type":2}]}
 ....
 
 Description::
-De-interleaves each row of `ms1` into lower and upper halves in `md`.
+De-interleaves the columns of the two-square logical source formed by the
+logical source square at `ms1` followed by the logical source square at `ms2`
+into the two destination operands `D0` and `D1`.
 +
 Let `N = sqrt(AME_NELEM)`. For each row `i` and index `j` in `[0, N/2)`:
 +
-  md[i, j]       = ms1[i, 2j]
-  md[i, j + N/2] = ms1[i, 2j+1]
+  D0[i, j]         = A[i, 2j]
+  D0[i, N/2 + j]   = B[i, 2j]
+  D1[i, j]         = A[i, 2j+1]
+  D1[i, N/2 + j]   = B[i, 2j+1]
 +
-Even-indexed columns of each row are collected into the lower half of the output;
-odd-indexed columns into the upper half.  Inverse of `mcolzip.ew`.
+where `A` and `B` are the logical source squares at `ms1` and `ms2`.
+Even-indexed columns of the logical source are collected into `D0`;
+odd-indexed columns into `D1`.  Each source is its sole square.
++
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
++
+`D0` is the logical square at `md`, and `D1` occupies the consecutive M
+registers immediately following `D0`.  A datatype wider than
+`AME_UNIT_DATATYPE_SIZE` therefore spans multiple consecutive M registers per
+destination operand.
++
+`md` must be aligned to the combined register span of `D0` and `D1`
+(even-aligned when each destination operand occupies a single M register).
+Inverse of `mcolzip.ew`.
 
 Operation::
 +
 [source]
 ----
-D[i,j] = A[i,2j]
-D[i,N/2+j] = A[i,2j+1]
+D0[i,j] = A[i,2j]
+D0[i,N/2+j] = B[i,2j]
+D1[i,j] = A[i,2j+1]
+D1[i,N/2+j] = B[i,2j+1]
 ----
 +
 This operation uses the common rules in <<ame-common-structural>>.
@@ -1346,10 +1374,10 @@ This operation uses the common rules in <<ame-common-structural>>.
 === `mcolzip.ew`
 
 Synopsis::
-Elementwise column zip (interleave)
+Column zip (interleave columns from two inputs)
 
 Mnemonic::
-`mcolzip.ew md, ms1`
+`mcolzip.ew md, ms1, ms2`
 
 Encoding::
 +
@@ -1358,26 +1386,45 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": 0xb,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x62,"type":2}]}
 ....
 
 Description::
-Interleaves the lower and upper halves of each row of `ms1` into `md`.
+Interleaves columns from the logical source square at `ms1` and the logical
+source square at `ms2` into the two destination operands `D0` and `D1`.
 +
 Let `N = sqrt(AME_NELEM)`. For each row `i` and index `j` in `[0, N/2)`:
 +
-  md[i, 2j]   = ms1[i, j]
-  md[i, 2j+1] = ms1[i, j + N/2]
+  D0[i, 2j]     = A[i, j]
+  D0[i, 2j+1]   = B[i, j]
+  D1[i, 2j]     = A[i, N/2 + j]
+  D1[i, 2j+1]   = B[i, N/2 + j]
 +
-The lower half of each row occupies even columns in the output; the upper half
-occupies odd columns.  Inverse of `mcolunzip.ew`.
+where `A` and `B` are the logical source squares at `ms1` and `ms2`.
+Columns from `A` appear at even positions and columns from `B` appear at
+odd positions within the two-square logical destination.  Each source is its
+sole square.
++
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
++
+`D0` is the logical square at `md`, and `D1` occupies the consecutive M
+registers immediately following `D0`.  A datatype wider than
+`AME_UNIT_DATATYPE_SIZE` therefore spans multiple consecutive M registers per
+destination operand.
++
+`md` must be aligned to the combined register span of `D0` and `D1`
+(even-aligned when each destination operand occupies a single M register).
+Inverse of `mcolunzip.ew`.
 
 Operation::
 +
 [source]
 ----
-D[i,2j] = A[i,j]
-D[i,2j+1] = A[i,N/2+j]
+D0[i,2j] = A[i,j]
+D0[i,2j+1] = B[i,j]
+D1[i,2j] = A[i,N/2+j]
+D1[i,2j+1] = B[i,N/2+j]
 ----
 +
 This operation uses the common rules in <<ame-common-structural>>.
@@ -1404,31 +1451,19 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Converts element data between a packed datatype and a non-packed datatype.
+Converts element data between supported datatypes.
 +
 The source datatype is determined from `Md[ms1]` and the destination datatype from `Md[md]`.
-Exactly one of the two must be a packed datatype (size < `AME_UNIT_DATATYPE_SIZE`);
-if both or neither are packed, `mconv.ew` sets `amestatus.UN` and returns without
-modifying any register.
+The source and destination datatypes may each be a packed or a non-packed datatype; no
+particular packedness combination is required.  Both operands are formed by the common
+operand-formation rules, so the instruction's square count is `N_sq = max(pack_factor)`
+and every operand spans exactly `N_sq` squares.
 +
-**Expand (packed → non-packed):** When `Md[ms1]` is packed and `Md[md]` is a
-non-packed datatype, `ms1` holds `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[ms1])`
-packed squares. `mconv.ew` converts each element from the packed datatype to the non-packed
-datatype and writes `pack_factor` consecutive result-square groups.  If the
-destination square occupies `dst_group_size` registers, square `sq` begins at
-`md + sq * dst_group_size`.  The base must be aligned to `dst_group_size`, and
-the complete `pack_factor * dst_group_size` span must fit in the M register
-file; otherwise, `mconv.ew` raises an `Illegal Instruction` exception.
-+
-**Compress (non-packed → packed):** When `Md[ms1]` is a non-packed datatype and `Md[md]`
-is packed, `pack_factor` consecutive non-packed square groups begin at `ms1`.
-If each source square occupies `src_group_size` registers, square `sq` begins
-at `ms1 + sq * src_group_size`.
-`mconv.ew` converts each element from the non-packed datatype to the packed datatype and packs
-all `pack_factor` result squares into the single register `md`.
-The base must be aligned to `src_group_size`, and the complete
-`pack_factor * src_group_size` span must fit; otherwise, `mconv.ew` raises an
-`Illegal Instruction` exception.
+`mconv.ew` converts each element of the formed logical source operand from the source
+datatype to the destination datatype and writes the result squares to the formed logical
+destination operand.  A packed source with a non-packed destination therefore expands
+the source squares; a non-packed source with a packed destination compresses them; and
+operands with the same packedness convert each element without changing the square layout.
 +
 Element conversion follows the common datatype conversion rules; unsupported conversion tuples set
 `amestatus.UN` and do not modify any register.
@@ -4771,6 +4806,9 @@ If `c` is outside `[0, sqrt(AME_NELEM))`, an `Illegal Instruction` exception is 
 The `xs1` operand is a control scalar: its low 32 bits are interpreted as an
 unsigned integer row index.  It does not read `CSR[ame_scalar_dtype]` and does not undergo
 AME datatype conversion.
++
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
 
 Operation::
 +
@@ -4803,7 +4841,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Elementwise gather: for each element in each column, uses the corresponding index from `ms2`
+Elementwise row gather: for each element in each column, uses the corresponding index from `ms2`
 to select a row from the same column of `ms1`, and stores the result into `md`.
 +
 For each row `i` and column `j`:
@@ -4812,6 +4850,9 @@ For each row `i` and column `j`:
 +
 `ms2` provides integer row indices in the range `[0, sqrt(AME_NELEM))`.
 An out-of-range index raises an `Illegal Instruction` exception.
++
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
 
 Operation::
 +
@@ -4893,15 +4934,21 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Elementwise shift of each column of `ms1` by row offset `c`, obtained by
-interpreting the low 32 bits of integer register `xs1` as a signed
-two's-complement integer, stored into `md`.  This fixed-type control operand does not read
+Elementwise row shift of `ms1` by offset `c`, obtained by interpreting the
+low 32 bits of integer register `xs1` as a signed two's-complement integer,
+stored into `md`.  This fixed-type control operand does not read
 `CSR[ame_scalar_dtype]`.
 +
 For each row `i` and column `j`:
 +
   md[i,j] = ms1[i+c, j]  if 0 <= i+c < sqrt(AME_NELEM), otherwise
   md[i,j] = zero(Md[md]).
++
+Elements shifted beyond the column boundary are filled with zero (no wrap-around).
+For the column-shift form, see `mcolshift.ew.x`.
++
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
 
 Operation::
 +
@@ -4918,10 +4965,10 @@ This operation uses the common rules in <<ame-common-structural>>.
 === `mrowunzip.ew`
 
 Synopsis::
-Row unzip (de-interleave rows)
+Row unzip (de-interleave rows from two inputs)
 
 Mnemonic::
-`mrowunzip.ew md, ms1`
+`mrowunzip.ew md, ms1, ms2`
 
 Encoding::
 +
@@ -4930,32 +4977,45 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": 0xc,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x63,"type":2}]}
 ....
 
 Description::
-De-interleaves the rows of the source register pair (`ms1`, `ms1+1`) into the
-destination register pair (`md`, `md+1`).
+De-interleaves the rows of the two-square logical source formed by the logical
+source square at `ms1` followed by the logical source square at `ms2` into the
+two destination operands `D0` and `D1`.
 +
-Let `N = sqrt(AME_NELEM)`. For each row `k` in `[0, N)` and column `j`:
+Let `N = sqrt(AME_NELEM)`. For each row `k` in `[0, N/2)` and column `j`:
 +
-  D0[k, j] = A[2k,   j]   (even rows of the source)
-  D1[k, j] = A[2k+1, j]   (odd rows of the source)
+  D0[k, j]       = A[2k, j]
+  D0[k+N/2, j]   = B[2k, j]
+  D1[k, j]       = A[2k+1, j]
+  D1[k+N/2, j]   = B[2k+1, j]
 +
-The even-indexed rows are collected into logical destination square `D0` in
-`md`; the odd-indexed rows are collected into `D1` in `md+1`.  The datatype
-size must be no greater than `AME_UNIT_DATATYPE_SIZE`; a wider tuple is
-unsupported.  For a packed datatype, only slot 0 of each of `ms1`, `ms1+1`,
-`md`, and `md+1` participates, and every other destination slot is preserved.
+where `A` and `B` are the logical source squares at `ms1` and `ms2`.
+Even-indexed rows of the logical source are collected into `D0`; odd-indexed
+rows into `D1`.  Each source is its sole square.
 +
-`md` must be even-aligned.  Inverse of `mrowzip.ew`.
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
++
+`D0` is the logical square at `md`, and `D1` occupies the consecutive M
+registers immediately following `D0`.  A datatype wider than
+`AME_UNIT_DATATYPE_SIZE` therefore spans multiple consecutive M registers per
+destination operand.
++
+`md` must be aligned to the combined register span of `D0` and `D1`
+(even-aligned when each destination operand occupies a single M register).
+Inverse of `mrowzip.ew`.
 
 Operation::
 +
 [source]
 ----
-D0[i,:] = A[2i,:]
-D1[i,:] = A[2i+1,:]
+D0[k,j] = A[2k,j]
+D0[k+N/2,j] = B[2k,j]
+D1[k,j] = A[2k+1,j]
+D1[k+N/2,j] = B[2k+1,j]
 ----
 +
 This operation uses the common rules in <<ame-common-structural>>.
@@ -4983,30 +5043,40 @@ This encoding is provisional and is not a final RISC-V allocation.
 
 Description::
 Interleaves rows from the logical source square at `ms1` and the logical
-source square at `ms2` into the destination register pair (`md`, `md+1`).
+source square at `ms2` into the two destination operands `D0` and `D1`.
 +
-Let `N = sqrt(AME_NELEM)`. For each row `k` in `[0, N)` and column `j`:
+Let `N = sqrt(AME_NELEM)`. For each row `k` in `[0, N/2)` and column `j`:
 +
-  D[2k,   j] = A[k, j]
-  D[2k+1, j] = B[k, j]
+  D0[2k, j]     = A[k, j]
+  D0[2k+1, j]   = B[k, j]
+  D1[2k, j]     = A[N/2+k, j]
+  D1[2k+1, j]   = B[N/2+k, j]
 +
-Each source is its sole square or packed slot 0.  `md` must be even-aligned.
-Rows from `ms1` appear at even positions and rows from `ms2` appear at odd
-positions within the two-square logical destination.
+where `A` and `B` are the logical source squares at `ms1` and `ms2`.
+Rows from `A` appear at even positions and rows from `B` appear at odd
+positions within the two-square logical destination.  Each source is its
+sole square.
 +
-The datatype size must be no greater than `AME_UNIT_DATATYPE_SIZE`; a wider
-tuple is unsupported.  For a packed datatype, `D0` occupies slot 0 of `md`
-and `D1` occupies slot 0 of `md+1`; every other destination slot is
-preserved.
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
 +
+`D0` is the logical square at `md`, and `D1` occupies the consecutive M
+registers immediately following `D0`.  A datatype wider than
+`AME_UNIT_DATATYPE_SIZE` therefore spans multiple consecutive M registers per
+destination operand.
++
+`md` must be aligned to the combined register span of `D0` and `D1`
+(even-aligned when each destination operand occupies a single M register).
 Inverse of `mrowunzip.ew`.
 
 Operation::
 +
 [source]
 ----
-D[2i,:] = A[i,:]
-D[2i+1,:] = B[i,:]
+D0[2k,j] = A[k,j]
+D0[2k+1,j] = B[k,j]
+D1[2k,j] = A[N/2+k,j]
+D1[2k+1,j] = B[N/2+k,j]
 ----
 +
 This operation uses the common rules in <<ame-common-structural>>.
@@ -5052,14 +5122,14 @@ This operation uses the common rules in <<ame-common-arithmetic>>.
 
 <<<
 
-[#ame:doc:inst:mscatadd_col]
-=== `mscatadd.col`
+[#ame:doc:inst:mrowscatadd_ew]
+=== `mrowscatadd.ew`
 
 Synopsis::
-Elementwise column scatter-add
+Elementwise row scatter-add
 
 Mnemonic::
-`mscatadd.col md, ms1, ms2`
+`mrowscatadd.ew md, ms1, ms2`
 
 Encoding::
 +
@@ -5072,22 +5142,25 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Elementwise column scatter-add: routes each element of `ms1` to a destination row
+Elementwise row scatter-add: routes each element of `ms1` to a destination row
 in `md` determined by the corresponding index in `ms2`, and accumulates with addition.
 +
 For each row `i` and column `j`:
 +
   md[ms2[i,j], j] += ms1[i,j]
 +
-`md` is both a source and destination: elements at the target rows are read,
+`md` is both a source and destination: elements at the target columns are read,
 the contribution from `ms1` is added, and the result is written back.
 +
 `ms2` provides integer row indices in the range `[0, sqrt(AME_NELEM))`.
 Multiple elements may scatter to the same destination row; all contributions are accumulated.
 An out-of-range index raises an `Illegal Instruction` exception.
 +
-For the row scatter-add form, see `mscatadd.row`.
-For the column scatter-max form, see `mscatmax.col`.
+For the column scatter-add form, see `mcolscatadd.ew`.
+For the row scatter-max form, see `mrowscatmax.ew`.
++
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
 
 Operation::
 +
@@ -5100,14 +5173,14 @@ This operation uses the common rules in <<ame-common-structural>>.
 
 <<<
 
-[#ame:doc:inst:mscatadd_row]
-=== `mscatadd.row`
+[#ame:doc:inst:mcolscatadd_ew]
+=== `mcolscatadd.ew`
 
 Synopsis::
-Elementwise scatter-add
+Elementwise column scatter-add
 
 Mnemonic::
-`mscatadd.row md, ms1, ms2`
+`mcolscatadd.ew md, ms1, ms2`
 
 Encoding::
 +
@@ -5120,22 +5193,25 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Elementwise scatter-add: routes each element of `ms1` to a destination column
+Elementwise column scatter-add: routes each element of `ms1` to a destination column
 in `md` determined by the corresponding index in `ms2`, and accumulates with addition.
 +
 For each row `i` and column `j`:
 +
   md[i, ms2[i,j]] += ms1[i,j]
 +
-`md` is both a source and destination: elements at the target columns are read,
+`md` is both a source and destination: elements at the target rows are read,
 the contribution from `ms1` is added, and the result is written back.
 +
 `ms2` provides integer column indices in the range `[0, sqrt(AME_NELEM))`.
 Multiple elements may scatter to the same destination column; all contributions are accumulated.
 An out-of-range index raises an `Illegal Instruction` exception.
 +
-For the row scatter-max form, see `mscatmax.row`.
-For the column scatter-add form, see `mscatadd.col`.
+For the column scatter-max form, see `mcolscatmax.ew`.
+For the row scatter-add form, see `mrowscatadd.ew`.
++
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
 
 Operation::
 +
@@ -5148,14 +5224,14 @@ This operation uses the common rules in <<ame-common-structural>>.
 
 <<<
 
-[#ame:doc:inst:mscatmax_col]
-=== `mscatmax.col`
+[#ame:doc:inst:mrowscatmax_ew]
+=== `mrowscatmax.ew`
 
 Synopsis::
-Elementwise column scatter-max
+Elementwise row scatter-max
 
 Mnemonic::
-`mscatmax.col md, ms1, ms2`
+`mrowscatmax.ew md, ms1, ms2`
 
 Encoding::
 +
@@ -5168,22 +5244,25 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Elementwise column scatter-max: routes each element of `ms1` to a destination row
+Elementwise row scatter-max: routes each element of `ms1` to a destination row
 in `md` determined by the corresponding index in `ms2`, and accumulates with maximum.
 +
 For each row `i` and column `j`:
 +
   md[ms2[i,j], j] = max(md[ms2[i,j], j], ms1[i,j])
 +
-`md` is both a source and destination: elements at the target rows are read,
+`md` is both a source and destination: elements at the target columns are read,
 the maximum with the incoming value is taken, and the result is written back.
 +
 `ms2` provides integer row indices in the range `[0, sqrt(AME_NELEM))`.
 Multiple elements may scatter to the same destination row; all contributions are reduced.
 An out-of-range index raises an `Illegal Instruction` exception.
 +
-For the row scatter-max form, see `mscatmax.row`.
-For the column scatter-add form, see `mscatadd.col`.
+For the column scatter-max form, see `mcolscatmax.ew`.
+For the row scatter-add form, see `mrowscatadd.ew`.
++
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
 
 Operation::
 +
@@ -5196,14 +5275,14 @@ This operation uses the common rules in <<ame-common-structural>>.
 
 <<<
 
-[#ame:doc:inst:mscatmax_row]
-=== `mscatmax.row`
+[#ame:doc:inst:mcolscatmax_ew]
+=== `mcolscatmax.ew`
 
 Synopsis::
-Elementwise scatter-max
+Elementwise column scatter-max
 
 Mnemonic::
-`mscatmax.row md, ms1, ms2`
+`mcolscatmax.ew md, ms1, ms2`
 
 Encoding::
 +
@@ -5216,22 +5295,25 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Elementwise scatter-max: routes each element of `ms1` to a destination column
+Elementwise column scatter-max: routes each element of `ms1` to a destination column
 in `md` determined by the corresponding index in `ms2`, and accumulates with maximum.
 +
 For each row `i` and column `j`:
 +
   md[i, ms2[i,j]] = max(md[i, ms2[i,j]], ms1[i,j])
 +
-`md` is both a source and destination: elements at the target columns are read,
+`md` is both a source and destination: elements at the target rows are read,
 the maximum with the incoming value is taken, and the result is written back.
 +
 `ms2` provides integer column indices in the range `[0, sqrt(AME_NELEM))`.
 Multiple elements may scatter to the same destination column; all contributions are reduced.
 An out-of-range index raises an `Illegal Instruction` exception.
 +
-For the row scatter-add form, see `mscatadd.row`.
-For the column scatter-max form, see `mscatmax.col`.
+For the column scatter-add form, see `mcolscatadd.ew`.
+For the row scatter-max form, see `mrowscatmax.ew`.
++
+The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
+datatypes are not supported.
 
 Operation::
 +

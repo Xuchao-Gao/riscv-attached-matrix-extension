@@ -134,7 +134,7 @@ reserved_funct7 = {
   "Fixed" => []
 }
 expected_funct7 = {
-  "R3" => ((0x00..0x50).to_a + (0x54..0x60).to_a) - reserved_funct7.fetch("R3"),
+  "R3" => ((0x00..0x50).to_a + (0x54..0x63).to_a) - reserved_funct7.fetch("R3"),
   "R2" => [0x51, 0x52],
   "R1" => [0x53],
   "Fixed" => [0x52]
@@ -203,7 +203,7 @@ end
 # funct7 bank.  This turns the space-saving policy into a checked invariant
 # rather than a documentation preference.
 reserved_extensions = {
-  ["R2", 0x51] => [9],
+  ["R2", 0x51] => [9, 10, 11, 12],
   ["R2", 0x52] => [10],
   ["R1", 0x53] => (4..63).to_a
 }

@@ -31,8 +31,8 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 | `mcolgather.ew` | 2122 | `ame:doc:inst:mcolgather_ew` | Permutation | `mcolgather.ew md, ms1, ms2` | `D[i,j] = A[i, B[i,j]]` | `ame-common-structural` | - | Ready |
 | `mcolid.ew` | 2240 | `ame:doc:inst:mcolid_ew` | State Management | `mcolid.ew md` | `D[i,j] = j` | `ame-common-register-groups` | - | Ready |
 | `mcolshift.ew.x` | 2323 | `ame:doc:inst:mcolshift_ew_x` | Permutation | `mcolshift.ew.x md, ms1, xs1` | `D[i,j] = A[i, j+c]` | `ame-common-structural` | - | Ready |
-| `mcolunzip.ew` | 2437 | `ame:doc:inst:mcolunzip_ew` | Permutation | `mcolunzip.ew md, ms1` | `D[i,j] = A[i,2j] + D[i, N/2+j] = A[i,2j+1]` | `ame-common-structural` | - | Ready |
-| `mcolzip.ew` | 2535 | `ame:doc:inst:mcolzip_ew` | Permutation | `mcolzip.ew md, ms1` | `D[i,2j] = A[i,j] + D[i,2j+1] = A[i, N/2+j]` | `ame-common-structural` | - | Ready |
+| `mcolunzip.ew` | 2437 | `ame:doc:inst:mcolunzip_ew` | Permutation | `mcolunzip.ew md, ms1, ms2` | `D^0^[i,j] = A[i,2j] + D^0^[i, N/2+j] = B[i,2j] + D^1^[i,j] = A[i,2j+1] + D^1^[i, N/2+j] = B[i,2j+1]` | `ame-common-structural` | - | Ready |
+| `mcolzip.ew` | 2535 | `ame:doc:inst:mcolzip_ew` | Permutation | `mcolzip.ew md, ms1, ms2` | `D^0^[i,2j] = A[i,j] + D^0^[i,2j+1] = B[i,j] + D^1^[i,2j] = A[i, N/2+j] + D^1^[i,2j+1] = B[i, N/2+j]` | `ame-common-structural` | - | Ready |
 | `mconv.ew` | 2636 | `ame:doc:inst:mconv_ew` | Register move / data conversion | `mconv.ew md, ms1` | `D = convert(A) over the formed logical operand` | `ame-common-register-groups` | - | Ready |
 | `mbcast.m.x` | 2755 | `ame:doc:inst:mbcast_m_x` | Register move / data conversion | `mbcast.m.x md, xs1, xtyp` | `D[i] = CONV1D(X[xs1], X[xtyp], Md[md])` | `ame-common-register-groups` | - | Ready |
 | `mcos.ew` | 2835 | `ame:doc:inst:mcos_ew` | Elementwise Math Functions | `mcos.ew md, ms1` | `D[i] = cos(A[i])` | `ame-common-arithmetic` | - | Ready |
@@ -115,13 +115,13 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 | `mrowgather.ew` | 10206 | `ame:doc:inst:mrowgather_ew` | Permutation | `mrowgather.ew md, ms1, ms2` | `D[i,j] = A[B[i,j],j]` | `ame-common-structural` | - | Ready |
 | `mrowid.ew` | 10324 | `ame:doc:inst:mrowid_ew` | State Management | `mrowid.ew md` | `D[i,j] = i` | `ame-common-register-groups` | - | Ready |
 | `mrowshift.ew.x` | 10407 | `ame:doc:inst:mrowshift_ew_x` | Permutation | `mrowshift.ew.x md, ms1, xs1` | `D[i,j] = A[i+c,j]` | `ame-common-structural` | - | Ready |
-| `mrowunzip.ew` | 10518 | `ame:doc:inst:mrowunzip_ew` | Permutation | `mrowunzip.ew md, ms1` | `D^0^[i,:] = A[2i,:] + D^1^[i,:] = A[2i+1,:]` | `ame-common-structural` | AME-MIG-004 | Ready |
-| `mrowzip.ew` | 10629 | `ame:doc:inst:mrowzip_ew` | Permutation | `mrowzip.ew md, ms1, ms2` | `D[2i,:] = A[i,:] + D[2i+1,:] = B[i,:]` | `ame-common-structural` | AME-MIG-004 | Ready |
+| `mrowunzip.ew` | 10518 | `ame:doc:inst:mrowunzip_ew` | Permutation | `mrowunzip.ew md, ms1, ms2` | `D^0^[k,j] = A[2k,j] + D^0^[k+N/2,j] = B[2k,j] + D^1^[k,j] = A[2k+1,j] + D^1^[k+N/2,j] = B[2k+1,j]` | `ame-common-structural` | AME-MIG-004 | Ready |
+| `mrowzip.ew` | 10629 | `ame:doc:inst:mrowzip_ew` | Permutation | `mrowzip.ew md, ms1, ms2` | `D^0^[2k,j] = A[k,j] + D^0^[2k+1,j] = B[k,j] + D^1^[2k,j] = A[N/2+k,j] + D^1^[2k+1,j] = B[N/2+k,j]` | `ame-common-structural` | AME-MIG-004 | Ready |
 | `mrsqrt.ew` | 10756 | `ame:doc:inst:mrsqrt_ew` | Elementwise Math Functions | `mrsqrt.ew md, ms1` | `D[i] = 1 / sqrt(A[i])` | `ame-common-arithmetic` | - | Ready |
-| `mscatadd.col` | 10851 | `ame:doc:inst:mscatadd_col` | Permutation | `mscatadd.col md, ms1, ms2` | `D[B[i,j], j] += A[i,j]` | `ame-common-structural` | - | Ready |
-| `mscatadd.row` | 10970 | `ame:doc:inst:mscatadd_row` | Permutation | `mscatadd.row md, ms1, ms2` | `D[i, B[i,j]] += A[i,j]` | `ame-common-structural` | - | Ready |
-| `mscatmax.col` | 11089 | `ame:doc:inst:mscatmax_col` | Permutation | `mscatmax.col md, ms1, ms2` | `D[B[i,j], j] = max(D[B[i,j],j], A[i,j])` | `ame-common-structural` | - | Ready |
-| `mscatmax.row` | 11208 | `ame:doc:inst:mscatmax_row` | Permutation | `mscatmax.row md, ms1, ms2` | `D[i, B[i,j]] = max(D[i,B[i,j]], A[i,j])` | `ame-common-structural` | - | Ready |
+| `mrowscatadd.ew` | 10851 | `ame:doc:inst:mrowscatadd_ew` | Permutation | `mrowscatadd.ew md, ms1, ms2` | `D[B[i,j], j] += A[i,j]` | `ame-common-structural` | - | Ready |
+| `mcolscatadd.ew` | 10970 | `ame:doc:inst:mcolscatadd_ew` | Permutation | `mcolscatadd.ew md, ms1, ms2` | `D[i, B[i,j]] += A[i,j]` | `ame-common-structural` | - | Ready |
+| `mrowscatmax.ew` | 11089 | `ame:doc:inst:mrowscatmax_ew` | Permutation | `mrowscatmax.ew md, ms1, ms2` | `D[B[i,j], j] = max(D[B[i,j],j], A[i,j])` | `ame-common-structural` | - | Ready |
+| `mcolscatmax.ew` | 11208 | `ame:doc:inst:mcolscatmax_ew` | Permutation | `mcolscatmax.ew md, ms1, ms2` | `D[i, B[i,j]] = max(D[i,B[i,j]], A[i,j])` | `ame-common-structural` | - | Ready |
 | `mselge.ew` | 11327 | `ame:doc:inst:mselge_ew` | Compare and Predication | `mselge.ew md, ms1, ms2` | `D[i] = (A[i] >= 0) ? B[i] : 0` | `ame-common-arithmetic` | - | Ready |
 | `msellt.ew` | 11433 | `ame:doc:inst:msellt_ew` | Compare and Predication | `msellt.ew md, ms1, ms2` | `D[i] = (A[i] < 0) ? B[i] : 0` | `ame-common-arithmetic` | - | Ready |
 | `msettyp` | 11539 | `ame:doc:inst:msettyp` | Datatype Management | `msettyp md, xs1` | `new_dtype = X[xs1][31:0]; Md[md] = new_dtype; raw_bits(M[md .. md+group_size-1]) = 0` | `ame-common-datatype-support` | - | Ready |
@@ -288,9 +288,9 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 ### AME-MIG-004: row zip/unzip wide-tuple ambiguity
 
 - Before: the legacy prose and IDL name literal consecutive bases (`base`, `base+1`) for the two squares, while the same IDL permits operation support to be queried for a wide datatype whose square occupies a multi-register aligned group.  The derived `base+1` then overlaps the first wide group and cannot itself satisfy that group's alignment.
-- After: `mrowzip.ew` and `mrowunzip.ew` support only datatypes no wider than `AME_UNIT_DATATYPE_SIZE`.  Unit datatypes use the literal register pair; packed datatypes use slot 0 of each literal register and preserve the other destination slots.
-- Evidence: this retains the literal register selection and element loop of the legacy instruction definitions for every supported case, while excluding the internally contradictory wide case.
-- Architectural impact: an implementation cannot advertise row zip/unzip support for a wide datatype.  A future revision may define a distinct wide encoding or group-stride rule.
+- After: the two destination squares are defined as matrix operands `D0` and `D1` rather than literal registers: `D0` is the logical square at `md`, and `D1` occupies the consecutive M registers immediately following `D0`, so a wide datatype whose square spans `ceil(sizeof(dtype)/AME_UNIT_DATATYPE_SIZE)` registers makes the pair span twice that many consecutive registers starting at `md`, and `md` must be aligned to that combined span.  Packed datatypes are no longer supported by the zip/unzip family; every Permutation instruction requires a datatype no smaller than `AME_UNIT_DATATYPE_SIZE`, so a unit datatype uses the literal register pair.
+- Evidence: this retains the element loop of the legacy instruction definitions for every supported case and resolves the internally contradictory wide case by generalizing the destination naming instead of excluding it.
+- Architectural impact: an implementation may advertise zip/unzip support for wide datatypes; the second destination square then starts `ceil(sizeof(dtype)/AME_UNIT_DATATYPE_SIZE)` registers after `md` instead of at `md+1`.  Packed datatypes, previously mapped to slot 0 of the literal registers, now raise the unsupported-operation contract instead.
 
 ### AME-MIG-005: transposed matrix formation when `N_sq > 1`
 

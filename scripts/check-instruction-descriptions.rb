@@ -26,7 +26,7 @@ baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 audit_path = File.join(root, "docs", "migration", "ame-prose-migration-audit.md")
 errors = []
 
-expected_baseline_hash = "212c854c6fc143674ea84fd94584d14212d3d2f582a3f97723b31be4abae488b"
+expected_baseline_hash = "8a7169a803fc2b4618d1d8ef9f652d0b0d02ae51fe590cd11790bfd45bee6072"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
@@ -227,9 +227,9 @@ end
 {
   /data-source element width/ => "source-width shift rule",
   /scalar\s+datatype is wider than XLEN, the X-register bit pattern is zero-extended/m => "data-scalar widening rule",
-  /`mrowunzip\.ew` and `mrowzip\.ew` are also explicit fixed-shape exceptions/ => "row zip/unzip fixed-shape exception",
-  /family supports only datatypes whose size is\s+no greater than `AME_UNIT_DATATYPE_SIZE`/m => "row zip/unzip wide-type restriction",
-  /only slot 0 of each named register participates/ => "packed row zip/unzip slot selection",
+  /`mcolunzip\.ew`, `mcolzip\.ew`, `mrowunzip\.ew`, and\s+`mrowzip\.ew` are also\s+explicit fixed-shape exceptions/m => "zip/unzip fixed-shape exception",
+  /`D1`\s+occupies the\s+consecutive\s+M\s+registers immediately following `D0`/m => "zip/unzip consecutive destination-operand placement",
+  /The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed\s+datatypes are not supported/m => "Permutation unit-or-wide datatype rule",
   /The opaque `mls` and `mss` instructions do not inspect `Md`/ => "opaque load/store datatype exemption",
   /Elements are packed\s+back-to-back as E-bit fields/m => "typed memory bit packing",
   /load ignores the unused high bits.*store writes those unused high bits as zero/m => "partial-byte load/store rule",
@@ -246,8 +246,8 @@ end
   /derived accumulator span.*checked after the operation\s+tuple is supported/m => "packed accumulator span validation",
   /zero-extended or low-bit truncated/ => "fixed scalar-exponent width rule",
   /`mmulacc\.ew\.x`/ => "destination-as-source scalar fused-operation rule",
-  /`mscatadd\.col`, `mscatadd\.row`/ => "scatter-add floating-point rule",
-  /`mscatmax\.col`, `mscatmax\.row`/ => "scatter-max floating-point rule",
+  /`mcolscatadd\.ew`, `mrowscatadd\.ew`/ => "scatter-add floating-point rule",
+  /`mcolscatmax\.ew`, `mrowscatmax\.ew`/ => "scatter-max floating-point rule",
   /Scatter source elements are processed in ascending logical row-major order/ => "scatter collision ordering rule",
   /prefix or reduction fold is seeded from the first source element/ => "prefix/reduction seed rule",
   /transposes each `N x N` logical square/ => "dimensionally valid transposed matrix formation",
@@ -500,6 +500,14 @@ File.foreach(legacy_instructions_path).with_index(1) do |line, line_number|
   match = line.match(/^\[#(ame:doc:inst:[^\]]+)\]$/)
   legacy_instruction_lines[match[1]] = line_number.to_s if match
 end
+# Prose anchors renamed after the archive freeze keep their provenance through
+# the frozen legacy anchor.
+renamed_legacy_anchors = {
+  "ame:doc:inst:mcolscatadd_ew" => "ame:doc:inst:mscatadd_row",
+  "ame:doc:inst:mrowscatadd_ew" => "ame:doc:inst:mscatadd_col",
+  "ame:doc:inst:mcolscatmax_ew" => "ame:doc:inst:mscatmax_row",
+  "ame:doc:inst:mrowscatmax_ew" => "ame:doc:inst:mscatmax_col"
+}
 correction_expectations.each do |name, correction|
   row = audited_instruction_rows[name]
   baseline_entry = baseline.find { |entry| entry.fetch("name") == name }
@@ -507,7 +515,7 @@ correction_expectations.each do |name, correction|
 
   expected_contract = name == "fence.ame" ? "ame-common-ordering" : primary_contract[baseline_entry.fetch("category")]
   {
-    "legacy_line" => legacy_instruction_lines[baseline_entry.fetch("anchor")],
+    "legacy_line" => legacy_instruction_lines[renamed_legacy_anchors.fetch(baseline_entry.fetch("anchor"), baseline_entry.fetch("anchor"))],
     "anchor" => baseline_entry.fetch("anchor"),
     "category" => baseline_entry.fetch("category"),
     "mnemonic" => baseline_entry.fetch("mnemonic"),
