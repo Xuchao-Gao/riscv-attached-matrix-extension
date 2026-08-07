@@ -50,8 +50,8 @@ R3 uses `funct7=0x00..0x50` and `funct7=0x54..0x60`. R2 uses `funct7=0x51` with 
 | 21 | R3 | `mcolgather.ew` | `mcolgather.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x33`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x6600002b` |
 | 22 | R1 | `mcolid.ew` | `mcolid.ew md` | `md[11:7]` | `[31:25]=0x53` (`ame-enc-r1-bank-funct7`); `[24:20]=0x00`; `[19:15]=0x02`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfffff07f` | `0xa601002b` |
 | 23 | R3 | `mcolshift.ew.x` | `mcolshift.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x34`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x6800002b` |
-| 24 | R3 | `mcolunzip.ew` | `mcolunzip.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x61`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0xc200002b` |
-| 25 | R3 | `mcolzip.ew` | `mcolzip.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x62`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0xc400002b` |
+| 24 | R3 | `mcolunzip.ew` | `mcolunzip.ew ms1, ms2` | `ms2[24:20]`; `ms1[19:15]` | `[31:25]=0x61`; `[14:12]=0x0` (`ame-enc-funct3`); `[11:7]=0x00`; `[6:0]=0x2b` | `0xfe007fff` | `0xc200002b` |
+| 25 | R3 | `mcolzip.ew` | `mcolzip.ew ms1, ms2` | `ms2[24:20]`; `ms1[19:15]` | `[31:25]=0x62`; `[14:12]=0x0` (`ame-enc-funct3`); `[11:7]=0x00`; `[6:0]=0x2b` | `0xfe007fff` | `0xc400002b` |
 | 26 | R2 | `mconv.ew` | `mconv.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x0d`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa2d0002b` |
 | 27 | R3 | `mbcast.m.x` | `mbcast.m.x md, xs1, xtyp` | `xtyp[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x58`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0xb000002b` |
 | 28 | R2 | `mcos.ew` | `mcos.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x0e`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa2e0002b` |
@@ -134,8 +134,8 @@ R3 uses `funct7=0x00..0x50` and `funct7=0x54..0x60`. R2 uses `funct7=0x51` with 
 | 105 | R3 | `mrowgather.ew` | `mrowgather.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x36`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x6c00002b` |
 | 106 | R1 | `mrowid.ew` | `mrowid.ew md` | `md[11:7]` | `[31:25]=0x53` (`ame-enc-r1-bank-funct7`); `[24:20]=0x00`; `[19:15]=0x03`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfffff07f` | `0xa601802b` |
 | 107 | R3 | `mrowshift.ew.x` | `mrowshift.ew.x md, ms1, xs1` | `xs1[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x37`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x6e00002b` |
-| 108 | R3 | `mrowunzip.ew` | `mrowunzip.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x63`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0xc600002b` |
-| 109 | R3 | `mrowzip.ew` | `mrowzip.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x38`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x7000002b` |
+| 108 | R3 | `mrowunzip.ew` | `mrowunzip.ew ms1, ms2` | `ms2[24:20]`; `ms1[19:15]` | `[31:25]=0x63`; `[14:12]=0x0` (`ame-enc-funct3`); `[11:7]=0x00`; `[6:0]=0x2b` | `0xfe007fff` | `0xc600002b` |
+| 109 | R3 | `mrowzip.ew` | `mrowzip.ew ms1, ms2` | `ms2[24:20]`; `ms1[19:15]` | `[31:25]=0x38`; `[14:12]=0x0` (`ame-enc-funct3`); `[11:7]=0x00`; `[6:0]=0x2b` | `0xfe007fff` | `0x7000002b` |
 | 110 | R2 | `mrsqrt.ew` | `mrsqrt.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x12`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa320002b` |
 | 111 | R3 | `mrowscatadd.ew` | `mrowscatadd.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x39`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x7200002b` |
 | 112 | R3 | `mcolscatadd.ew` | `mcolscatadd.ew md, ms1, ms2` | `ms2[24:20]`; `ms1[19:15]`; `md[11:7]` | `[31:25]=0x3a`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0x7400002b` |
