@@ -26,7 +26,7 @@ baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 audit_path = File.join(root, "docs", "migration", "ame-prose-migration-audit.md")
 errors = []
 
-expected_baseline_hash = "36b18ef6ac82370b13470916cb03c2d0205783de9e14a57afed3b2affff26b90"
+expected_baseline_hash = "944ba452847bba95833dc88366a6aac989360055fff324c4776d7d875ea2178d"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
@@ -222,6 +222,10 @@ end
 }.merge(
   %w[mcolunzip.ew mcolzip.ew mrowunzip.ew mrowzip.ew].map do |name|
     [name, [/must name distinct M registers/, "zip/unzip distinct-register requirement"]]
+  end.to_h
+).merge(
+  %w[mcolunzip.ew mcolzip.ew mrowunzip.ew mrowzip.ew].map do |name|
+    [name, [/The datatypes of `ms1` and `ms2` must match/, "zip/unzip datatype-match requirement"]]
   end.to_h
 ).each do |name, (pattern, description)|
   section = active_sections_by_name.fetch(name, "")

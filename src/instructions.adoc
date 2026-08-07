@@ -1348,6 +1348,9 @@ where `A` and `B` are the pre-instruction logical squares at `ms1` and
 `ms1` and `ms2` must name distinct M registers; an equal pair raises an
 `Illegal Instruction` exception before any register is read or written.
 +
+The datatypes of `ms1` and `ms2` must match; if they differ, `amestatus.UN`
+is set and no register is written.
++
 The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
 datatypes are not supported.
 +
@@ -1405,6 +1408,9 @@ operand is its sole square.
 +
 `ms1` and `ms2` must name distinct M registers; an equal pair raises an
 `Illegal Instruction` exception before any register is read or written.
++
+The datatypes of `ms1` and `ms2` must match; if they differ, `amestatus.UN`
+is set and no register is written.
 +
 The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
 datatypes are not supported.
@@ -4993,6 +4999,9 @@ odd-indexed rows into `ms2`.  Each operand is its sole square.
 `ms1` and `ms2` must name distinct M registers; an equal pair raises an
 `Illegal Instruction` exception before any register is read or written.
 +
+The datatypes of `ms1` and `ms2` must match; if they differ, `amestatus.UN`
+is set and no register is written.
++
 The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
 datatypes are not supported.
 +
@@ -5050,6 +5059,9 @@ sole square.
 +
 `ms1` and `ms2` must name distinct M registers; an equal pair raises an
 `Illegal Instruction` exception before any register is read or written.
++
+The datatypes of `ms1` and `ms2` must match; if they differ, `amestatus.UN`
+is set and no register is written.
 +
 The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
 datatypes are not supported.
