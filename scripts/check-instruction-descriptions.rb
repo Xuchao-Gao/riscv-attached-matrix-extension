@@ -26,7 +26,7 @@ baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 audit_path = File.join(root, "docs", "migration", "ame-prose-migration-audit.md")
 errors = []
 
-expected_baseline_hash = "8a7169a803fc2b4618d1d8ef9f652d0b0d02ae51fe590cd11790bfd45bee6072"
+expected_baseline_hash = "944ba452847bba95833dc88366a6aac989360055fff324c4776d7d875ea2178d"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
@@ -217,9 +217,17 @@ end
   "mrowbcast.ew.x" => [/low 32 bits/, "U32 row-index width"],
   "mcolshift.ew.x" => [/low 32 bits/, "S32 column-offset width"],
   "mrowshift.ew.x" => [/low 32 bits/, "S32 row-offset width"],
-  "mpack.ew.x" => [/low 32 bits/, "U32 packed-slot index width"],
-  "munpack.ew.x" => [/low 32 bits/, "U32 packed-slot index width"]
-}.each do |name, (pattern, description)|
+  "mpack.ew.x" => [/the index is the low\s+`log2\(pack_factor\)` bits of `X\[xs1\]`; higher X-register bits are ignored/m, "masked packed-slot index width"],
+  "munpack.ew.x" => [/the index is the low\s+`log2\(pack_factor\)` bits of `X\[xs1\]`; higher X-register bits are ignored/m, "masked packed-slot index width"]
+}.merge(
+  %w[mcolunzip.ew mcolzip.ew mrowunzip.ew mrowzip.ew].map do |name|
+    [name, [/must name distinct M registers/, "zip/unzip distinct-register requirement"]]
+  end.to_h
+).merge(
+  %w[mcolunzip.ew mcolzip.ew mrowunzip.ew mrowzip.ew].map do |name|
+    [name, [/The datatypes of `ms1` and `ms2` must match/, "zip/unzip datatype-match requirement"]]
+  end.to_h
+).each do |name, (pattern, description)|
   section = active_sections_by_name.fetch(name, "")
   errors << "#{name}: missing #{description}" unless section.match?(pattern)
 end
@@ -228,7 +236,9 @@ end
   /data-source element width/ => "source-width shift rule",
   /scalar\s+datatype is wider than XLEN, the X-register bit pattern is zero-extended/m => "data-scalar widening rule",
   /`mcolunzip\.ew`, `mcolzip\.ew`, `mrowunzip\.ew`, and\s+`mrowzip\.ew` are also\s+explicit fixed-shape exceptions/m => "zip/unzip fixed-shape exception",
-  /`D1`\s+occupies the\s+consecutive\s+M\s+registers immediately following `D0`/m => "zip/unzip consecutive destination-operand placement",
+  /writes\s+the\s+two\s+result\s+squares\s+back\s+into\s+`ms1`\s+and\s+`ms2`/m => "zip/unzip in-place operand model",
+  /the\s+requirement\s+that\s+`ms1`\s+and\s+`ms2`\s+name\s+distinct\s+M\s+registers\s+is\s+likewise\s+checked\s+immediately\s+after\s+decode/m => "zip/unzip distinct-register validation stage",
+  /Datatype\s+compatibility\s+between\s+the\s+two\s+operands\s+is\s+a\s+separate\s+operand-class\s+requirement/m => "zip/unzip datatype-mismatch UN rule",
   /The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed\s+datatypes are not supported/m => "Permutation unit-or-wide datatype rule",
   /The opaque `mls` and `mss` instructions do not inspect `Md`/ => "opaque load/store datatype exemption",
   /Elements are packed\s+back-to-back as E-bit fields/m => "typed memory bit packing",
