@@ -284,16 +284,13 @@ squares like any other elementwise instruction.
 `mcolunzip.ew`, `mcolzip.ew`, `mrowunzip.ew`, and `mrowzip.ew` are also
 explicit fixed-shape exceptions.
 They perform one two-square transformation rather than repeating a one-square
-transformation `N_sq` times.  Each instruction consumes the sole square from
-each of `ms1` and `ms2` and produces the two destination operands `D0` and
-`D1`.  `D0` is the logical square at `md`, and `D1` occupies the consecutive
-M registers immediately following `D0`, so the pair spans twice as many
-consecutive M registers starting at `md` as each operand requires (that is,
-two registers for a unit datatype, and twice
-`ceil(sizeof(Md[md]) / AME_UNIT_DATATYPE_SIZE)` for wider datatypes).  Every
-referenced physical register is validated before either destination square is
-written, and `md` must be aligned to the combined register span of `D0` and
-`D1`, as required by the instruction descriptions.
+transformation `N_sq` times.  Each operand is both a source and a
+destination: each instruction consumes the sole square from each of `ms1`
+and `ms2` and writes the two result squares back into `ms1` and `ms2`, so
+no separate destination operand is allocated and each operand spans only its
+own register requirement.  `ms1` and `ms2` must name distinct M registers;
+an equal pair raises an `Illegal Instruction` exception before any register
+is read or written.
 
 All Permutation instructions -- the row/column broadcast, gather, scatter,
 and shift forms together with the fixed-shape zip/unzip forms -- support only
@@ -337,6 +334,13 @@ Every encoded `M` or `Md` register specifier is validated immediately after
 decode and before any `Md` or `M` state is read.  Thus an index greater than or
 equal to `AME_NUM_M_REGS` raises an Illegal Instruction exception before any
 datatype-dependent validation.
+For the `mcolunzip.ew`, `mcolzip.ew`, `mrowunzip.ew`, and `mrowzip.ew`
+instructions, the requirement that `ms1` and `ms2` name distinct M registers
+is likewise checked immediately after decode, together with these base-index
+checks; an equal pair raises an Illegal Instruction exception.
+Datatype compatibility between the two operands is a separate operand-class
+requirement: a datatype mismatch reports `amestatus.UN` rather than an
+exception.
 
 Every encoded `Acc` or `Ad` register specifier is likewise checked immediately
 after decode and before any `Ad`, `Acc`, or datatype-dependent `M` state is
@@ -487,8 +491,8 @@ their `.ew.x` forms
 datatype.
 
 | `mcolunzip.ew`, `mcolzip.ew`, `mrowunzip.ew`, `mrowzip.ew`
-| Source and destination datatypes are identical; the operation is a bit-exact
-copy after the instruction-specific source selection and destination placement.
+| The two operands share one common datatype; the operation is a bit-exact
+copy after the instruction-specific source selection and result placement.
 
 | `mcolbcast.ew.x`, `mrowbcast.ew.x`, `mcolgather.ew`, `mrowgather.ew`,
 `mcolshift.ew.x`, `mrowshift.ew.x`, `mcolscatadd.ew`, `mrowscatadd.ew`,
@@ -1545,28 +1549,28 @@ at a time, while the zip/unzip forms perform one two-square transformation.
 | `D[i,j] = A[i+c,j]`, with `zero(Md[md])` fill
 | Elementwise row shift by scalar offset
 | <<ame:doc:inst:mcolunzip_ew,mcolunzip.ew>>
-| `D0[i,j] = A[i,2j] +
- D0[i, N/2+j] = B[i,2j] +
- D1[i,j] = A[i,2j+1] +
- D1[i, N/2+j] = B[i,2j+1]`
+| `ms1[i,j] = A[i,2j] +
+ ms1[i, N/2+j] = B[i,2j] +
+ ms2[i,j] = A[i,2j+1] +
+ ms2[i, N/2+j] = B[i,2j+1]`
 | Column unzip (de-interleave columns from two inputs)
 | <<ame:doc:inst:mrowunzip_ew,mrowunzip.ew>>
-| `D0[i,:] = A[2i,:] +
- D0[i+N/2,:] = B[2i,:] +
- D1[i,:] = A[2i+1,:] +
- D1[i+N/2,:] = B[2i+1,:]`
+| `ms1[i,:] = A[2i,:] +
+ ms1[i+N/2,:] = B[2i,:] +
+ ms2[i,:] = A[2i+1,:] +
+ ms2[i+N/2,:] = B[2i+1,:]`
 | Row unzip (de-interleave rows from two inputs)
 | <<ame:doc:inst:mcolzip_ew,mcolzip.ew>>
-| `D0[i,2j] = A[i,j] +
- D0[i,2j+1] = B[i,j] +
- D1[i,2j] = A[i, N/2+j] +
- D1[i,2j+1] = B[i, N/2+j]`
+| `ms1[i,2j] = A[i,j] +
+ ms1[i,2j+1] = B[i,j] +
+ ms2[i,2j] = A[i, N/2+j] +
+ ms2[i,2j+1] = B[i, N/2+j]`
 | Column zip (interleave columns from two inputs)
 | <<ame:doc:inst:mrowzip_ew,mrowzip.ew>>
-| `D0[2i,:] = A[i,:] +
- D0[2i+1,:] = B[i,:] +
- D1[2i,:] = A[i+N/2,:] +
- D1[2i+1,:] = B[i+N/2,:]`
+| `ms1[2i,:] = A[i,:] +
+ ms1[2i+1,:] = B[i,:] +
+ ms2[2i,:] = A[i+N/2,:] +
+ ms2[2i+1,:] = B[i+N/2,:]`
 | Row zip (interleave rows from two inputs)
 |===
 

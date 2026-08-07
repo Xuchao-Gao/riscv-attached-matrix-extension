@@ -205,9 +205,9 @@ a| `mcolscatmax.ew md, ms1, ms2`
 | <<ame:doc:inst:mcolscatmax_ew,Elementwise column scatter-max>>
 a| `mcolshift.ew.x md, ms1, xs1`
 | <<ame:doc:inst:mcolshift_ew_x,Elementwise column shift by scalar offset>>
-a| `mcolunzip.ew md, ms1, ms2`
+a| `mcolunzip.ew ms1, ms2`
 | <<ame:doc:inst:mcolunzip_ew,Column unzip (de-interleave columns from two inputs)>>
-a| `mcolzip.ew md, ms1, ms2`
+a| `mcolzip.ew ms1, ms2`
 | <<ame:doc:inst:mcolzip_ew,Column zip (interleave columns from two inputs)>>
 a| `mrowbcast.ew.x md, ms1, xs1`
 | <<ame:doc:inst:mrowbcast_ew_x,Broadcast one row to all rows>>
@@ -219,9 +219,9 @@ a| `mrowscatmax.ew md, ms1, ms2`
 | <<ame:doc:inst:mrowscatmax_ew,Elementwise row scatter-max>>
 a| `mrowshift.ew.x md, ms1, xs1`
 | <<ame:doc:inst:mrowshift_ew_x,Elementwise row shift by scalar offset>>
-a| `mrowunzip.ew md, ms1, ms2`
+a| `mrowunzip.ew ms1, ms2`
 | <<ame:doc:inst:mrowunzip_ew,Row unzip (de-interleave rows from two inputs)>>
-a| `mrowzip.ew md, ms1, ms2`
+a| `mrowzip.ew ms1, ms2`
 | <<ame:doc:inst:mrowzip_ew,Row zip (interleave rows from two inputs)>>
 !===
 
@@ -1316,7 +1316,7 @@ Synopsis::
 Column unzip (de-interleave columns from two inputs)
 
 Mnemonic::
-`mcolunzip.ew md, ms1, ms2`
+`mcolunzip.ew ms1, ms2`
 
 Encoding::
 +
@@ -1325,45 +1325,42 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x61,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": 0x0,"type":2},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x61,"type":2}]}
 ....
 
 Description::
 De-interleaves the columns of the two-square logical source formed by the
-logical source square at `ms1` followed by the logical source square at `ms2`
-into the two destination operands `D0` and `D1`.
+logical source square at `ms1` followed by the logical source square at
+`ms2`, and writes the two result squares back into `ms1` and `ms2`.  Each
+operand is both a source and a destination.
 +
 Let `N = sqrt(AME_NELEM)`. For each row `i` and index `j` in `[0, N/2)`:
 +
-  D0[i, j]         = A[i, 2j]
-  D0[i, N/2 + j]   = B[i, 2j]
-  D1[i, j]         = A[i, 2j+1]
-  D1[i, N/2 + j]   = B[i, 2j+1]
+  ms1[i, j]         = A[i, 2j]
+  ms1[i, N/2 + j]   = B[i, 2j]
+  ms2[i, j]         = A[i, 2j+1]
+  ms2[i, N/2 + j]   = B[i, 2j+1]
 +
-where `A` and `B` are the logical source squares at `ms1` and `ms2`.
-Even-indexed columns of the logical source are collected into `D0`;
-odd-indexed columns into `D1`.  Each source is its sole square.
+where `A` and `B` are the pre-instruction logical squares at `ms1` and
+`ms2`.  Even-indexed columns of the logical source are collected into
+`ms1`; odd-indexed columns into `ms2`.  Each operand is its sole square.
++
+`ms1` and `ms2` must name distinct M registers; an equal pair raises an
+`Illegal Instruction` exception before any register is read or written.
 +
 The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
 datatypes are not supported.
 +
-`D0` is the logical square at `md`, and `D1` occupies the consecutive M
-registers immediately following `D0`.  A datatype wider than
-`AME_UNIT_DATATYPE_SIZE` therefore spans multiple consecutive M registers per
-destination operand.
-+
-`md` must be aligned to the combined register span of `D0` and `D1`
-(even-aligned when each destination operand occupies a single M register).
 Inverse of `mcolzip.ew`.
 
 Operation::
 +
 [source]
 ----
-D0[i,j] = A[i,2j]
-D0[i,N/2+j] = B[i,2j]
-D1[i,j] = A[i,2j+1]
-D1[i,N/2+j] = B[i,2j+1]
+ms1[i,j] = A[i,2j]
+ms1[i,N/2+j] = B[i,2j]
+ms2[i,j] = A[i,2j+1]
+ms2[i,N/2+j] = B[i,2j+1]
 ----
 +
 This operation uses the common rules in <<ame-common-structural>>.
@@ -1377,7 +1374,7 @@ Synopsis::
 Column zip (interleave columns from two inputs)
 
 Mnemonic::
-`mcolzip.ew md, ms1, ms2`
+`mcolzip.ew ms1, ms2`
 
 Encoding::
 +
@@ -1386,45 +1383,42 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x62,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": 0x0,"type":2},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x62,"type":2}]}
 ....
 
 Description::
 Interleaves columns from the logical source square at `ms1` and the logical
-source square at `ms2` into the two destination operands `D0` and `D1`.
+source square at `ms2`, and writes the two result squares back into `ms1`
+and `ms2`.  Each operand is both a source and a destination.
 +
 Let `N = sqrt(AME_NELEM)`. For each row `i` and index `j` in `[0, N/2)`:
 +
-  D0[i, 2j]     = A[i, j]
-  D0[i, 2j+1]   = B[i, j]
-  D1[i, 2j]     = A[i, N/2 + j]
-  D1[i, 2j+1]   = B[i, N/2 + j]
+  ms1[i, 2j]     = A[i, j]
+  ms1[i, 2j+1]   = B[i, j]
+  ms2[i, 2j]     = A[i, N/2 + j]
+  ms2[i, 2j+1]   = B[i, N/2 + j]
 +
-where `A` and `B` are the logical source squares at `ms1` and `ms2`.
-Columns from `A` appear at even positions and columns from `B` appear at
-odd positions within the two-square logical destination.  Each source is its
-sole square.
+where `A` and `B` are the pre-instruction logical squares at `ms1` and
+`ms2`.  Columns from `A` appear at even positions and columns from `B`
+appear at odd positions within the two-square logical result.  Each
+operand is its sole square.
++
+`ms1` and `ms2` must name distinct M registers; an equal pair raises an
+`Illegal Instruction` exception before any register is read or written.
 +
 The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
 datatypes are not supported.
 +
-`D0` is the logical square at `md`, and `D1` occupies the consecutive M
-registers immediately following `D0`.  A datatype wider than
-`AME_UNIT_DATATYPE_SIZE` therefore spans multiple consecutive M registers per
-destination operand.
-+
-`md` must be aligned to the combined register span of `D0` and `D1`
-(even-aligned when each destination operand occupies a single M register).
 Inverse of `mcolunzip.ew`.
 
 Operation::
 +
 [source]
 ----
-D0[i,2j] = A[i,j]
-D0[i,2j+1] = B[i,j]
-D1[i,2j] = A[i,N/2+j]
-D1[i,2j+1] = B[i,N/2+j]
+ms1[i,2j] = A[i,j]
+ms1[i,2j+1] = B[i,j]
+ms2[i,2j] = A[i,N/2+j]
+ms2[i,2j+1] = B[i,N/2+j]
 ----
 +
 This operation uses the common rules in <<ame-common-structural>>.
@@ -4967,7 +4961,7 @@ Synopsis::
 Row unzip (de-interleave rows from two inputs)
 
 Mnemonic::
-`mrowunzip.ew md, ms1, ms2`
+`mrowunzip.ew ms1, ms2`
 
 Encoding::
 +
@@ -4976,45 +4970,42 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x63,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": 0x0,"type":2},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x63,"type":2}]}
 ....
 
 Description::
-De-interleaves the rows of the two-square logical source formed by the logical
-source square at `ms1` followed by the logical source square at `ms2` into the
-two destination operands `D0` and `D1`.
+De-interleaves the rows of the two-square logical source formed by the
+logical source square at `ms1` followed by the logical source square at
+`ms2`, and writes the two result squares back into `ms1` and `ms2`.  Each
+operand is both a source and a destination.
 +
 Let `N = sqrt(AME_NELEM)`. For each row `k` in `[0, N/2)` and column `j`:
 +
-  D0[k, j]       = A[2k, j]
-  D0[k+N/2, j]   = B[2k, j]
-  D1[k, j]       = A[2k+1, j]
-  D1[k+N/2, j]   = B[2k+1, j]
+  ms1[k, j]       = A[2k, j]
+  ms1[k+N/2, j]   = B[2k, j]
+  ms2[k, j]       = A[2k+1, j]
+  ms2[k+N/2, j]   = B[2k+1, j]
 +
-where `A` and `B` are the logical source squares at `ms1` and `ms2`.
-Even-indexed rows of the logical source are collected into `D0`; odd-indexed
-rows into `D1`.  Each source is its sole square.
+where `A` and `B` are the pre-instruction logical squares at `ms1` and
+`ms2`.  Even-indexed rows of the logical source are collected into `ms1`;
+odd-indexed rows into `ms2`.  Each operand is its sole square.
++
+`ms1` and `ms2` must name distinct M registers; an equal pair raises an
+`Illegal Instruction` exception before any register is read or written.
 +
 The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
 datatypes are not supported.
 +
-`D0` is the logical square at `md`, and `D1` occupies the consecutive M
-registers immediately following `D0`.  A datatype wider than
-`AME_UNIT_DATATYPE_SIZE` therefore spans multiple consecutive M registers per
-destination operand.
-+
-`md` must be aligned to the combined register span of `D0` and `D1`
-(even-aligned when each destination operand occupies a single M register).
 Inverse of `mrowzip.ew`.
 
 Operation::
 +
 [source]
 ----
-D0[k,j] = A[2k,j]
-D0[k+N/2,j] = B[2k,j]
-D1[k,j] = A[2k+1,j]
-D1[k+N/2,j] = B[2k+1,j]
+ms1[k,j] = A[2k,j]
+ms1[k+N/2,j] = B[2k,j]
+ms2[k,j] = A[2k+1,j]
+ms2[k+N/2,j] = B[2k+1,j]
 ----
 +
 This operation uses the common rules in <<ame-common-structural>>.
@@ -5028,7 +5019,7 @@ Synopsis::
 Row zip (interleave rows from two inputs)
 
 Mnemonic::
-`mrowzip.ew md, ms1, ms2`
+`mrowzip.ew ms1, ms2`
 
 Encoding::
 +
@@ -5037,45 +5028,42 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x38,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": 0x0,"type":2},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x38,"type":2}]}
 ....
 
 Description::
 Interleaves rows from the logical source square at `ms1` and the logical
-source square at `ms2` into the two destination operands `D0` and `D1`.
+source square at `ms2`, and writes the two result squares back into `ms1`
+and `ms2`.  Each operand is both a source and a destination.
 +
 Let `N = sqrt(AME_NELEM)`. For each row `k` in `[0, N/2)` and column `j`:
 +
-  D0[2k, j]     = A[k, j]
-  D0[2k+1, j]   = B[k, j]
-  D1[2k, j]     = A[N/2+k, j]
-  D1[2k+1, j]   = B[N/2+k, j]
+  ms1[2k, j]     = A[k, j]
+  ms1[2k+1, j]   = B[k, j]
+  ms2[2k, j]     = A[N/2+k, j]
+  ms2[2k+1, j]   = B[N/2+k, j]
 +
-where `A` and `B` are the logical source squares at `ms1` and `ms2`.
-Rows from `A` appear at even positions and rows from `B` appear at odd
-positions within the two-square logical destination.  Each source is its
+where `A` and `B` are the pre-instruction logical squares at `ms1` and
+`ms2`.  Rows from `A` appear at even positions and rows from `B` appear at
+odd positions within the two-square logical result.  Each operand is its
 sole square.
++
+`ms1` and `ms2` must name distinct M registers; an equal pair raises an
+`Illegal Instruction` exception before any register is read or written.
 +
 The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
 datatypes are not supported.
 +
-`D0` is the logical square at `md`, and `D1` occupies the consecutive M
-registers immediately following `D0`.  A datatype wider than
-`AME_UNIT_DATATYPE_SIZE` therefore spans multiple consecutive M registers per
-destination operand.
-+
-`md` must be aligned to the combined register span of `D0` and `D1`
-(even-aligned when each destination operand occupies a single M register).
 Inverse of `mrowunzip.ew`.
 
 Operation::
 +
 [source]
 ----
-D0[2k,j] = A[k,j]
-D0[2k+1,j] = B[k,j]
-D1[2k,j] = A[N/2+k,j]
-D1[2k+1,j] = B[N/2+k,j]
+ms1[2k,j] = A[k,j]
+ms1[2k+1,j] = B[k,j]
+ms2[2k,j] = A[N/2+k,j]
+ms2[2k+1,j] = B[N/2+k,j]
 ----
 +
 This operation uses the common rules in <<ame-common-structural>>.

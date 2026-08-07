@@ -26,7 +26,7 @@ baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 audit_path = File.join(root, "docs", "migration", "ame-prose-migration-audit.md")
 errors = []
 
-expected_baseline_hash = "02bdace4b8ef64d0cc18d5bbde8126e4cdde42accf9bac5b4ac951126106845d"
+expected_baseline_hash = "36b18ef6ac82370b13470916cb03c2d0205783de9e14a57afed3b2affff26b90"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
@@ -219,7 +219,11 @@ end
   "mrowshift.ew.x" => [/low 32 bits/, "S32 row-offset width"],
   "mpack.ew.x" => [/the index is the low\s+`log2\(pack_factor\)` bits of `X\[xs1\]`; higher X-register bits are ignored/m, "masked packed-slot index width"],
   "munpack.ew.x" => [/the index is the low\s+`log2\(pack_factor\)` bits of `X\[xs1\]`; higher X-register bits are ignored/m, "masked packed-slot index width"]
-}.each do |name, (pattern, description)|
+}.merge(
+  %w[mcolunzip.ew mcolzip.ew mrowunzip.ew mrowzip.ew].map do |name|
+    [name, [/must name distinct M registers/, "zip/unzip distinct-register requirement"]]
+  end.to_h
+).each do |name, (pattern, description)|
   section = active_sections_by_name.fetch(name, "")
   errors << "#{name}: missing #{description}" unless section.match?(pattern)
 end
@@ -228,7 +232,9 @@ end
   /data-source element width/ => "source-width shift rule",
   /scalar\s+datatype is wider than XLEN, the X-register bit pattern is zero-extended/m => "data-scalar widening rule",
   /`mcolunzip\.ew`, `mcolzip\.ew`, `mrowunzip\.ew`, and\s+`mrowzip\.ew` are also\s+explicit fixed-shape exceptions/m => "zip/unzip fixed-shape exception",
-  /`D1`\s+occupies the\s+consecutive\s+M\s+registers immediately following `D0`/m => "zip/unzip consecutive destination-operand placement",
+  /writes\s+the\s+two\s+result\s+squares\s+back\s+into\s+`ms1`\s+and\s+`ms2`/m => "zip/unzip in-place operand model",
+  /the\s+requirement\s+that\s+`ms1`\s+and\s+`ms2`\s+name\s+distinct\s+M\s+registers\s+is\s+likewise\s+checked\s+immediately\s+after\s+decode/m => "zip/unzip distinct-register validation stage",
+  /Datatype\s+compatibility\s+between\s+the\s+two\s+operands\s+is\s+a\s+separate\s+operand-class\s+requirement/m => "zip/unzip datatype-mismatch UN rule",
   /The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed\s+datatypes are not supported/m => "Permutation unit-or-wide datatype rule",
   /The opaque `mls` and `mss` instructions do not inspect `Md`/ => "opaque load/store datatype exemption",
   /Elements are packed\s+back-to-back as E-bit fields/m => "typed memory bit packing",
