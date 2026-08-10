@@ -209,8 +209,9 @@ The required register count is the datatype size rounded up in units of
 When a square requires multiple consecutive `M` registers, consecutive registers are combined into a group.
 When registers are grouped, the register index must be a multiple of the group size (_e.g._, when
 group size is two, register indices must be even).
-Specifying a register index that is not a multiple of the group size results in an
-Illegal Instruction exception.
+Specifying a register index that is not a multiple of the group size results in an Illegal Instruction exception.
+All `M` registers within a group must hold the same datatype; specifying a group whose registers have
+inconsistent datatypes results in an Illegal Instruction exception.
 This mechanism is analogous to the `LMUL` facility used in the RISC-V vector (`V`) extension.
 
 Packed datatypes can be used directly as operands in compute instructions;
@@ -1653,24 +1654,24 @@ register for it.
 ===== Scalar ingress and data scalar operands
 
 `mbcast.m.x` is the explicit scalar ingress instruction. It interprets an X-register
-bit pattern using a datatype encoding supplied in another X register, converts the
+bit pattern using the datatype encoding in <<ame-scalar-dtype,`ame_scalar_dtype`>>, converts the
 value to the destination `Md` datatype using the common conversion rules, and broadcasts the converted
 value to every logical element of the destination M operand.
 
-Data scalar `.ew.x` instructions use `CSR[ame_scalar_dtype]` for the source scalar
+Data scalar `.ew.x` instructions use <<ame-scalar-dtype,`ame_scalar_dtype`>> for the source scalar
 type. The scalar is converted to the tensor operand datatype before the ordinary
 same-datatype operation is evaluated. This keeps the operation support table
 polymorphic without requiring a separate mixed-type tuple for every instruction.
 
 Shift amounts, indices, offsets, and other control scalar operands are fixed-type
 integer values defined by their instruction. They do not read
-`CSR[ame_scalar_dtype]` and do not undergo AME datatype conversion.
+<<ame-scalar-dtype,`ame_scalar_dtype`>> and do not undergo AME datatype conversion.
 
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
 | <<ame:doc:inst:mbcast_m_x,mbcast.m.x>>
-| `D[i] = convert(X[xs1], source datatype X[xtyp], destination datatype Md[md])`
+| `D[i] = convert(X[xs1], source datatype ame_scalar_dtype, destination datatype Md[md])`
 | Convert one X scalar and broadcast it to an M operand
 |===
 
@@ -1681,7 +1682,7 @@ fixed position inside one M register, intended for debugging.  Each
 instruction defines its own element size (8, 16, 32, or 64 bits) and accesses
 the register through the row-major layout transformation, viewed as `N` rows
 of `row_elements` elements of that size; it uses neither
-`CSR[ame_scalar_dtype]` nor the register datatype in `Md`.
+<<ame-scalar-dtype,`ame_scalar_dtype`>> nor the register datatype in `Md`.
 
 [cols="1,2,3",options="header"]
 |===

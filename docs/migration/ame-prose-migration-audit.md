@@ -34,7 +34,7 @@ The published prose is authoritative after cutover. NumPy examples are never sem
 | `mcolunzip.ew` | 2437 | `ame:doc:inst:mcolunzip_ew` | Permutation | `mcolunzip.ew ms1, ms2` | `ms1[i,j] = A[i,2j] + ms1[i, N/2+j] = B[i,2j] + ms2[i,j] = A[i,2j+1] + ms2[i, N/2+j] = B[i,2j+1]` | `ame-common-structural` | - | Ready |
 | `mcolzip.ew` | 2535 | `ame:doc:inst:mcolzip_ew` | Permutation | `mcolzip.ew ms1, ms2` | `ms1[i,2j] = A[i,j] + ms1[i,2j+1] = B[i,j] + ms2[i,2j] = A[i, N/2+j] + ms2[i,2j+1] = B[i, N/2+j]` | `ame-common-structural` | - | Ready |
 | `mconv.ew` | 2636 | `ame:doc:inst:mconv_ew` | Register move / data conversion | `mconv.ew md, ms1` | `D = convert(A) over the formed logical operand` | `ame-common-register-groups` | - | Ready |
-| `mbcast.m.x` | 2755 | `ame:doc:inst:mbcast_m_x` | Register move / data conversion | `mbcast.m.x md, xs1, xtyp` | `D[i] = CONV1D(X[xs1], X[xtyp], Md[md])` | `ame-common-register-groups` | - | Ready |
+| `mbcast.m.x` | 2755 | `ame:doc:inst:mbcast_m_x` | Register move / data conversion | `mbcast.m.x md, xs1` | `D[i] = CONV1D(X[xs1], ame_scalar_dtype, Md[md])` | `ame-common-register-groups` | - | Ready |
 | `mcos.ew` | 2835 | `ame:doc:inst:mcos_ew` | Elementwise Math Functions | `mcos.ew md, ms1` | `D[i] = cos(A[i])` | `ame-common-arithmetic` | - | Ready |
 | `mexp2.ew` | 2930 | `ame:doc:inst:mexp2_ew` | Elementwise Math Functions | `mexp2.ew md, ms1` | `D[i] = 2^A[i]^` | `ame-common-arithmetic` | - | Ready |
 | `mfrintm.ew` | 3013 | `ame:doc:inst:mfrintm_ew` | Elementwise Arithmetic | `mfrintm.ew md, ms1` | `D[i] = floor(A[i])` | `ame-common-arithmetic` | - | Ready |

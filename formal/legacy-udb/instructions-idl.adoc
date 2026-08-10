@@ -763,7 +763,7 @@ Description::
 Computes the elementwise absolute difference between a scalar constant from integer
 register `xs1` and every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = |xs1 - ms2[i]|`
@@ -953,7 +953,7 @@ Description::
 Adds a scalar constant from integer register `xs1` to every element of square `ms2`,
 stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 + ms2[i]`
@@ -1143,7 +1143,7 @@ Description::
 Computes the elementwise bitwise AND of a scalar constant from integer register `xs1`
 with every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 & ms2[i]`
@@ -1335,7 +1335,7 @@ Description::
 Computes the elementwise bitwise AND of a scalar constant from integer register `xs1`
 with the bitwise complement of every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 & ~ms2[i]`
@@ -1745,7 +1745,7 @@ Compares a scalar constant from integer register `xs1` against every element of 
 `ms2`, storing -1 (all bits set) where the scalar is greater than or equal to the element,
 and 0 otherwise, into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = (xs1 >= ms2[i]) ? -1 : 0`
@@ -1943,7 +1943,7 @@ Compares a scalar constant from integer register `xs1` against every element of 
 `ms2`, storing -1 (all bits set) where the scalar is strictly less than the element,
 and 0 otherwise, into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = (xs1 < ms2[i]) ? -1 : 0`
@@ -2042,7 +2042,7 @@ For each row `i` and column `j`:
 If `c` is outside `[0, sqrt(AME_NELEM))`, an `Illegal Instruction` exception is raised.
 +
 The `xs1` operand is a control scalar: it is interpreted as an unsigned integer
-column index.  It does not read `CSR[ame_scalar_dtype]` and does not undergo
+column index.  It does not read `ame_scalar_dtype` and does not undergo
 AME datatype conversion.
 
 
@@ -2342,7 +2342,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 Description::
 Elementwise column shift of `ms1` by a signed 32-bit integer offset `c` from integer
 register `xs1`, stored into `md`.  This fixed-type control operand does not read
-`CSR[ame_scalar_dtype]`.
+`ame_scalar_dtype`.
 +
 For each row `i` and column `j`:
 +
@@ -2783,7 +2783,7 @@ logical packed element.
 The source and destination datatype encodings must be supported, and the
 source-to-destination conversion must be supported.  Otherwise,
 `amestatus.UN` is set and no destination state is modified.  The instruction
-does not read `CSR[ame_scalar_dtype]`; the source datatype is its explicit
+does not read `ame_scalar_dtype`; the source datatype is its explicit
 `xtyp` operand.
 
 NumPy Equivalent::
@@ -3533,7 +3533,7 @@ Description::
 Computes the elementwise half-difference between a scalar constant from integer register
 `xs1` and every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = (xs1 - ms2[i]) / 2`
@@ -3734,7 +3734,7 @@ For each element position `i`:
 +
 The type of the matrix elements is determined by `Md[ms2]`. The scalar exponent is
 interpreted as an integer of the maximum supported AME integer datatype (`AME_MAX_INT_DTYPE`).
-The exponent is a fixed-type control operand and does not read `CSR[ame_scalar_dtype]`.
+The exponent is a fixed-type control operand and does not read `ame_scalar_dtype`.
 +
 Equivalent to C `ldexp` applied elementwise with a broadcast scalar exponent.
 Complementary to `mrdexp.ew`.
@@ -3942,7 +3942,7 @@ is added, and the sum is written back.
 +
 The type of the matrix elements is determined by `Md[ms2]`. The scalar exponent is
 interpreted as an integer of the maximum supported AME integer datatype (`AME_MAX_INT_DTYPE`).
-The exponent is a fixed-type control operand and does not read `CSR[ame_scalar_dtype]`.
+The exponent is a fixed-type control operand and does not read `ame_scalar_dtype`.
 +
 Complementary to `mrdexpacc.ew`.
 +
@@ -4222,7 +4222,7 @@ Description::
 Computes the elementwise base-2 logarithm of the absolute value of every element of
 square `ms2`, minus a scalar bias from integer register `xs1`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before being used as the bias for every element position `i`:
 +
   `md[i] = log2(|ms2[i]|) - xs1`
@@ -4846,7 +4846,7 @@ Description::
 Computes the elementwise maximum of a scalar constant from integer register `xs1` and
 every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = max(xs1, ms2[i])`
@@ -5037,7 +5037,7 @@ Description::
 Computes the elementwise mean of a scalar constant from integer register `xs1` and
 every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = (xs1 + ms2[i]) / 2`
@@ -5228,7 +5228,7 @@ Description::
 Computes the elementwise minimum of a scalar constant from integer register `xs1` and
 every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = min(xs1, ms2[i])`
@@ -5649,7 +5649,7 @@ bits of `X[xs1]`; higher bits are ignored.  The selected column is
 `pos % row_elements` and the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `ame_scalar_dtype`, does not
 read or convert using `Md[md]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -5732,7 +5732,7 @@ bits of `X[xs1]`; higher bits are ignored.  The selected column is
 `pos % row_elements` and the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `ame_scalar_dtype`, does not
 read or convert using `Md[md]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -5815,7 +5815,7 @@ bits of `X[xs1]`; higher bits are ignored.  The selected column is
 `pos % row_elements` and the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `ame_scalar_dtype`, does not
 read or convert using `Md[md]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -5901,7 +5901,7 @@ bits of `X[xs1]`; higher bits are ignored.  The selected column is
 `pos % row_elements` and the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `ame_scalar_dtype`, does not
 read or convert using `Md[md]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -5988,7 +5988,7 @@ higher bits are ignored.  The selected column is `pos % row_elements` and
 the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `ame_scalar_dtype`, does not
 read or convert using `Md[ms2]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -6071,7 +6071,7 @@ higher bits are ignored.  The selected column is `pos % row_elements` and
 the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `ame_scalar_dtype`, does not
 read or convert using `Md[ms2]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -6154,7 +6154,7 @@ higher bits are ignored.  The selected column is `pos % row_elements` and
 the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `ame_scalar_dtype`, does not
 read or convert using `Md[ms2]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -6240,7 +6240,7 @@ higher bits are ignored.  The selected column is `pos % row_elements` and
 the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `ame_scalar_dtype`, does not
 read or convert using `Md[ms2]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -6516,7 +6516,7 @@ Description::
 Multiplies every element of square `ms2` by a scalar constant from integer register
 `xs1`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 × ms2[i]`
@@ -6824,7 +6824,7 @@ Multiplies every element of square `ms2` by a scalar constant from integer regis
 `md` is both a source and destination: the existing element is read, the scaled value
 `xs1 × ms2[i]` is added, and the sum is written back.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = md[i] + xs1 × ms2[i]`
@@ -7131,7 +7131,7 @@ Multiplies every element of square `ms2` by a scalar constant from integer regis
 `md` is both a source and destination: the existing element is read, the product
 `xs1 × ms2[i]` is subtracted, and the result is written back.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = md[i] - xs1 × ms2[i]`
@@ -7332,7 +7332,7 @@ destination.
 `md` is both a source and destination: each existing element is multiplied by the
 corresponding element of `ms2`, the scalar `xs1` is added, and the result is written back.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 + ms2[i] × md[i]`
@@ -8041,7 +8041,7 @@ Description::
 Negates the product of a scalar constant from integer register `xs1` and every element
 of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = -(xs1 × ms2[i])`
@@ -8244,7 +8244,7 @@ and the destination.
 corresponding element of `ms2`, that product is subtracted from the scalar `xs1`,
 and the result is written back.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 - ms2[i] × md[i]`
@@ -8434,7 +8434,7 @@ Description::
 Computes the elementwise bitwise OR of a scalar constant from integer register `xs1`
 with every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 | ms2[i]`
@@ -8626,7 +8626,7 @@ Description::
 Computes the elementwise bitwise OR of a scalar constant from integer register `xs1`
 with the bitwise complement of every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 | ~ms2[i]`
@@ -8727,7 +8727,7 @@ sub-square slots of `md` are preserved (read-modify-write).
 `Illegal Instruction` exception.
 The index is a fixed U32 unsigned integer control operand (the low 32 bits of
 `X[xs1]`) and does not read
-`CSR[ame_scalar_dtype]`.
+`ame_scalar_dtype`.
 +
 This is the single-square form of the pack (compress) direction of
 <<ame:doc:inst:mconv_ew,mconv.ew>>; use it to pack one square at a time without holding
@@ -10126,7 +10126,7 @@ For each row `i` and column `j`:
 If `c` is outside `[0, sqrt(AME_NELEM))`, an `Illegal Instruction` exception is raised.
 +
 The `xs1` operand is a control scalar: it is interpreted as an unsigned integer
-row index.  It does not read `CSR[ame_scalar_dtype]` and does not undergo
+row index.  It does not read `ame_scalar_dtype` and does not undergo
 AME datatype conversion.
 
 
@@ -10426,7 +10426,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 Description::
 Elementwise shift of each column of `ms1` by a signed 32-bit integer row offset `c` from
 integer register `xs1`, stored into `md`.  This fixed-type control operand does not read
-`CSR[ame_scalar_dtype]`.
+`ame_scalar_dtype`.
 +
 For each row `i` and column `j`:
 +
@@ -11833,7 +11833,7 @@ Logical left shift of every element of `ms2` by a scalar amount from integer reg
 Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
 element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
 The X operand is a fixed unsigned integer control value and does not read
-`CSR[ame_scalar_dtype]`.
+`ame_scalar_dtype`.
 
 
 NumPy Equivalent::
@@ -12137,7 +12137,7 @@ Arithmetic (sign-preserving) right shift of every element of `ms2` by a scalar a
 Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
 element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
 The X operand is a fixed unsigned integer control value and does not read
-`CSR[ame_scalar_dtype]`.
+`ame_scalar_dtype`.
 
 
 NumPy Equivalent::
@@ -12346,7 +12346,7 @@ Logical (unsigned) right shift of every element of `ms2` by a scalar amount from
 Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
 element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
 The X operand is a fixed unsigned integer control value and does not read
-`CSR[ame_scalar_dtype]`.
+`ame_scalar_dtype`.
 
 
 NumPy Equivalent::
@@ -12969,7 +12969,7 @@ Description::
 Subtracts every element of square `ms2` from a scalar constant from integer register `xs1`,
 stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 - ms2[i]`
@@ -13165,7 +13165,7 @@ Description::
 Subtracts the elementwise base-2 logarithm of the absolute value of every element of
 square `ms2` from a scalar constant from integer register `xs1`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before being used as the bias for every element position `i`:
 +
   `md[i] = xs1 - log2(|ms2[i]|)`
@@ -13363,7 +13363,7 @@ element from the packed datatype (`Md[ms1]`) to the non-packed datatype (`Md[md]
 `Illegal Instruction` exception.
 The index is a fixed U32 unsigned integer control operand (the low 32 bits of
 `X[xs1]`) and does not read
-`CSR[ame_scalar_dtype]`.
+`ame_scalar_dtype`.
 +
 This is the single-square form of the unpack (expand) direction of
 <<ame:doc:inst:mconv_ew,mconv.ew>>; use it to unpack one square at a time and limit the
@@ -13547,7 +13547,7 @@ Description::
 Computes the elementwise bitwise XOR of a scalar constant from integer register `xs1`
 with every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `ame_scalar_dtype`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
   `md[i] = xs1 ^ ms2[i]`

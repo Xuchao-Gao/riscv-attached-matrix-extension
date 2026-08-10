@@ -172,6 +172,7 @@ Software saves `ameown.OWNED` with the execution context. To restore a saved
 value of one, software executes `ame.acquire`; a successful acquisition
 restores `ameown.OWNED` to one.
 
+[[ame-scalar-dtype]]
 ==== ame_scalar_dtype
 
 Selects the AME datatype used to interpret an X-register operand when an

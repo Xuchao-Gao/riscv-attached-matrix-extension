@@ -44,9 +44,10 @@ selector is reserved. This does not define an additional register format.
 |===
 | Allocation | Instruction count | `funct7` allocation | Selector / fixed fields | Remaining capacity
 
-| R3 | 97 | `0x00..0x50`, `0x54..0x63` | n/a | 0 reserved values
+| R3 | 96 | `0x00..0x50`, `0x54..0x57`, `0x59..0x63` | n/a | 0 reserved values
 | R2 bank 0 | 28 | `{ame-enc-r2-bank0-funct7}` | `xfunct5=0..31` except `0x09..0x0C` | 4 reserved values
 | R2 bank 1 | 11 | `{ame-enc-r2-bank1-funct7}` | `xfunct5=0..0x0A`; `0x0A` fixes `rs1=rd=0` | 21
+| R2 bank 2 | 1 | `0x58` | `xfunct5=0` | 31
 | R1 | 5 | `{ame-enc-r1-bank-funct7}` | `xfunct10=0..3,64..79` | 959
 | Unallocated | 0 | `0x64..0x7f` | n/a | 28 `funct7` banks
 |===

@@ -134,8 +134,8 @@ reserved_funct7 = {
   "Fixed" => []
 }
 expected_funct7 = {
-  "R3" => ((0x00..0x50).to_a + (0x54..0x63).to_a) - reserved_funct7.fetch("R3"),
-  "R2" => [0x51, 0x52],
+  "R3" => ((0x00..0x50).to_a + (0x54..0x57).to_a + (0x59..0x63).to_a) - reserved_funct7.fetch("R3"),
+  "R2" => [0x51, 0x52, 0x58],
   "R1" => [0x53],
   "Fixed" => [0x52]
 }
@@ -205,6 +205,7 @@ end
 reserved_extensions = {
   ["R2", 0x51] => [9, 10, 11, 12],
   ["R2", 0x52] => [10],
+  ["R2", 0x58] => (1..31).to_a,
   ["R1", 0x53] => (4..63).to_a
 }
 [["R2", 32], ["R1", 1024]].each do |format_name, capacity|

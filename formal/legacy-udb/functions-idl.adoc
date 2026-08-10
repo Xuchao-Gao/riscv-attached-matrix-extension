@@ -99,7 +99,7 @@ h| Arguments   l| AmeOperation op, Bits<32> dest_dtype, Bits<32> src1_dtype, Bit
 [#ame:doc:func:ame_scalar_op_supported]
 === `ame_scalar_op_supported`
 Returns true when a data-scalar element-wise operation is supported after the
-X-register scalar has been interpreted using `CSR[ame_scalar_dtype]` and
+X-register scalar has been interpreted using `ame_scalar_dtype` and
 converted to the tensor operand datatype.
 
 The scalar conversion is checked separately from the operation tuple.  The
@@ -122,7 +122,7 @@ return <<ame:doc:func:ame_op_supported,ame_op_supported>>pass:[(]AmeOperation::C
 
 [#ame:doc:func:ame_scalar_data_value]
 === `ame_scalar_data_value`
-Interprets an X-register bit pattern using `CSR[ame_scalar_dtype]` and
+Interprets an X-register bit pattern using `ame_scalar_dtype` and
 converts it to `target_dtype` using the common `CONV1D` semantics.  Callers
 must first establish that `ame_scalar_op_supported` is true.  Only the low
 `ame_dtype_val_to_size(scalar_dtype)` bits of the X-register value are used;

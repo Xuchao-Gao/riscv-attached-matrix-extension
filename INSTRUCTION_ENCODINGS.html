@@ -45,8 +45,8 @@
   <p>Standalone review artifact generated from <code>src/instructions.adoc</code>. Decoder rule: <code>(word &amp; mask) == match</code>.</p>
   <div class="cards">
     <div class="card"><strong>141</strong><span>instructions</span></div>
-    <div class="card"><strong>97</strong><span>R3 encodings</span></div>
-    <div class="card"><strong>38</strong><span>R2 encodings</span></div>
+    <div class="card"><strong>96</strong><span>R3 encodings</span></div>
+    <div class="card"><strong>39</strong><span>R2 encodings</span></div>
     <div class="card"><strong>5</strong><span>R1 encodings</span></div>
     <div class="card"><strong>1</strong><span>fixed encodings</span></div>
     <div class="card"><strong>0</strong><span>decode overlaps</span></div>
@@ -1141,13 +1141,13 @@
     <td><code>0xfff0707f</code></td>
     <td><code>0xa480002b</code></td>
   </tr>
-<tr data-format="R3" data-category="Register move / data conversion">
+<tr data-format="R2" data-category="Register move / data conversion">
     <td class="num">120</td>
-    <td><span class="tag r3">R3</span></td>
+    <td><span class="tag r2">R2</span></td>
     <td><code>mbcast.m.x</code></td>
-    <td><code>mbcast.m.x md, xs1, xtyp</code><div class="synopsis">Convert an X-register scalar and broadcast it to an M operand</div></td>
-    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x58</small></span><span class="bit operand w5" title="bits 24:20"><b>xtyp</b><small>xtyp</small></span><span class="bit operand w5" title="bits 19:15"><b>xs1</b><small>xs1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
-    <td><code>0xfe00707f</code></td>
+    <td><code>mbcast.m.x md, xs1</code><div class="synopsis">Convert an X-register scalar and broadcast it to an M operand</div></td>
+    <td><div class="bitbar"><span class="bit fixed w7" title="bits 31:25"><b>funct7</b><small>0x58</small></span><span class="bit fixed w5" title="bits 24:20"><b>xfunct5</b><small>0x0</small></span><span class="bit operand w5" title="bits 19:15"><b>xs1</b><small>xs1</small></span><span class="bit fixed w3" title="bits 14:12"><b>funct3</b><small>0x0</small></span><span class="bit operand w5" title="bits 11:7"><b>md</b><small>md</small></span><span class="bit fixed w7" title="bits 6:0"><b>opcode</b><small>0x2b</small></span></div></td>
+    <td><code>0xfff0707f</code></td>
     <td><code>0xb000002b</code></td>
   </tr>
 <tr data-format="R2" data-category="Register move / data conversion">

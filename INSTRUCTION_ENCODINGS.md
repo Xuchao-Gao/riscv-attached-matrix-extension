@@ -11,8 +11,8 @@ The canonical decoder test is `(instruction_word & mask) == match`. Fixed fields
 | Instructions | 141 |
 | Fixed encodings | 1 |
 | R1 encodings | 5 |
-| R2 encodings | 38 |
-| R3 encodings | 97 |
+| R2 encodings | 39 |
+| R3 encodings | 96 |
 | Exact duplicate decode patterns | 0 |
 | Partial decode-space overlaps | 0 |
 
@@ -53,7 +53,7 @@ R3 uses `funct7=0x00..0x50` and `funct7=0x54..0x60`. R2 uses `funct7=0x51` with 
 | 24 | R3 | `mcolunzip.ew` | `mcolunzip.ew ms1, ms2` | `ms2[24:20]`; `ms1[19:15]` | `[31:25]=0x61`; `[14:12]=0x0` (`ame-enc-funct3`); `[11:7]=0x00`; `[6:0]=0x2b` | `0xfe007fff` | `0xc200002b` |
 | 25 | R3 | `mcolzip.ew` | `mcolzip.ew ms1, ms2` | `ms2[24:20]`; `ms1[19:15]` | `[31:25]=0x62`; `[14:12]=0x0` (`ame-enc-funct3`); `[11:7]=0x00`; `[6:0]=0x2b` | `0xfe007fff` | `0xc400002b` |
 | 26 | R2 | `mconv.ew` | `mconv.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x0d`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa2d0002b` |
-| 27 | R3 | `mbcast.m.x` | `mbcast.m.x md, xs1, xtyp` | `xtyp[24:20]`; `xs1[19:15]`; `md[11:7]` | `[31:25]=0x58`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfe00707f` | `0xb000002b` |
+| 27 | R2 | `mbcast.m.x` | `mbcast.m.x md, xs1` | `xs1[19:15]`; `md[11:7]` | `[31:25]=0x58`; `[24:20]=0x00`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xb000002b` |
 | 28 | R2 | `mcos.ew` | `mcos.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x0e`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa2e0002b` |
 | 29 | R2 | `mexp2.ew` | `mexp2.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x0f`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa2f0002b` |
 | 30 | R2 | `mfrintm.ew` | `mfrintm.ew md, ms1` | `ms1[19:15]`; `md[11:7]` | `[31:25]=0x51` (`ame-enc-r2-bank0-funct7`); `[24:20]=0x05`; `[14:12]=0x0` (`ame-enc-funct3`); `[6:0]=0x2b` | `0xfff0707f` | `0xa250002b` |

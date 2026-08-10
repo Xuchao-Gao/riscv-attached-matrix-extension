@@ -18,8 +18,8 @@ and migration review; buildable normative content lives under `src/`.
 
 | File | SHA-256 |
 |---|---|
-| `instructions-idl.adoc` | `7e103b393e5e6e7e762757b890d7afa9a51eca3b4a046567803e807070d49680` |
-| `functions-idl.adoc` | `140e50c2d5bb24f5de88fec1a71ac15c29cc2b6f8084d084cfd7024c3d8c1b07` |
+| `instructions-idl.adoc` | `9dab6e7c5d6979305bc15ea8537f28c9c5ef8c9d7cf7adc18a1a3dd5374f323f` |
+| `functions-idl.adoc` | `ffb92d0b1147f9bcf3c3358c930850333b0fcaacd9ae1239a7538f7253e1c75d` |
 | `instruction-encoding-allocations.adoc` | `9a3748a14613d05e44c7a70810f0b1747df2c75125e46e98ed0725fada929f30` |
 
 Semantic conflicts and their prose dispositions are recorded in
