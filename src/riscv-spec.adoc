@@ -107,10 +107,6 @@ prose in this document is the architectural definition.
 
 include::instructions.adoc[]
 
-include::glossary.adoc[]
-
-include::base-isa-anchors.adoc[]
-
 // The index must precede the bibliography
 // include::index.adoc[]
 // include::bibliography.adoc[]

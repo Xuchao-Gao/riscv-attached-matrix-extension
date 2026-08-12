@@ -121,7 +121,7 @@ version may assign different standard CSR addresses.
 | `CC1`
 | AME unit datatype size in bits
 
-| <<ame:doc:csr:ame_scalar_dtype,ame_scalar_dtype>>
+| <<ame:doc:csr:amestype,amestype>>
 | `CC2`
 | Datatype of data scalar operands supplied in `X` registers
 
@@ -143,9 +143,10 @@ version may assign different standard CSR addresses.
 
 |===
 
-`ame_scalar_dtype` and `amestatus` are backend context state. `amenlen` and
+`amestype` and `amestatus` are backend context state. `amenlen` and
 `ameudsz` report implementation capabilities. `ameown` reports ownership.
 
+[#ame:doc:csr:ameown]
 ==== ameown
 
 `ameown` is a read-only CSR that reports whether the current software execution
@@ -172,7 +173,8 @@ Software saves `ameown.OWNED` with the execution context. To restore a saved
 value of one, software executes `ame.acquire`; a successful acquisition
 restores `ameown.OWNED` to one.
 
-==== ame_scalar_dtype
+[#ame:doc:csr:amestype]
+==== amestype
 
 Selects the AME datatype used to interpret an X-register operand when an
 instruction declares a *data scalar* operand.  The encoding is the same
@@ -198,6 +200,7 @@ restored with the AME state when software changes execution context.
 
 |===
 
+[#ame:doc:csr:amenlen]
 ==== amenlen
 
 Holds the value N = sqrt(AME_NELEM), the side length of an AME tile in elements.
@@ -221,6 +224,7 @@ This is analogous to reading `vlenb` in RISC-V Vector code.
 
 |===
 
+[#ame:doc:csr:ameudsz]
 ==== ameudsz
 
 Holds `AME_UNIT_DATATYPE_SIZE`, the element size in bits at which exactly one
@@ -251,6 +255,7 @@ without hardcoding any implementation-specific constant.
 
 |===
 
+[#ame:doc:csr:amefflags]
 ==== amefflags
 
 `amefflags` holds the accrued floating-point exception flags raised by AME
@@ -292,6 +297,7 @@ modify the `fflags` CSR of the F extension.
 
 |===
 
+[#ame:doc:csr:amexsat]
 ==== amexsat
 
 `amexsat` reports fixed-point saturation from AME integer operations.  Bit 0 is
@@ -318,6 +324,8 @@ clamps its output to the destination datatype's range.
 
 |===
 
+[#ame:doc:csr:amestatus]
+[#ame:doc:csr_field:amestatus:UN]
 ==== amestatus
 
 `amestatus` is backend context state and reports sticky AME execution status.

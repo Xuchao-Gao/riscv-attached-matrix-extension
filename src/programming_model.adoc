@@ -578,16 +578,16 @@ first-stage index checks.  A tuple that violates a requirement is unsupported
 and follows <<norm:ame_op_supported_contract>>.
 
 Data-scalar `.ew.x` instructions interpret exactly the low
-`sizeof(ame_scalar_dtype)` bits of the X-register operand when XLEN is at
+`sizeof(amestype)` bits of the X-register operand when XLEN is at
 least that width, ignoring any higher X-register bits.  When the scalar
 datatype is wider than XLEN, the X-register bit pattern is zero-extended to
 that width.  The resulting bit pattern is interpreted using
-`ame_scalar_dtype`, converted to the tensor source datatype, and then used by
+`amestype`, converted to the tensor source datatype, and then used by
 the ordinary same-datatype element operation.  A
 failed scalar conversion is an unsupported datatype tuple.  Control scalars,
 including indices, offsets, shift amounts, strides, and packed-slot selectors,
 are unsigned or signed integer quantities defined by their instruction; they
-do not use `ame_scalar_dtype`.
+do not use `amestype`.
 
 A legal implementation may support either zero standard datatypes or zero custom datatypes (i.e.,
 all custom or all standard).
@@ -654,8 +654,8 @@ row-major or column-major order.  The base-address alignment is
 
 For a strided transfer, `element_bytes = ceil(E / 8)` is used only for the
 base-address alignment, which is `min(element_bytes, 4096)` bytes.  `base` is
-the unsigned XLEN-bit value `X[xs1]`, and `stride` is the unsigned XLEN-bit
-value `X[xs2]`.  Each segment begins at
+the unsigned XLEN-bit value `X[rs1]`, and `stride` is the unsigned XLEN-bit
+value `X[rs2]`.  Each segment begins at
 `(base + seg * stride) modulo 2^XLEN`; the resulting XLEN-bit address is then
 subject to the ordinary translation, protection, and access checks described
 above.  Each segment is a separately byte-rounded bit string:
@@ -765,11 +765,11 @@ AME does not support general masking/predication on computational instructions, 
 
 ===== `ame.acquire`
 
-`ame.acquire xd, xs` atomically requests the entire backend. Every applicable
+`ame.acquire rd, rs1` atomically requests the entire backend. Every applicable
 `MS` field must be non-Off; otherwise, the instruction raises an
 illegal-instruction exception.
 
-`xs` contains the acquisition descriptor:
+`rs1` contains the acquisition descriptor:
 
 [cols="1,1,3",options="header"]
 |===
@@ -794,7 +794,7 @@ reserved. For BOUNDED_WAIT, `TIMEOUT_CLASS` values `0x0` through `0x3` select
 SHORT, MEDIUM, LONG, and VERY_LONG; `0xF` is implementation-defined and all
 other values are reserved. TRY ignores `TIMEOUT_CLASS`.
 
-`xd` receives:
+`rd` receives:
 
 [cols="1,1,3",options="header"]
 |===
@@ -1280,7 +1280,7 @@ encoding need not be all zero bits.
 destination datatype.
 
 For `mcmovge.ew` and `mcmovlt.ew`, an unselected destination element is
-preserved bit-for-bit.  For `mldexp.ew.x` and `mldexpacc.ew.x`, `X[xs1]` is
+preserved bit-for-bit.  For `mldexp.ew.x` and `mldexpacc.ew.x`, `X[rs1]` is
 zero-extended or low-bit truncated to the width of
 <<ame:doc:param:AME_MAX_INT_DTYPE,AME_MAX_INT_DTYPE>> as defined by that
 parameter, then interpreted using that integer datatype.  For `mldexpacc.ew`,
@@ -1628,10 +1628,10 @@ index, represented in the configured datatype, to every logical element of an `M
 | Convert element data between supported datatypes
 | <<ame:doc:inst:mpack_ew_x,mpack.ew.x>>
 | `D[k] = convert(A)`; preserve all `D[n]` for `n != k`
-| Convert and insert one non-packed square into packed slot `k = X[xs1]`
+| Convert and insert one non-packed square into packed slot `k = X[rs1]`
 | <<ame:doc:inst:munpack_ew_x,munpack.ew.x>>
 | `D = convert(A[k])`
-| Extract and convert packed slot `k = X[xs1]` into one non-packed square
+| Extract and convert packed slot `k = X[rs1]` into one non-packed square
 |===
 
 `<<ame:doc:inst:mconv_ew,mconv.ew>>` converts element data from one datatype to another.
@@ -1657,20 +1657,20 @@ bit pattern using a datatype encoding supplied in another X register, converts t
 value to the destination `Md` datatype using the common conversion rules, and broadcasts the converted
 value to every logical element of the destination M operand.
 
-Data scalar `.ew.x` instructions use `CSR[ame_scalar_dtype]` for the source scalar
+Data scalar `.ew.x` instructions use `CSR[amestype]` for the source scalar
 type. The scalar is converted to the tensor operand datatype before the ordinary
 same-datatype operation is evaluated. This keeps the operation support table
 polymorphic without requiring a separate mixed-type tuple for every instruction.
 
 Shift amounts, indices, offsets, and other control scalar operands are fixed-type
 integer values defined by their instruction. They do not read
-`CSR[ame_scalar_dtype]` and do not undergo AME datatype conversion.
+`CSR[amestype]` and do not undergo AME datatype conversion.
 
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
 | <<ame:doc:inst:mbcast_m_x,mbcast.m.x>>
-| `D[i] = convert(X[xs1], source datatype X[xtyp], destination datatype Md[md])`
+| `D[i] = convert(X[rs1], source datatype X[rs2], destination datatype Md[md])`
 | Convert one X scalar and broadcast it to an M operand
 |===
 
@@ -1681,7 +1681,7 @@ fixed position inside one M register, intended for debugging.  Each
 instruction defines its own element size (8, 16, 32, or 64 bits) and accesses
 the register through the row-major layout transformation, viewed as `N` rows
 of `row_elements` elements of that size; it uses neither
-`CSR[ame_scalar_dtype]` nor the register datatype in `Md`.
+`CSR[amestype]` nor the register datatype in `Md`.
 
 [cols="1,2,3",options="header"]
 |===
@@ -1690,13 +1690,13 @@ of `row_elements` elements of that size; it uses neither
   <<ame:doc:inst:mmove16_m_x,mmove16.m.x>> /
   <<ame:doc:inst:mmove32_m_x,mmove32.m.x>> /
   <<ame:doc:inst:mmove64_m_x,mmove64.m.x>>
-| `D.rm[pos] = X[xs2]`
+| `D.rm[pos] = X[rs2]`
 | Move one 8/16/32/64-bit scalar into an M register position
 | <<ame:doc:inst:mmove8_x_m,mmove8.x.m>> /
   <<ame:doc:inst:mmove16_x_m,mmove16.x.m>> /
   <<ame:doc:inst:mmove32_x_m,mmove32.x.m>> /
   <<ame:doc:inst:mmove64_x_m,mmove64.x.m>>
-| `X[xd] = zext(A.rm[pos])`
+| `X[rd] = zext(A.rm[pos])`
 | Move one 8/16/32/64-bit element from an M register position to an X register
 |===
 
@@ -1716,34 +1716,34 @@ single instruction.
 |===
 | Instruction | Operation | Description
 | <<ame:doc:inst:mls,mls>>
-| `md <= mem[xs1]`
+| `md <= mem[rs1]`
 | Load raw M register from implementation-defined format
 | <<ame:doc:inst:mls_cm,mls.cm>>
-| `md <= mem[xs1]` (column-major)
+| `md <= mem[rs1]` (column-major)
 | Load square from column-major format
 | <<ame:doc:inst:mls_rm,mls.rm>>
-| `md <= mem[xs1]` (row-major)
+| `md <= mem[rs1]` (row-major)
 | Load square from row-major format
 | <<ame:doc:inst:mls_st,mls.st>>
-| `md <= mem[xs1, stride=xs2]`
+| `md <= mem[rs1, stride=rs2]`
 | Load square from strided memory format
 | <<ame:doc:inst:mls_tst,mls.tst>>
-| `md <= mem[xs1, stride=xs2]` (transposed)
+| `md <= mem[rs1, stride=rs2]` (transposed)
 | Load square from transposed strided memory format
 | <<ame:doc:inst:mss,mss>>
-| `mem[xs1] <= ms1`
+| `mem[rs1] <= ms1`
 | Store raw M register in implementation-defined format
 | <<ame:doc:inst:mss_cm,mss.cm>>
-| `mem[xs1] <= ms1` (column-major)
+| `mem[rs1] <= ms1` (column-major)
 | Store square to column-major format
 | <<ame:doc:inst:mss_rm,mss.rm>>
-| `mem[xs1] <= ms1` (row-major)
+| `mem[rs1] <= ms1` (row-major)
 | Store square to row-major format
 | <<ame:doc:inst:mss_st,mss.st>>
-| `mem[xs1, stride=xs2] <= ms1`
+| `mem[rs1, stride=rs2] <= ms1`
 | Store square to strided memory format
 | <<ame:doc:inst:mss_tst,mss.tst>>
-| `mem[xs1, stride=xs2] <= ms1` (transposed)
+| `mem[rs1, stride=rs2] <= ms1` (transposed)
 | Store square to transposed strided memory format
 |===
 
