@@ -26,7 +26,7 @@ square::
   Squares are the fundamental unit of work in AME.
   All squares are the same size for a given implementation and contain <<ame:doc:param:AME_NELEM,AME_NELEM>> elements regardless
   of datatype.
-  A square may fit in part of, exactly one, or multiple tensor registers, depending on the datatype
+  A square may fit in part of, exactly one, or multiple matrix registers, depending on the datatype
   of elements in the square and the implementation-defined parameter <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>.
 
 polymorphic register::
@@ -36,9 +36,11 @@ polymorphic register::
   The datatype of TRF (`M`) registers is managed with the `msettyp` and `mgettyp` instructions.
   The datatype of ARF (`Acc`) registers is managed with the `asettyp` and `agettyp` instructions.
 
-tensor register::
-  A register in either the Tensor Register File (TRF) or Accumulator Register File (ARF).
-  Tensor registers are polymorphic.
+matrix register::
+  A register in the Tensor Register File (TRF), one of the `M` registers numbered `M0`
+  to `M(AME_NUM_M_REGS-1)`.
+  Accumulator registers are not matrix registers.
+  Matrix registers are polymorphic.
 
 Tensor Register File (TRF)::
   An <<ame:doc:param:AME_NUM_M_REGS,AME_NUM_M_REGS>>-entry register file of matrix registers (`M`).

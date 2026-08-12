@@ -37,7 +37,7 @@ Resource Management::
 !===
 | Mnemonic | Name
 
-a| `ame.acquire xd, xs`
+a| `ame.acquire rd, rs1`
 | <<ame:doc:inst:ame_acquire,Acquire the AME backend>>
 a| `ame.release`
 | <<ame:doc:inst:ame_release,Release the AME backend>>
@@ -49,13 +49,13 @@ Datatype Management::
 !===
 | Mnemonic | Name
 
-a| `agettyp xd, ad`
+a| `agettyp rd, ad`
 | <<ame:doc:inst:agettyp,Get accumulator datatype>>
-a| `asettyp ad, xs1`
+a| `asettyp ad, rs1`
 | <<ame:doc:inst:asettyp,Set accumulator datatype>>
-a| `mgettyp xd, ms1`
+a| `mgettyp rd, ms1`
 | <<ame:doc:inst:mgettyp,Get datatype>>
-a| `msettyp md, xs1`
+a| `msettyp md, rs1`
 | <<ame:doc:inst:msettyp,Set datatype>>
 !===
 
@@ -68,11 +68,11 @@ a| `mabs.ew md, ms1`
 | <<ame:doc:inst:mabs_ew,Elementwise absolute value>>
 a| `mabsdiff.ew md, ms1, ms2`
 | <<ame:doc:inst:mabsdiff_ew,Elementwise absolute difference>>
-a| `mabsdiff.ew.x md, xs1, ms2`
+a| `mabsdiff.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mabsdiff_ew_x,Elementwise scalar absolute difference>>
 a| `madd.ew md, ms1, ms2`
 | <<ame:doc:inst:madd_ew,Elementwise addition>>
-a| `madd.ew.x md, xs1, ms2`
+a| `madd.ew.x md, rs1, ms2`
 | <<ame:doc:inst:madd_ew_x,Elementwise scalar addition>>
 a| `mfrintm.ew md, ms1`
 | <<ame:doc:inst:mfrintm_ew,Round float to integral (toward -inf)>>
@@ -84,47 +84,47 @@ a| `mfrintz.ew md, ms1`
 | <<ame:doc:inst:mfrintz_ew,Round float to integral (toward zero)>>
 a| `mhdiff.ew md, ms1, ms2`
 | <<ame:doc:inst:mhdiff_ew,Elementwise half-difference>>
-a| `mhdiff.ew.x md, xs1, ms2`
+a| `mhdiff.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mhdiff_ew_x,Elementwise scalar half-difference>>
 a| `mmax.ew md, ms1, ms2`
 | <<ame:doc:inst:mmax_ew,Elementwise maximum>>
-a| `mmax.ew.x md, xs1, ms2`
+a| `mmax.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mmax_ew_x,Elementwise scalar maximum>>
 a| `mmean.ew md, ms1, ms2`
 | <<ame:doc:inst:mmean_ew,Elementwise arithmetic mean (half-add)>>
-a| `mmean.ew.x md, xs1, ms2`
+a| `mmean.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mmean_ew_x,Elementwise scalar mean>>
 a| `mmin.ew md, ms1, ms2`
 | <<ame:doc:inst:mmin_ew,Elementwise minimum>>
-a| `mmin.ew.x md, xs1, ms2`
+a| `mmin.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mmin_ew_x,Elementwise scalar minimum>>
 a| `mmul.ew md, ms1, ms2`
 | <<ame:doc:inst:mmul_ew,Elementwise multiplication>>
-a| `mmul.ew.x md, xs1, ms2`
+a| `mmul.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mmul_ew_x,Elementwise scalar multiplication>>
 a| `mmulacc.ew md, ms1, ms2`
 | <<ame:doc:inst:mmulacc_ew,Elementwise multiply-accumulate>>
-a| `mmulacc.ew.x md, xs1, ms2`
+a| `mmulacc.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mmulacc_ew_x,Elementwise scalar multiply-accumulate>>
 a| `mmulaccneg.ew md, ms1, ms2`
 | <<ame:doc:inst:mmulaccneg_ew,Elementwise negative multiply-accumulate>>
-a| `mmulaccneg.ew.x md, xs1, ms2`
+a| `mmulaccneg.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mmulaccneg_ew_x,Elementwise scalar negative multiply-accumulate>>
 a| `mmuladd.ew md, ms1, ms2`
 | <<ame:doc:inst:mmuladd_ew,Elementwise fused multiply-add>>
-a| `mmuladd.ew.x md, xs1, ms2`
+a| `mmuladd.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mmuladd_ew_x,Elementwise scalar fused multiply-add>>
 a| `mmulneg.ew md, ms1, ms2`
 | <<ame:doc:inst:mmulneg_ew,Elementwise negate-multiply>>
-a| `mmulneg.ew.x md, xs1, ms2`
+a| `mmulneg.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mmulneg_ew_x,Elementwise scalar negate-multiply>>
 a| `mmulsub.ew md, ms1, ms2`
 | <<ame:doc:inst:mmulsub_ew,Elementwise fused multiply-subtract>>
-a| `mmulsub.ew.x md, xs1, ms2`
+a| `mmulsub.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mmulsub_ew_x,Elementwise scalar fused multiply-subtract>>
 a| `msub.ew md, ms1, ms2`
 | <<ame:doc:inst:msub_ew,Elementwise subtraction>>
-a| `msub.ew.x md, xs1, ms2`
+a| `msub.ew.x md, rs1, ms2`
 | <<ame:doc:inst:msub_ew_x,Elementwise scalar subtraction>>
 !===
 
@@ -135,35 +135,35 @@ Bitwise::
 
 a| `mand.ew md, ms1, ms2`
 | <<ame:doc:inst:mand_ew,Elementwise bitwise AND>>
-a| `mand.ew.x md, xs1, ms2`
+a| `mand.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mand_ew_x,Elementwise scalar bitwise AND>>
 a| `mandnot.ew md, ms1, ms2`
 | <<ame:doc:inst:mandnot_ew,Elementwise bitwise AND-NOT>>
-a| `mandnot.ew.x md, xs1, ms2`
+a| `mandnot.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mandnot_ew_x,Elementwise scalar bitwise AND-NOT>>
 a| `mor.ew md, ms1, ms2`
 | <<ame:doc:inst:mor_ew,Elementwise bitwise OR>>
-a| `mor.ew.x md, xs1, ms2`
+a| `mor.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mor_ew_x,Elementwise scalar bitwise OR>>
 a| `mornot.ew md, ms1, ms2`
 | <<ame:doc:inst:mornot_ew,Elementwise bitwise OR-NOT>>
-a| `mornot.ew.x md, xs1, ms2`
+a| `mornot.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mornot_ew_x,Elementwise scalar bitwise OR-NOT>>
 a| `msll.ew md, ms1, ms2`
 | <<ame:doc:inst:msll_ew,Elementwise logical left shift>>
-a| `msll.ew.x md, xs1, ms2`
+a| `msll.ew.x md, rs1, ms2`
 | <<ame:doc:inst:msll_ew_x,Elementwise scalar logical left shift>>
 a| `msra.ew md, ms1, ms2`
 | <<ame:doc:inst:msra_ew,Elementwise arithmetic right shift>>
-a| `msra.ew.x md, xs1, ms2`
+a| `msra.ew.x md, rs1, ms2`
 | <<ame:doc:inst:msra_ew_x,Elementwise scalar arithmetic right shift>>
 a| `msrl.ew md, ms1, ms2`
 | <<ame:doc:inst:msrl_ew,Elementwise logical right shift>>
-a| `msrl.ew.x md, xs1, ms2`
+a| `msrl.ew.x md, rs1, ms2`
 | <<ame:doc:inst:msrl_ew_x,Elementwise scalar logical right shift>>
 a| `mxor.ew md, ms1, ms2`
 | <<ame:doc:inst:mxor_ew,Elementwise bitwise XOR>>
-a| `mxor.ew.x md, xs1, ms2`
+a| `mxor.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mxor_ew_x,Elementwise scalar bitwise XOR>>
 !===
 
@@ -178,11 +178,11 @@ a| `mcmovlt.ew md, ms1, ms2`
 | <<ame:doc:inst:mcmovlt_ew,Elementwise two-way conditional move (negative)>>
 a| `mcmpge.ew md, ms1, ms2`
 | <<ame:doc:inst:mcmpge_ew,Elementwise greater-or-equal compare>>
-a| `mcmpge.ew.x md, xs1, ms2`
+a| `mcmpge.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mcmpge_ew_x,Elementwise scalar compare greater-or-equal>>
 a| `mcmplt.ew md, ms1, ms2`
 | <<ame:doc:inst:mcmplt_ew,Elementwise less-than compare>>
-a| `mcmplt.ew.x md, xs1, ms2`
+a| `mcmplt.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mcmplt_ew_x,Elementwise scalar compare less-than>>
 a| `mselge.ew md, ms1, ms2`
 | <<ame:doc:inst:mselge_ew,Elementwise predicated select (non-negative)>>
@@ -195,7 +195,7 @@ Permutation::
 !===
 | Mnemonic | Name
 
-a| `mcolbcast.ew.x md, ms1, xs1`
+a| `mcolbcast.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mcolbcast_ew_x,Broadcast one column to all columns>>
 a| `mcolgather.ew md, ms1, ms2`
 | <<ame:doc:inst:mcolgather_ew,Elementwise column gather (take)>>
@@ -203,13 +203,13 @@ a| `mcolscatadd.ew md, ms1, ms2`
 | <<ame:doc:inst:mcolscatadd_ew,Elementwise column scatter-add>>
 a| `mcolscatmax.ew md, ms1, ms2`
 | <<ame:doc:inst:mcolscatmax_ew,Elementwise column scatter-max>>
-a| `mcolshift.ew.x md, ms1, xs1`
+a| `mcolshift.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mcolshift_ew_x,Elementwise column shift by scalar offset>>
 a| `mcolunzip.ew ms1, ms2`
 | <<ame:doc:inst:mcolunzip_ew,Column unzip (de-interleave columns from two inputs)>>
 a| `mcolzip.ew ms1, ms2`
 | <<ame:doc:inst:mcolzip_ew,Column zip (interleave columns from two inputs)>>
-a| `mrowbcast.ew.x md, ms1, xs1`
+a| `mrowbcast.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mrowbcast_ew_x,Broadcast one row to all rows>>
 a| `mrowgather.ew md, ms1, ms2`
 | <<ame:doc:inst:mrowgather_ew,Elementwise row gather (take)>>
@@ -217,7 +217,7 @@ a| `mrowscatadd.ew md, ms1, ms2`
 | <<ame:doc:inst:mrowscatadd_ew,Elementwise row scatter-add>>
 a| `mrowscatmax.ew md, ms1, ms2`
 | <<ame:doc:inst:mrowscatmax_ew,Elementwise row scatter-max>>
-a| `mrowshift.ew.x md, ms1, xs1`
+a| `mrowshift.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mrowshift_ew_x,Elementwise row shift by scalar offset>>
 a| `mrowunzip.ew ms1, ms2`
 | <<ame:doc:inst:mrowunzip_ew,Row unzip (de-interleave rows from two inputs)>>
@@ -230,29 +230,29 @@ Register move / data conversion::
 !===
 | Mnemonic | Name
 
-a| `mbcast.m.x md, xs1, xtyp`
+a| `mbcast.m.x md, rs1, rs2`
 | <<ame:doc:inst:mbcast_m_x,Typed scalar ingress and broadcast to M>>
 a| `mconv.ew md, ms1`
 | <<ame:doc:inst:mconv_ew,Convert element data between supported datatypes, including packed and non-packed representations>>
-a| `mmove8.m.x md, xs2, xs1`
+a| `mmove8.m.x md, rs2, rs1`
 | <<ame:doc:inst:mmove8_m_x,Move one 8-bit scalar into an M register position (debug)>>
-a| `mmove16.m.x md, xs2, xs1`
+a| `mmove16.m.x md, rs2, rs1`
 | <<ame:doc:inst:mmove16_m_x,Move one 16-bit scalar into an M register position (debug)>>
-a| `mmove32.m.x md, xs2, xs1`
+a| `mmove32.m.x md, rs2, rs1`
 | <<ame:doc:inst:mmove32_m_x,Move one 32-bit scalar into an M register position (debug)>>
-a| `mmove64.m.x md, xs2, xs1`
+a| `mmove64.m.x md, rs2, rs1`
 | <<ame:doc:inst:mmove64_m_x,Move one 64-bit scalar into an M register position (debug)>>
-a| `mmove8.x.m xd, ms2, xs1`
+a| `mmove8.x.m rd, ms2, rs1`
 | <<ame:doc:inst:mmove8_x_m,Move one 8-bit element from an M register position to an X register (debug)>>
-a| `mmove16.x.m xd, ms2, xs1`
+a| `mmove16.x.m rd, ms2, rs1`
 | <<ame:doc:inst:mmove16_x_m,Move one 16-bit element from an M register position to an X register (debug)>>
-a| `mmove32.x.m xd, ms2, xs1`
+a| `mmove32.x.m rd, ms2, rs1`
 | <<ame:doc:inst:mmove32_x_m,Move one 32-bit element from an M register position to an X register (debug)>>
-a| `mmove64.x.m xd, ms2, xs1`
+a| `mmove64.x.m rd, ms2, rs1`
 | <<ame:doc:inst:mmove64_x_m,Move one 64-bit element from an M register position to an X register (debug)>>
-a| `mpack.ew.x md, ms1, xs1`
+a| `mpack.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mpack_ew_x,Pack one square into a slot of a packed M register>>
-a| `munpack.ew.x md, ms1, xs1`
+a| `munpack.ew.x md, rs1, ms2`
 | <<ame:doc:inst:munpack_ew_x,Unpack one sub-square from a packed M register>>
 !===
 
@@ -267,17 +267,17 @@ a| `mexp2.ew md, ms1`
 | <<ame:doc:inst:mexp2_ew,Elementwise base-2 exponentiation>>
 a| `mldexp.ew md, ms1, ms2`
 | <<ame:doc:inst:mldexp_ew,Elementwise left-shift scale (ldexp)>>
-a| `mldexp.ew.x md, xs1, ms2`
+a| `mldexp.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mldexp_ew_x,Elementwise scalar left-shift scale (ldexp)>>
 a| `mldexpacc.ew md, ms1, ms2`
 | <<ame:doc:inst:mldexpacc_ew,Elementwise left-shift scale accumulate>>
-a| `mldexpacc.ew.x md, xs1, ms2`
+a| `mldexpacc.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mldexpacc_ew_x,Elementwise scalar left-shift scale accumulate>>
 a| `mlog2.ew md, ms1`
 | <<ame:doc:inst:mlog2_ew,Elementwise base-2 logarithm>>
 a| `mlog2sub.ew md, ms1, ms2`
 | <<ame:doc:inst:mlog2sub_ew,Elementwise log2 minus bias>>
-a| `mlog2sub.ew.x md, xs1, ms2`
+a| `mlog2sub.ew.x md, rs1, ms2`
 | <<ame:doc:inst:mlog2sub_ew_x,Elementwise log2 minus scalar bias>>
 a| `mrdexp.ew md, ms1, ms2`
 | <<ame:doc:inst:mrdexp_ew,Elementwise right-shift scale>>
@@ -293,7 +293,7 @@ a| `msqrt.ew md, ms1`
 | <<ame:doc:inst:msqrt_ew,Elementwise square root>>
 a| `msublog2.ew md, ms1, ms2`
 | <<ame:doc:inst:msublog2_ew,Elementwise bias minus log2>>
-a| `msublog2.ew.x md, xs1, ms2`
+a| `msublog2.ew.x md, rs1, ms2`
 | <<ame:doc:inst:msublog2_ew_x,Elementwise scalar bias minus log2>>
 a| `mtanh.ew md, ms1`
 | <<ame:doc:inst:mtanh_ew,Elementwise hyperbolic tangent>>
@@ -304,25 +304,25 @@ Memory::
 !===
 | Mnemonic | Name
 
-a| `mls md, xs1`
+a| `mls md, rs1`
 | <<ame:doc:inst:mls,Load raw M register from implementation-defined format>>
-a| `mls.cm md, xs1`
+a| `mls.cm md, rs1`
 | <<ame:doc:inst:mls_cm,Load square from column-major format>>
-a| `mls.rm md, xs1`
+a| `mls.rm md, rs1`
 | <<ame:doc:inst:mls_rm,Load square from row-major format>>
-a| `mls.st md, (xs1), xs2`
+a| `mls.st md, (rs1), rs2`
 | <<ame:doc:inst:mls_st,Load square from strided memory format>>
-a| `mls.tst md, (xs1), xs2`
+a| `mls.tst md, (rs1), rs2`
 | <<ame:doc:inst:mls_tst,Load square from transposed strided memory format>>
-a| `mss ms1, xs1`
+a| `mss ms1, rs1`
 | <<ame:doc:inst:mss,Store raw M register in implementation-defined format>>
-a| `mss.cm ms1, xs1`
+a| `mss.cm ms1, rs1`
 | <<ame:doc:inst:mss_cm,Store square to column-major format>>
-a| `mss.rm ms1, xs1`
+a| `mss.rm ms1, rs1`
 | <<ame:doc:inst:mss_rm,Store square to row-major format>>
-a| `mss.st ms1, (xs1), xs2`
+a| `mss.st ms1, (rs1), rs2`
 | <<ame:doc:inst:mss_st,Store square to strided memory format>>
-a| `mss.tst ms1, (xs1), xs2`
+a| `mss.tst ms1, (rs1), rs2`
 | <<ame:doc:inst:mss_tst,Store square to transposed strided memory format>>
 !===
 
@@ -344,7 +344,7 @@ a| `mrowid.ew md`
 a| `mzero.2d.acc acc`
 | <<ame:doc:inst:mzero_2d_acc,Clear accumulator tile>>
 a| `mzero.2d.m md`
-| <<ame:doc:inst:mzero_2d_m,Clear tensor register>>
+| <<ame:doc:inst:mzero_2d_m,Clear matrix register>>
 a| `fence.ame sw, sr, pw, pr`
 | <<ame:doc:inst:fence_ame,Order selected AME transfers before selected non-AME transfers>>
 !===
@@ -408,7 +408,7 @@ Synopsis::
 Acquire the entire AME backend
 
 Mnemonic::
-`ame.acquire xd, xs`
+`ame.acquire rd, rs1`
 
 Encoding::
 +
@@ -417,7 +417,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs","type":4},{"bits":5,"name": 0x9,"type":2},{"bits":7,"name": {ame-enc-r2-bank1-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "rd","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": 0x9,"type":2},{"bits":7,"name": {ame-enc-r2-bank1-funct7},"type":2}]}
 ....
 
 Description::
@@ -427,7 +427,7 @@ Operation::
 +
 [source]
 ----
-X[xd] = acquire_backend(descriptor = X[xs])
+X[rd] = acquire_backend(descriptor = X[rs1])
 ----
 +
 This operation uses the common rules in <<ame-common-state-access>>.
@@ -474,7 +474,7 @@ Synopsis::
 Get accumulator datatype
 
 Mnemonic::
-`agettyp xd, ad`
+`agettyp rd, ad`
 
 Encoding::
 +
@@ -483,18 +483,18 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ad","type":4},{"bits":5,"name": 0x0,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "rd","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ad","type":4},{"bits":5,"name": 0x0,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
 ....
 
 Description::
 Gets the 32-bit datatype descriptor of an `Acc` register by reading from `Ad`
-and zero-extending it to XLEN in `X[xd]`.
+and zero-extending it to XLEN in `X[rd]`.
 
 Operation::
 +
 [source]
 ----
-X[xd] = zero_extend_XLEN(Ad[ad])
+X[rd] = zero_extend_XLEN(Ad[ad])
 ----
 +
 This operation uses the common rules in <<ame-common-datatype-support>>.
@@ -508,7 +508,7 @@ Synopsis::
 Set accumulator datatype
 
 Mnemonic::
-`asettyp ad, xs1`
+`asettyp ad, rs1`
 
 Encoding::
 +
@@ -517,20 +517,20 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "ad","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x1,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "ad","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": 0x1,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
 ....
 
 Description::
 Sets the datatype of an `Acc` register and clears every physical storage bit of
 the accumulator to zero.  This is a raw-bit clear, not conversion to the new
-datatype's semantic zero.  The new 32-bit descriptor is `X[xs1][31:0]`; any
+datatype's semantic zero.  The new 32-bit descriptor is `X[rs1][31:0]`; any
 upper X-register bits are ignored.
 
 Operation::
 +
 [source]
 ----
-Ad[ad] = X[xs1][31:0]; raw_bits(Acc[ad]) = 0
+Ad[ad] = X[rs1][31:0]; raw_bits(Acc[ad]) = 0
 ----
 +
 This operation uses the common rules in <<ame-common-datatype-support>>.
@@ -611,7 +611,7 @@ Synopsis::
 Elementwise scalar absolute difference
 
 Mnemonic::
-`mabsdiff.ew.x md, xs1, ms2`
+`mabsdiff.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -620,17 +620,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x1,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x1,"type":2}]}
 ....
 
 Description::
 Computes the elementwise absolute difference between a scalar constant from integer
-register `xs1` and every element of square `ms2`, stored into `md`.
+register `rs1` and every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = |xs1 - ms2[i]|
+  md[i] = |rs1 - ms2[i]|
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -686,7 +686,7 @@ Synopsis::
 Elementwise scalar addition
 
 Mnemonic::
-`madd.ew.x md, xs1, ms2`
+`madd.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -695,17 +695,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x3,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x3,"type":2}]}
 ....
 
 Description::
-Adds a scalar constant from integer register `xs1` to every element of square `ms2`,
+Adds a scalar constant from integer register `rs1` to every element of square `ms2`,
 stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = xs1 + ms2[i]
+  md[i] = rs1 + ms2[i]
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -761,7 +761,7 @@ Synopsis::
 Elementwise scalar bitwise AND
 
 Mnemonic::
-`mand.ew.x md, xs1, ms2`
+`mand.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -770,17 +770,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x1b,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x1b,"type":2}]}
 ....
 
 Description::
-Computes the elementwise bitwise AND of a scalar constant from integer register `xs1`
+Computes the elementwise bitwise AND of a scalar constant from integer register `rs1`
 with every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = xs1 & ms2[i]
+  md[i] = rs1 & ms2[i]
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -838,7 +838,7 @@ Synopsis::
 Elementwise scalar bitwise AND-NOT
 
 Mnemonic::
-`mandnot.ew.x md, xs1, ms2`
+`mandnot.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -847,17 +847,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x1d,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x1d,"type":2}]}
 ....
 
 Description::
-Computes the elementwise bitwise AND of a scalar constant from integer register `xs1`
+Computes the elementwise bitwise AND of a scalar constant from integer register `rs1`
 with the bitwise complement of every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = xs1 & ~ms2[i]
+  md[i] = rs1 & ~ms2[i]
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -1004,7 +1004,7 @@ Synopsis::
 Elementwise scalar compare greater-or-equal
 
 Mnemonic::
-`mcmpge.ew.x md, xs1, ms2`
+`mcmpge.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -1013,18 +1013,18 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x2d,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x2d,"type":2}]}
 ....
 
 Description::
-Compares a scalar constant from integer register `xs1` against every element of square
+Compares a scalar constant from integer register `rs1` against every element of square
 `ms2`, storing -1 (all bits set) where the scalar is greater than or equal to the element,
 and 0 otherwise, into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = (xs1 >= ms2[i]) ? -1 : 0
+  md[i] = (rs1 >= ms2[i]) ? -1 : 0
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -1087,7 +1087,7 @@ Synopsis::
 Elementwise scalar compare less-than
 
 Mnemonic::
-`mcmplt.ew.x md, xs1, ms2`
+`mcmplt.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -1096,18 +1096,18 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x2f,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x2f,"type":2}]}
 ....
 
 Description::
-Compares a scalar constant from integer register `xs1` against every element of square
+Compares a scalar constant from integer register `rs1` against every element of square
 `ms2`, storing -1 (all bits set) where the scalar is strictly less than the element,
 and 0 otherwise, into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = (xs1 < ms2[i]) ? -1 : 0
+  md[i] = (rs1 < ms2[i]) ? -1 : 0
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -1130,7 +1130,7 @@ Synopsis::
 Broadcast one column to all columns
 
 Mnemonic::
-`mcolbcast.ew.x md, ms1, xs1`
+`mcolbcast.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -1139,20 +1139,20 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x32,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x32,"type":2}]}
 ....
 
 Description::
-Broadcasts column `c` (from integer register `xs1`) of `ms1` to every column of `md`.
+Broadcasts column `c` (from integer register `rs1`) of `ms2` to every column of `md`.
 +
 For each row `i` and column `j`:
 +
-  md[i,j] = ms1[i, c]
+  md[i,j] = ms2[i, c]
 +
 If `c` is outside `[0, sqrt(AME_NELEM))`, an `Illegal Instruction` exception is raised.
 +
-The `xs1` operand is a control scalar: its low 32 bits are interpreted as an
-unsigned integer column index.  It does not read `CSR[ame_scalar_dtype]` and does not undergo
+The `rs1` operand is a control scalar: its low 32 bits are interpreted as an
+unsigned integer column index.  It does not read `CSR[amestype]` and does not undergo
 AME datatype conversion.
 +
 The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
@@ -1269,7 +1269,7 @@ Synopsis::
 Elementwise column shift by scalar offset
 
 Mnemonic::
-`mcolshift.ew.x md, ms1, xs1`
+`mcolshift.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -1278,18 +1278,18 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x34,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x34,"type":2}]}
 ....
 
 Description::
-Elementwise column shift of `ms1` by offset `c`, obtained by interpreting the
-low 32 bits of integer register `xs1` as a signed two's-complement integer,
+Elementwise column shift of `ms2` by offset `c`, obtained by interpreting the
+low 32 bits of integer register `rs1` as a signed two's-complement integer,
 stored into `md`.  This fixed-type control operand does not read
-`CSR[ame_scalar_dtype]`.
+`CSR[amestype]`.
 +
 For each row `i` and column `j`:
 +
-  md[i,j] = ms1[i, j + c]  if 0 <= j + c < sqrt(AME_NELEM), otherwise
+  md[i,j] = ms2[i, j + c]  if 0 <= j + c < sqrt(AME_NELEM), otherwise
   md[i,j] = zero(Md[md]).
 +
 Elements shifted beyond the row boundary are filled with zero (no wrap-around).
@@ -1486,7 +1486,7 @@ Synopsis::
 Convert an X-register scalar and broadcast it to an M operand
 
 Mnemonic::
-`mbcast.m.x md, xs1, xtyp`
+`mbcast.m.x md, rs1, rs2`
 
 Encoding::
 +
@@ -1495,15 +1495,15 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs1","type":4},{"bits":5,"name":"xtyp","type":4},{"bits":7,"name":0x58,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"rs1","type":4},{"bits":5,"name":"rs2","type":4},{"bits":7,"name":0x58,"type":2}]}
 ....
 
 Description::
-Interprets the low 32 bits of `X[xtyp]` as an AME datatype encoding and the
+Interprets the low 32 bits of `X[rs2]` as an AME datatype encoding and the
 X-register bit pattern as one scalar of that datatype, where
-`src_dtype = X[xtyp][31:0]`.  If `sizeof(src_dtype)` is less than XLEN, only
+`src_dtype = X[rs2][31:0]`.  If `sizeof(src_dtype)` is less than XLEN, only
 the low `sizeof(src_dtype)` bits are used and higher X-register bits are
-ignored; if it is greater than XLEN, `X[xs1]` is zero-extended to that width.
+ignored; if it is greater than XLEN, `X[rs1]` is zero-extended to that width.
 The
 scalar is converted once to the destination datatype `Md[md]` using the
 common scalar conversion rules, then the converted value is written to every
@@ -1513,14 +1513,14 @@ logical packed element.
 The source and destination datatype encodings must be supported, and the
 source-to-destination conversion must be supported.  Otherwise,
 `amestatus.UN` is set and no destination state is modified.  The instruction
-does not read `CSR[ame_scalar_dtype]`; the source datatype is its explicit
-`xtyp` operand.
+does not read `CSR[amestype]`; the source datatype is supplied
+explicitly by `X[rs2]`.
 
 Operation::
 +
 [source]
 ----
-D[i] = convert(X[xs1], source datatype X[xtyp], destination datatype Md[md])
+D[i] = convert(X[rs1], source datatype X[rs2], destination datatype Md[md])
 ----
 +
 This operation uses the common rules in <<ame-common-register-groups>>.
@@ -1756,7 +1756,7 @@ Synopsis::
 Get datatype
 
 Mnemonic::
-`mgettyp xd, ms1`
+`mgettyp rd, ms1`
 
 Encoding::
 +
@@ -1765,18 +1765,18 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": 0x2,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "rd","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": 0x2,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
 ....
 
 Description::
 Gets the 32-bit datatype descriptor of an `M` register by reading from `Md`
-and zero-extending it to XLEN in `X[xd]`.
+and zero-extending it to XLEN in `X[rd]`.
 
 Operation::
 +
 [source]
 ----
-X[xd] = zero_extend_XLEN(Md[ms1])
+X[rd] = zero_extend_XLEN(Md[ms1])
 ----
 +
 This operation uses the common rules in <<ame-common-datatype-support>>.
@@ -1824,7 +1824,7 @@ Synopsis::
 Elementwise scalar half-difference
 
 Mnemonic::
-`mhdiff.ew.x md, xs1, ms2`
+`mhdiff.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -1833,17 +1833,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x5,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x5,"type":2}]}
 ....
 
 Description::
 Computes the elementwise half-difference between a scalar constant from integer register
-`xs1` and every element of square `ms2`, stored into `md`.
+`rs1` and every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = (xs1 - ms2[i]) / 2
+  md[i] = (rs1 - ms2[i]) / 2
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -1904,7 +1904,7 @@ Synopsis::
 Elementwise scalar left-shift scale (ldexp)
 
 Mnemonic::
-`mldexp.ew.x md, xs1, ms2`
+`mldexp.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -1913,22 +1913,22 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x40,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x40,"type":2}]}
 ....
 
 Description::
 Scales every element of square `ms2` by a power of two given by a scalar integer
-from integer register `xs1`, stored into `md`.
+from integer register `rs1`, stored into `md`.
 +
 For each element position `i`:
 +
-  md[i] = ms2[i] * 2^xs1
+  md[i] = ms2[i] * 2^rs1
 +
-The type of the matrix elements is determined by `Md[ms2]`. `X[xs1]` is
+The type of the matrix elements is determined by `Md[ms2]`. `X[rs1]` is
 zero-extended or low-bit truncated to the width of
 <<ame:doc:param:AME_MAX_INT_DTYPE,AME_MAX_INT_DTYPE>> and then interpreted using
 that integer datatype.  The exponent is a fixed-type control operand and does
-not read `CSR[ame_scalar_dtype]`.
+not read `CSR[amestype]`.
 +
 Equivalent to C `ldexp` applied elementwise with a broadcast scalar exponent.
 Complementary to `mrdexp.ew`.
@@ -1994,7 +1994,7 @@ Synopsis::
 Elementwise scalar left-shift scale accumulate
 
 Mnemonic::
-`mldexpacc.ew.x md, xs1, ms2`
+`mldexpacc.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -2003,25 +2003,25 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x42,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x42,"type":2}]}
 ....
 
 Description::
 Scales every element of square `ms2` by a power of two given by a scalar integer
-from integer register `xs1`, accumulated into `md`.
+from integer register `rs1`, accumulated into `md`.
 +
 For each element position `i`:
 +
-  md[i] = md[i] + ms2[i] * 2^xs1
+  md[i] = md[i] + ms2[i] * 2^rs1
 +
 `md` is both a source and destination: the existing element is read, the scaled value
 is added, and the sum is written back.
 +
-The type of the matrix elements is determined by `Md[ms2]`. `X[xs1]` is
+The type of the matrix elements is determined by `Md[ms2]`. `X[rs1]` is
 zero-extended or low-bit truncated to the width of
 <<ame:doc:param:AME_MAX_INT_DTYPE,AME_MAX_INT_DTYPE>> and then interpreted using
 that integer datatype.  The exponent is a fixed-type control operand and does
-not read `CSR[ame_scalar_dtype]`.
+not read `CSR[amestype]`.
 +
 Complementary to `mrdexpacc.ew`.
 +
@@ -2120,7 +2120,7 @@ Synopsis::
 Elementwise log2 minus scalar bias
 
 Mnemonic::
-`mlog2sub.ew.x md, xs1, ms2`
+`mlog2sub.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -2129,19 +2129,19 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x44,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x44,"type":2}]}
 ....
 
 Description::
 Computes the elementwise base-2 logarithm of the absolute value of every element of
-square `ms2`, minus a scalar bias from integer register `xs1`, stored into `md`.
+square `ms2`, minus a scalar bias from integer register `rs1`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before being used as the bias for every element position `i`:
 +
-  md[i] = log2(|ms2[i]|) - xs1
+  md[i] = log2(|ms2[i]|) - rs1
 +
-Useful for biased-exponent arithmetic, where `xs1` holds the bias value.
+Useful for biased-exponent arithmetic, where `rs1` holds the bias value.
 Complementary to `msublog2.ew.x`.
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
@@ -2165,7 +2165,7 @@ Synopsis::
 Load raw M register from implementation-defined format
 
 Mnemonic::
-`mls md, xs1`
+`mls md, rs1`
 
 Encoding::
 +
@@ -2174,7 +2174,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x16,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": 0x16,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
 ....
 
 Description::
@@ -2199,7 +2199,7 @@ Operation::
 +
 [source]
 ----
-md <= mem[xs1]
+md <= mem[rs1]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -2213,7 +2213,7 @@ Synopsis::
 Load square from column-major format
 
 Mnemonic::
-`mls.cm md, xs1`
+`mls.cm md, rs1`
 
 Encoding::
 +
@@ -2222,7 +2222,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x17,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": 0x17,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
 ....
 
 Description::
@@ -2245,7 +2245,7 @@ Operation::
 +
 [source]
 ----
-md <= mem[xs1]
+md <= mem[rs1]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -2259,7 +2259,7 @@ Synopsis::
 Load square from row-major format
 
 Mnemonic::
-`mls.rm md, xs1`
+`mls.rm md, rs1`
 
 Encoding::
 +
@@ -2268,7 +2268,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x18,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": 0x18,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
 ....
 
 Description::
@@ -2291,7 +2291,7 @@ Operation::
 +
 [source]
 ----
-md <= mem[xs1]
+md <= mem[rs1]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -2305,7 +2305,7 @@ Synopsis::
 Load square from strided memory format
 
 Mnemonic::
-`mls.st md, (xs1), xs2`
+`mls.st md, (rs1), rs2`
 
 Encoding::
 +
@@ -2314,7 +2314,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x54,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "rs2","type":4},{"bits":7,"name": 0x54,"type":2}]}
 ....
 
 Description::
@@ -2331,7 +2331,7 @@ containing `sqrt(AME_NELEM)` contiguous elements.
 For packed datatypes, there are still `sqrt(AME_NELEM)` segments, but each segment
 contains `pack_factor * sqrt(AME_NELEM)` contiguous elements — `pack_factor` sub-squares
 placed side by side horizontally within each row.
-Consecutive segments are separated by a byte stride supplied in integer register `xs2`.
+Consecutive segments are separated by a byte stride supplied in integer register `rs2`.
 +
 Let `element_bytes = ceil(sizeof(Md[md]) / 8)`.  The address must be aligned
 to `element_bytes` or 4KB, whichever is smaller. Otherwise, `mls.st` raises a
@@ -2342,7 +2342,7 @@ Operation::
 +
 [source]
 ----
-md <= mem[xs1, stride=xs2]
+md <= mem[rs1, stride=rs2]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -2356,7 +2356,7 @@ Synopsis::
 Load square from transposed strided memory format
 
 Mnemonic::
-`mls.tst md, (xs1), xs2`
+`mls.tst md, (rs1), rs2`
 
 Encoding::
 +
@@ -2365,7 +2365,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x55,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "rs2","type":4},{"bits":7,"name": 0x55,"type":2}]}
 ....
 
 Description::
@@ -2379,7 +2379,7 @@ squares are loaded and packed into a single M register.
 The transposed strided load accesses memory as a sequence of equally spaced segments,
 one segment per column of the square. Each segment contains `sqrt(AME_NELEM)` contiguous
 elements, and consecutive segments are separated by a byte stride supplied in integer
-register `xs2`. For packed datatypes, the total number of segments is
+register `rs2`. For packed datatypes, the total number of segments is
 `pack_factor * sqrt(AME_NELEM)` — one column per sub-square, stacked vertically.
 The segment addresses and within-segment bit offsets are defined by the common
 memory rules; this arrangement transposes each square during the transfer.
@@ -2392,7 +2392,7 @@ Operation::
 +
 [source]
 ----
-md <= mem[xs1, stride=xs2]
+md <= mem[rs1, stride=rs2]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -2440,7 +2440,7 @@ Synopsis::
 Elementwise scalar maximum
 
 Mnemonic::
-`mmax.ew.x md, xs1, ms2`
+`mmax.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -2449,17 +2449,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x7,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x7,"type":2}]}
 ....
 
 Description::
-Computes the elementwise maximum of a scalar constant from integer register `xs1` and
+Computes the elementwise maximum of a scalar constant from integer register `rs1` and
 every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = max(xs1, ms2[i])
+  md[i] = max(rs1, ms2[i])
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -2516,7 +2516,7 @@ Synopsis::
 Elementwise scalar mean
 
 Mnemonic::
-`mmean.ew.x md, xs1, ms2`
+`mmean.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -2525,17 +2525,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x9,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x9,"type":2}]}
 ....
 
 Description::
-Computes the elementwise mean of a scalar constant from integer register `xs1` and
+Computes the elementwise mean of a scalar constant from integer register `rs1` and
 every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = (xs1 + ms2[i]) / 2
+  md[i] = (rs1 + ms2[i]) / 2
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -2592,7 +2592,7 @@ Synopsis::
 Elementwise scalar minimum
 
 Mnemonic::
-`mmin.ew.x md, xs1, ms2`
+`mmin.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -2601,17 +2601,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0xb,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0xb,"type":2}]}
 ....
 
 Description::
-Computes the elementwise minimum of a scalar constant from integer register `xs1` and
+Computes the elementwise minimum of a scalar constant from integer register `rs1` and
 every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = min(xs1, ms2[i])
+  md[i] = min(rs1, ms2[i])
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -2793,7 +2793,7 @@ Synopsis::
 Move one 8-bit scalar into an M register position (debug)
 
 Mnemonic::
-`mmove8.m.x md, xs2, xs1`
+`mmove8.m.x md, rs2, rs1`
 
 Encoding::
 +
@@ -2802,21 +2802,21 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x59,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"rs2","type":4},{"bits":5,"name":"rs1","type":4},{"bits":7,"name":0x59,"type":2}]}
 ....
 
 Description::
-Writes the low 8 bits of `X[xs2]` into one 8-bit element position of the
+Writes the low 8 bits of `X[rs2]` into one 8-bit element position of the
 single M register `md`.  The contents of `md` are viewed, in row-major order, as
 `N = sqrt(AME_NELEM)` rows of `row_elements = (N * AME_UNIT_DATATYPE_SIZE) / 8`
 8-bit elements each, independent of the configured datatype `Md[md]`.
 +
 The element position `pos` is selected by the low `log2(N * row_elements)`
-bits of `X[xs1]`; higher bits are ignored.  The selected column is
+bits of `X[rs1]`; higher bits are ignored.  The selected column is
 `pos % row_elements` and the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `CSR[amestype]`, does not
 read or convert using `Md[md]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -2833,7 +2833,7 @@ Operation::
 +
 [source]
 ----
-D.rm[pos, 8] = X[xs2][7:0]
+D.rm[pos, 8] = X[rs2][7:0]
 ----
 +
 This operation uses the common rules in <<ame-common-register-groups>>.
@@ -2847,7 +2847,7 @@ Synopsis::
 Move one 16-bit scalar into an M register position (debug)
 
 Mnemonic::
-`mmove16.m.x md, xs2, xs1`
+`mmove16.m.x md, rs2, rs1`
 
 Encoding::
 +
@@ -2856,21 +2856,21 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5a,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"rs2","type":4},{"bits":5,"name":"rs1","type":4},{"bits":7,"name":0x5a,"type":2}]}
 ....
 
 Description::
-Writes the low 16 bits of `X[xs2]` into one 16-bit element position of the
+Writes the low 16 bits of `X[rs2]` into one 16-bit element position of the
 single M register `md`.  The contents of `md` are viewed, in row-major order, as
 `N = sqrt(AME_NELEM)` rows of `row_elements = (N * AME_UNIT_DATATYPE_SIZE) / 16`
 16-bit elements each, independent of the configured datatype `Md[md]`.
 +
 The element position `pos` is selected by the low `log2(N * row_elements)`
-bits of `X[xs1]`; higher bits are ignored.  The selected column is
+bits of `X[rs1]`; higher bits are ignored.  The selected column is
 `pos % row_elements` and the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `CSR[amestype]`, does not
 read or convert using `Md[md]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -2887,7 +2887,7 @@ Operation::
 +
 [source]
 ----
-D.rm[pos, 16] = X[xs2][15:0]
+D.rm[pos, 16] = X[rs2][15:0]
 ----
 +
 This operation uses the common rules in <<ame-common-register-groups>>.
@@ -2901,7 +2901,7 @@ Synopsis::
 Move one 32-bit scalar into an M register position (debug)
 
 Mnemonic::
-`mmove32.m.x md, xs2, xs1`
+`mmove32.m.x md, rs2, rs1`
 
 Encoding::
 +
@@ -2910,21 +2910,21 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5b,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"rs2","type":4},{"bits":5,"name":"rs1","type":4},{"bits":7,"name":0x5b,"type":2}]}
 ....
 
 Description::
-Writes the low 32 bits of `X[xs2]` into one 32-bit element position of the
+Writes the low 32 bits of `X[rs2]` into one 32-bit element position of the
 single M register `md`.  The contents of `md` are viewed, in row-major order, as
 `N = sqrt(AME_NELEM)` rows of `row_elements = (N * AME_UNIT_DATATYPE_SIZE) / 32`
 32-bit elements each, independent of the configured datatype `Md[md]`.
 +
 The element position `pos` is selected by the low `log2(N * row_elements)`
-bits of `X[xs1]`; higher bits are ignored.  The selected column is
+bits of `X[rs1]`; higher bits are ignored.  The selected column is
 `pos % row_elements` and the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `CSR[amestype]`, does not
 read or convert using `Md[md]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -2941,7 +2941,7 @@ Operation::
 +
 [source]
 ----
-D.rm[pos, 32] = X[xs2][31:0]
+D.rm[pos, 32] = X[rs2][31:0]
 ----
 +
 This operation uses the common rules in <<ame-common-register-groups>>.
@@ -2955,7 +2955,7 @@ Synopsis::
 Move one 64-bit scalar into an M register position (debug)
 
 Mnemonic::
-`mmove64.m.x md, xs2, xs1`
+`mmove64.m.x md, rs2, rs1`
 
 Encoding::
 +
@@ -2964,11 +2964,11 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"xs2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5c,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"md","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"rs2","type":4},{"bits":5,"name":"rs1","type":4},{"bits":7,"name":0x5c,"type":2}]}
 ....
 
 Description::
-Writes the low 64 bits of `X[xs2]` into one 64-bit element position of the
+Writes the low 64 bits of `X[rs2]` into one 64-bit element position of the
 single M register `md`.  The contents of `md` are viewed, in row-major order, as
 `N = sqrt(AME_NELEM)` rows of `row_elements = (N * AME_UNIT_DATATYPE_SIZE) / 64`
 64-bit elements each, independent of the configured datatype `Md[md]`.
@@ -2977,11 +2977,11 @@ This 64-bit form requires `XLEN >= 64`; when `XLEN < 64`, the instruction
 raises an `Illegal Instruction` exception.
 +
 The element position `pos` is selected by the low `log2(N * row_elements)`
-bits of `X[xs1]`; higher bits are ignored.  The selected column is
+bits of `X[rs1]`; higher bits are ignored.  The selected column is
 `pos % row_elements` and the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `CSR[amestype]`, does not
 read or convert using `Md[md]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -2998,7 +2998,7 @@ Operation::
 +
 [source]
 ----
-D.rm[pos, 64] = X[xs2][63:0]
+D.rm[pos, 64] = X[rs2][63:0]
 ----
 +
 This operation uses the common rules in <<ame-common-register-groups>>.
@@ -3012,7 +3012,7 @@ Synopsis::
 Move one 8-bit element from an M register position to an X register (debug)
 
 Mnemonic::
-`mmove8.x.m xd, ms2, xs1`
+`mmove8.x.m rd, ms2, rs1`
 
 Encoding::
 +
@@ -3021,22 +3021,22 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"xd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5d,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"rd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"rs1","type":4},{"bits":7,"name":0x5d,"type":2}]}
 ....
 
 Description::
 Reads one 8-bit element from the single M register `ms2` and writes it,
-zero-extended, to `X[xd]`.  The contents of `ms2` are viewed, in row-major order, as
+zero-extended, to `X[rd]`.  The contents of `ms2` are viewed, in row-major order, as
 `N = sqrt(AME_NELEM)` rows of `row_elements = (N * AME_UNIT_DATATYPE_SIZE) / 8`
 8-bit elements each, independent of the configured datatype `Md[ms2]`.
 +
 The element position `pos` is selected by the low `log2(N * row_elements)`
-bits of `X[xs1]`, exactly as in `<<ame:doc:inst:mmove8_m_x,mmove8.m.x>>`;
+bits of `X[rs1]`, exactly as in `<<ame:doc:inst:mmove8_m_x,mmove8.m.x>>`;
 higher bits are ignored.  The selected column is `pos % row_elements` and
 the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `CSR[amestype]`, does not
 read or convert using `Md[ms2]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -3053,7 +3053,7 @@ Operation::
 +
 [source]
 ----
-X[xd] = zero_extend(A.rm[pos, 8])
+X[rd] = zero_extend(A.rm[pos, 8])
 ----
 +
 This operation uses the common rules in <<ame-common-register-groups>>.
@@ -3067,7 +3067,7 @@ Synopsis::
 Move one 16-bit element from an M register position to an X register (debug)
 
 Mnemonic::
-`mmove16.x.m xd, ms2, xs1`
+`mmove16.x.m rd, ms2, rs1`
 
 Encoding::
 +
@@ -3076,22 +3076,22 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"xd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5e,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"rd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"rs1","type":4},{"bits":7,"name":0x5e,"type":2}]}
 ....
 
 Description::
 Reads one 16-bit element from the single M register `ms2` and writes it,
-zero-extended, to `X[xd]`.  The contents of `ms2` are viewed, in row-major order, as
+zero-extended, to `X[rd]`.  The contents of `ms2` are viewed, in row-major order, as
 `N = sqrt(AME_NELEM)` rows of `row_elements = (N * AME_UNIT_DATATYPE_SIZE) / 16`
 16-bit elements each, independent of the configured datatype `Md[ms2]`.
 +
 The element position `pos` is selected by the low `log2(N * row_elements)`
-bits of `X[xs1]`, exactly as in `<<ame:doc:inst:mmove16_m_x,mmove16.m.x>>`;
+bits of `X[rs1]`, exactly as in `<<ame:doc:inst:mmove16_m_x,mmove16.m.x>>`;
 higher bits are ignored.  The selected column is `pos % row_elements` and
 the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `CSR[amestype]`, does not
 read or convert using `Md[ms2]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -3108,7 +3108,7 @@ Operation::
 +
 [source]
 ----
-X[xd] = zero_extend(A.rm[pos, 16])
+X[rd] = zero_extend(A.rm[pos, 16])
 ----
 +
 This operation uses the common rules in <<ame-common-register-groups>>.
@@ -3122,7 +3122,7 @@ Synopsis::
 Move one 32-bit element from an M register position to an X register (debug)
 
 Mnemonic::
-`mmove32.x.m xd, ms2, xs1`
+`mmove32.x.m rd, ms2, rs1`
 
 Encoding::
 +
@@ -3131,22 +3131,22 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"xd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x5f,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"rd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"rs1","type":4},{"bits":7,"name":0x5f,"type":2}]}
 ....
 
 Description::
 Reads one 32-bit element from the single M register `ms2` and writes it,
-zero-extended, to `X[xd]`.  The contents of `ms2` are viewed, in row-major order, as
+zero-extended, to `X[rd]`.  The contents of `ms2` are viewed, in row-major order, as
 `N = sqrt(AME_NELEM)` rows of `row_elements = (N * AME_UNIT_DATATYPE_SIZE) / 32`
 32-bit elements each, independent of the configured datatype `Md[ms2]`.
 +
 The element position `pos` is selected by the low `log2(N * row_elements)`
-bits of `X[xs1]`, exactly as in `<<ame:doc:inst:mmove32_m_x,mmove32.m.x>>`;
+bits of `X[rs1]`, exactly as in `<<ame:doc:inst:mmove32_m_x,mmove32.m.x>>`;
 higher bits are ignored.  The selected column is `pos % row_elements` and
 the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `CSR[amestype]`, does not
 read or convert using `Md[ms2]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -3163,7 +3163,7 @@ Operation::
 +
 [source]
 ----
-X[xd] = zero_extend(A.rm[pos, 32])
+X[rd] = zero_extend(A.rm[pos, 32])
 ----
 +
 This operation uses the common rules in <<ame-common-register-groups>>.
@@ -3177,7 +3177,7 @@ Synopsis::
 Move one 64-bit element from an M register position to an X register (debug)
 
 Mnemonic::
-`mmove64.x.m xd, ms2, xs1`
+`mmove64.x.m rd, ms2, rs1`
 
 Encoding::
 +
@@ -3186,12 +3186,12 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"xd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"xs1","type":4},{"bits":7,"name":0x60,"type":2}]}
+{"reg":[{"bits":7,"name":0x2b,"type":2},{"bits":5,"name":"rd","type":4},{"bits":3,"name":{ame-enc-funct3},"type":2},{"bits":5,"name":"ms2","type":4},{"bits":5,"name":"rs1","type":4},{"bits":7,"name":0x60,"type":2}]}
 ....
 
 Description::
 Reads one 64-bit element from the single M register `ms2` and writes it,
-zero-extended, to `X[xd]`.  The contents of `ms2` are viewed, in row-major order, as
+zero-extended, to `X[rd]`.  The contents of `ms2` are viewed, in row-major order, as
 `N = sqrt(AME_NELEM)` rows of `row_elements = (N * AME_UNIT_DATATYPE_SIZE) / 64`
 64-bit elements each, independent of the configured datatype `Md[ms2]`.
 +
@@ -3199,12 +3199,12 @@ This 64-bit form requires `XLEN >= 64`; when `XLEN < 64`, the instruction
 raises an `Illegal Instruction` exception.
 +
 The element position `pos` is selected by the low `log2(N * row_elements)`
-bits of `X[xs1]`, exactly as in `<<ame:doc:inst:mmove64_m_x,mmove64.m.x>>`;
+bits of `X[rs1]`, exactly as in `<<ame:doc:inst:mmove64_m_x,mmove64.m.x>>`;
 higher bits are ignored.  The selected column is `pos % row_elements` and
 the selected row is `pos / row_elements`.
 +
 This instruction is intended for debugging.  The element size is defined by
-the instruction itself: it does not read `CSR[ame_scalar_dtype]`, does not
+the instruction itself: it does not read `CSR[amestype]`, does not
 read or convert using `Md[ms2]`, does not form a register group, and never
 sets `amestatus.UN`.  The register contents are first normalized with the
 row-major layout transformation, using the unsigned integer datatype of
@@ -3221,7 +3221,7 @@ Operation::
 +
 [source]
 ----
-X[xd] = zero_extend(A.rm[pos, 64])
+X[rd] = zero_extend(A.rm[pos, 64])
 ----
 +
 This operation uses the common rules in <<ame-common-register-groups>>.
@@ -3306,7 +3306,7 @@ Synopsis::
 Elementwise scalar multiplication
 
 Mnemonic::
-`mmul.ew.x md, xs1, ms2`
+`mmul.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -3315,17 +3315,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0xd,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0xd,"type":2}]}
 ....
 
 Description::
 Multiplies every element of square `ms2` by a scalar constant from integer register
-`xs1`, stored into `md`.
+`rs1`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = xs1 × ms2[i]
+  md[i] = rs1 × ms2[i]
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -3430,7 +3430,7 @@ Synopsis::
 Elementwise scalar multiply-accumulate
 
 Mnemonic::
-`mmulacc.ew.x md, xs1, ms2`
+`mmulacc.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -3439,20 +3439,20 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0xf,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0xf,"type":2}]}
 ....
 
 Description::
 Multiplies every element of square `ms2` by a scalar constant from integer register
-`xs1` and accumulates the product into `md`.
+`rs1` and accumulates the product into `md`.
 +
 `md` is both a source and destination: the existing element is read, the scaled value
-`xs1 × ms2[i]` is added, and the sum is written back.
+`rs1 × ms2[i]` is added, and the sum is written back.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = md[i] + xs1 × ms2[i]
+  md[i] = md[i] + rs1 × ms2[i]
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -3556,7 +3556,7 @@ Synopsis::
 Elementwise scalar negative multiply-accumulate
 
 Mnemonic::
-`mmulaccneg.ew.x md, xs1, ms2`
+`mmulaccneg.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -3565,20 +3565,20 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x11,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x11,"type":2}]}
 ....
 
 Description::
 Multiplies every element of square `ms2` by a scalar constant from integer register
-`xs1`, subtracts the product from `md`, and stores the result back into `md`.
+`rs1`, subtracts the product from `md`, and stores the result back into `md`.
 +
 `md` is both a source and destination: the existing element is read, the product
-`xs1 × ms2[i]` is subtracted, and the result is written back.
+`rs1 × ms2[i]` is subtracted, and the result is written back.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = md[i] - xs1 × ms2[i]
+  md[i] = md[i] - rs1 × ms2[i]
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -3642,7 +3642,7 @@ Synopsis::
 Elementwise scalar fused multiply-add
 
 Mnemonic::
-`mmuladd.ew.x md, xs1, ms2`
+`mmuladd.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -3651,7 +3651,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x13,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x13,"type":2}]}
 ....
 
 Description::
@@ -3659,12 +3659,12 @@ Elementwise scalar fused multiply-add where `md` serves as both the multiplicand
 destination.
 +
 `md` is both a source and destination: each existing element is multiplied by the
-corresponding element of `ms2`, the scalar `xs1` is added, and the result is written back.
+corresponding element of `ms2`, the scalar `rs1` is added, and the result is written back.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = xs1 + ms2[i] × md[i]
+  md[i] = rs1 + ms2[i] × md[i]
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -3918,7 +3918,7 @@ Synopsis::
 Elementwise scalar negate-multiply
 
 Mnemonic::
-`mmulneg.ew.x md, xs1, ms2`
+`mmulneg.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -3927,17 +3927,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x15,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x15,"type":2}]}
 ....
 
 Description::
-Negates the product of a scalar constant from integer register `xs1` and every element
+Negates the product of a scalar constant from integer register `rs1` and every element
 of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = -(xs1 × ms2[i])
+  md[i] = -(rs1 × ms2[i])
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -4002,7 +4002,7 @@ Synopsis::
 Elementwise scalar fused multiply-subtract
 
 Mnemonic::
-`mmulsub.ew.x md, xs1, ms2`
+`mmulsub.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -4011,7 +4011,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x17,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x17,"type":2}]}
 ....
 
 Description::
@@ -4019,13 +4019,13 @@ Elementwise scalar fused multiply-subtract where `md` serves as both the multipl
 and the destination.
 +
 `md` is both a source and destination: each existing element is multiplied by the
-corresponding element of `ms2`, that product is subtracted from the scalar `xs1`,
+corresponding element of `ms2`, that product is subtracted from the scalar `rs1`,
 and the result is written back.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = xs1 - ms2[i] × md[i]
+  md[i] = rs1 - ms2[i] × md[i]
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -4081,7 +4081,7 @@ Synopsis::
 Elementwise scalar bitwise OR
 
 Mnemonic::
-`mor.ew.x md, xs1, ms2`
+`mor.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -4090,17 +4090,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x1f,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x1f,"type":2}]}
 ....
 
 Description::
-Computes the elementwise bitwise OR of a scalar constant from integer register `xs1`
+Computes the elementwise bitwise OR of a scalar constant from integer register `rs1`
 with every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = xs1 | ms2[i]
+  md[i] = rs1 | ms2[i]
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -4158,7 +4158,7 @@ Synopsis::
 Elementwise scalar bitwise OR-NOT
 
 Mnemonic::
-`mornot.ew.x md, xs1, ms2`
+`mornot.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -4167,17 +4167,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x21,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x21,"type":2}]}
 ....
 
 Description::
-Computes the elementwise bitwise OR of a scalar constant from integer register `xs1`
+Computes the elementwise bitwise OR of a scalar constant from integer register `rs1`
 with the bitwise complement of every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = xs1 | ~ms2[i]
+  md[i] = rs1 | ~ms2[i]
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -4200,7 +4200,7 @@ Synopsis::
 Pack one square into a slot of a packed M register
 
 Mnemonic::
-`mpack.ew.x md, ms1, xs1`
+`mpack.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -4209,21 +4209,21 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x3d,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x3d,"type":2}]}
 ....
 
 Description::
-Inserts the single non-packed square group beginning at `ms1` into the sub-square slot selected by the
-index in integer register `xs1` of the packed M register `md`, converting each element
-from the non-packed datatype (`Md[ms1]`) to the packed datatype (`Md[md]`). The other
+Inserts the single non-packed square group beginning at `ms2` into the sub-square slot selected by the
+index in integer register `rs1` of the packed M register `md`, converting each element
+from the non-packed datatype (`Md[ms2]`) to the packed datatype (`Md[md]`). The other
 sub-square slots of `md` are preserved (read-modify-write).
 +
-`Md[md]` must be a packed datatype and `Md[ms1]` a non-packed datatype; otherwise
+`Md[md]` must be a packed datatype and `Md[ms2]` a non-packed datatype; otherwise
 `amestatus.UN` is set and no register is written. For
 `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[md])`, the index is the low
-`log2(pack_factor)` bits of `X[xs1]`; higher X-register bits are ignored.  The
+`log2(pack_factor)` bits of `X[rs1]`; higher X-register bits are ignored.  The
 index is a fixed unsigned integer control operand and does not read
-`CSR[ame_scalar_dtype]`.
+`CSR[amestype]`.
 +
 This is the single-square form of the pack (compress) direction of
 <<ame:doc:inst:mconv_ew,mconv.ew>>; use it to pack one square at a time without holding
@@ -4781,7 +4781,7 @@ Synopsis::
 Broadcast one row to all rows
 
 Mnemonic::
-`mrowbcast.ew.x md, ms1, xs1`
+`mrowbcast.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -4790,20 +4790,20 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x35,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x35,"type":2}]}
 ....
 
 Description::
-Broadcasts row `c` (from integer register `xs1`) of `ms1` to every row of `md`.
+Broadcasts row `c` (from integer register `rs1`) of `ms2` to every row of `md`.
 +
 For each row `i` and column `j`:
 +
-  md[i,j] = ms1[c, j]
+  md[i,j] = ms2[c, j]
 +
 If `c` is outside `[0, sqrt(AME_NELEM))`, an `Illegal Instruction` exception is raised.
 +
-The `xs1` operand is a control scalar: its low 32 bits are interpreted as an
-unsigned integer row index.  It does not read `CSR[ame_scalar_dtype]` and does not undergo
+The `rs1` operand is a control scalar: its low 32 bits are interpreted as an
+unsigned integer row index.  It does not read `CSR[amestype]` and does not undergo
 AME datatype conversion.
 +
 The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
@@ -4920,7 +4920,7 @@ Synopsis::
 Elementwise row shift by scalar offset
 
 Mnemonic::
-`mrowshift.ew.x md, ms1, xs1`
+`mrowshift.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -4929,18 +4929,18 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x37,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x37,"type":2}]}
 ....
 
 Description::
-Elementwise row shift of `ms1` by offset `c`, obtained by interpreting the
-low 32 bits of integer register `xs1` as a signed two's-complement integer,
+Elementwise row shift of `ms2` by offset `c`, obtained by interpreting the
+low 32 bits of integer register `rs1` as a signed two's-complement integer,
 stored into `md`.  This fixed-type control operand does not read
-`CSR[ame_scalar_dtype]`.
+`CSR[amestype]`.
 +
 For each row `i` and column `j`:
 +
-  md[i,j] = ms1[i+c, j]  if 0 <= i+c < sqrt(AME_NELEM), otherwise
+  md[i,j] = ms2[i+c, j]  if 0 <= i+c < sqrt(AME_NELEM), otherwise
   md[i,j] = zero(Md[md]).
 +
 Elements shifted beyond the column boundary are filled with zero (no wrap-around).
@@ -5416,7 +5416,7 @@ Synopsis::
 Set datatype
 
 Mnemonic::
-`msettyp md, xs1`
+`msettyp md, rs1`
 
 Encoding::
 +
@@ -5425,11 +5425,11 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x3,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": 0x3,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
 ....
 
 Description::
-Sets `Md[md]` to the low 32 bits of `X[xs1]` and clears every physical storage bit
+Sets `Md[md]` to the low 32 bits of `X[rs1]` and clears every physical storage bit
 in the complete M-register group required by that new datatype.  This is a
 raw-bit clear, not conversion to the new datatype's semantic zero.  The group
 base must meet the new datatype's alignment requirement and its complete span
@@ -5439,7 +5439,7 @@ Operation::
 +
 [source]
 ----
-new_dtype = X[xs1][31:0]
+new_dtype = X[rs1][31:0]
 group_size = max(1, ceil(sizeof(new_dtype) / AME_UNIT_DATATYPE_SIZE))
 Md[md] = new_dtype; raw_bits(M[md .. md+group_size-1]) = 0
 ----
@@ -5530,7 +5530,7 @@ Synopsis::
 Elementwise scalar logical left shift
 
 Mnemonic::
-`msll.ew.x md, xs1, ms2`
+`msll.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -5539,16 +5539,16 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x23,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x23,"type":2}]}
 ....
 
 Description::
-Logical left shift of every element of `ms2` by a scalar amount from integer register `xs1`, stored into `md`.
+Logical left shift of every element of `ms2` by a scalar amount from integer register `rs1`, stored into `md`.
 +
 Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
 element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
 The X operand is a fixed unsigned integer control value and does not read
-`CSR[ame_scalar_dtype]`.
+`CSR[amestype]`.
 
 Operation::
 +
@@ -5643,7 +5643,7 @@ Synopsis::
 Elementwise scalar arithmetic right shift
 
 Mnemonic::
-`msra.ew.x md, xs1, ms2`
+`msra.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -5652,16 +5652,16 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x25,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x25,"type":2}]}
 ....
 
 Description::
-Arithmetic (sign-preserving) right shift of every element of `ms2` by a scalar amount from integer register `xs1`, stored into `md`.
+Arithmetic (sign-preserving) right shift of every element of `ms2` by a scalar amount from integer register `rs1`, stored into `md`.
 +
 Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
 element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
 The X operand is a fixed unsigned integer control value and does not read
-`CSR[ame_scalar_dtype]`.
+`CSR[amestype]`.
 
 Operation::
 +
@@ -5717,7 +5717,7 @@ Synopsis::
 Elementwise scalar logical right shift
 
 Mnemonic::
-`msrl.ew.x md, xs1, ms2`
+`msrl.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -5726,16 +5726,16 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x27,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x27,"type":2}]}
 ....
 
 Description::
-Logical (unsigned) right shift of every element of `ms2` by a scalar amount from integer register `xs1`, stored into `md`.
+Logical (unsigned) right shift of every element of `ms2` by a scalar amount from integer register `rs1`, stored into `md`.
 +
 Only the low `lg2(EW)` bits of the scalar shift amount are used, where `EW` is the
 element width in bits of `ms2`. The shift amount is interpreted as an unsigned bit pattern.
 The X operand is a fixed unsigned integer control value and does not read
-`CSR[ame_scalar_dtype]`.
+`CSR[amestype]`.
 
 Operation::
 +
@@ -5755,7 +5755,7 @@ Synopsis::
 Store raw M register in implementation-defined format
 
 Mnemonic::
-`mss ms1, xs1`
+`mss ms1, rs1`
 
 Encoding::
 +
@@ -5764,7 +5764,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x19,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": 0x19,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
 ....
 
 Description::
@@ -5788,7 +5788,7 @@ Operation::
 +
 [source]
 ----
-mem[xs1] <= ms1
+mem[rs1] <= ms1
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5802,7 +5802,7 @@ Synopsis::
 Store square to column-major format
 
 Mnemonic::
-`mss.cm ms1, xs1`
+`mss.cm ms1, rs1`
 
 Encoding::
 +
@@ -5811,7 +5811,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x1a,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": 0x1a,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
 ....
 
 Description::
@@ -5834,7 +5834,7 @@ Operation::
 +
 [source]
 ----
-mem[xs1] <= ms1
+mem[rs1] <= ms1
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5848,7 +5848,7 @@ Synopsis::
 Store square to row-major format
 
 Mnemonic::
-`mss.rm ms1, xs1`
+`mss.rm ms1, rs1`
 
 Encoding::
 +
@@ -5857,7 +5857,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": 0x1b,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": 0x1b,"type":2},{"bits":7,"name": {ame-enc-r2-bank0-funct7},"type":2}]}
 ....
 
 Description::
@@ -5880,7 +5880,7 @@ Operation::
 +
 [source]
 ----
-mem[xs1] <= ms1
+mem[rs1] <= ms1
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5894,7 +5894,7 @@ Synopsis::
 Store square to strided memory format
 
 Mnemonic::
-`mss.st ms1, (xs1), xs2`
+`mss.st ms1, (rs1), rs2`
 
 Encoding::
 +
@@ -5903,7 +5903,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x56,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "rs2","type":4},{"bits":7,"name": 0x56,"type":2}]}
 ....
 
 Description::
@@ -5920,7 +5920,7 @@ containing `sqrt(AME_NELEM)` contiguous elements.
 For packed datatypes, there are still `sqrt(AME_NELEM)` segments, but each segment
 contains `pack_factor * sqrt(AME_NELEM)` contiguous elements — `pack_factor` sub-squares
 placed side by side horizontally within each row.
-Consecutive segments are separated by a byte stride supplied in integer register `xs2`.
+Consecutive segments are separated by a byte stride supplied in integer register `rs2`.
 +
 Let `element_bytes = ceil(sizeof(Md[ms1]) / 8)`.  The address must be aligned
 to `element_bytes` or 4KB, whichever is smaller. Otherwise, `mss.st` raises a
@@ -5931,7 +5931,7 @@ Operation::
 +
 [source]
 ----
-mem[xs1, stride=xs2] <= ms1
+mem[rs1, stride=rs2] <= ms1
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5945,7 +5945,7 @@ Synopsis::
 Store square to transposed strided memory format
 
 Mnemonic::
-`mss.tst ms1, (xs1), xs2`
+`mss.tst ms1, (rs1), rs2`
 
 Encoding::
 +
@@ -5954,7 +5954,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "xs2","type":4},{"bits":7,"name": 0x57,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "ms1","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "rs2","type":4},{"bits":7,"name": 0x57,"type":2}]}
 ....
 
 Description::
@@ -5968,7 +5968,7 @@ squares are unpacked from the single M register and stored.
 The transposed strided store writes memory as a sequence of equally spaced segments,
 one segment per column of the square. Each segment contains `sqrt(AME_NELEM)` contiguous
 elements, and consecutive segments are separated by a byte stride supplied in integer
-register `xs2`. For packed datatypes, the total number of segments is
+register `rs2`. For packed datatypes, the total number of segments is
 `pack_factor * sqrt(AME_NELEM)` — one column per sub-square, stacked vertically.
 The segment addresses and within-segment bit offsets are defined by the common
 memory rules; this arrangement transposes each square during the transfer.
@@ -5981,7 +5981,7 @@ Operation::
 +
 [source]
 ----
-mem[xs1, stride=xs2] <= ms1
+mem[rs1, stride=rs2] <= ms1
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -6028,7 +6028,7 @@ Synopsis::
 Elementwise scalar subtraction
 
 Mnemonic::
-`msub.ew.x md, xs1, ms2`
+`msub.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -6037,17 +6037,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x19,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x19,"type":2}]}
 ....
 
 Description::
-Subtracts every element of square `ms2` from a scalar constant from integer register `xs1`,
+Subtracts every element of square `ms2` from a scalar constant from integer register `rs1`,
 stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = xs1 - ms2[i]
+  md[i] = rs1 - ms2[i]
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -6109,7 +6109,7 @@ Synopsis::
 Elementwise scalar bias minus log2
 
 Mnemonic::
-`msublog2.ew.x md, xs1, ms2`
+`msublog2.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -6118,19 +6118,19 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x48,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x48,"type":2}]}
 ....
 
 Description::
 Subtracts the elementwise base-2 logarithm of the absolute value of every element of
-square `ms2` from a scalar constant from integer register `xs1`, stored into `md`.
+square `ms2` from a scalar constant from integer register `rs1`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before being used as the bias for every element position `i`:
 +
-  md[i] = xs1 - log2(|ms2[i]|)
+  md[i] = rs1 - log2(|ms2[i]|)
 +
-Useful for biased-exponent arithmetic, where `xs1` holds the bias value.
+Useful for biased-exponent arithmetic, where `rs1` holds the bias value.
 Complementary to `mlog2sub.ew.x`.
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
@@ -6193,7 +6193,7 @@ Synopsis::
 Unpack one sub-square from a packed M register
 
 Mnemonic::
-`munpack.ew.x md, ms1, xs1`
+`munpack.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -6202,20 +6202,20 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "xs1","type":4},{"bits":7,"name": 0x3e,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x3e,"type":2}]}
 ....
 
 Description::
-Extracts a single sub-square, selected by the index in integer register `xs1`, from the
-packed M register `ms1` and writes it to the non-packed M register group beginning at `md`, converting each
-element from the packed datatype (`Md[ms1]`) to the non-packed datatype (`Md[md]`).
+Extracts a single sub-square, selected by the index in integer register `rs1`, from the
+packed M register `ms2` and writes it to the non-packed M register group beginning at `md`, converting each
+element from the packed datatype (`Md[ms2]`) to the non-packed datatype (`Md[md]`).
 +
-`Md[ms1]` must be a packed datatype and `Md[md]` a non-packed datatype; otherwise
+`Md[ms2]` must be a packed datatype and `Md[md]` a non-packed datatype; otherwise
 `amestatus.UN` is set and no register is written. For
-`pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[ms1])`, the index is the low
-`log2(pack_factor)` bits of `X[xs1]`; higher X-register bits are ignored.  The
+`pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[ms2])`, the index is the low
+`log2(pack_factor)` bits of `X[rs1]`; higher X-register bits are ignored.  The
 index is a fixed unsigned integer control operand and does not read
-`CSR[ame_scalar_dtype]`.
+`CSR[amestype]`.
 +
 This is the single-square form of the unpack (expand) direction of
 <<ame:doc:inst:mconv_ew,mconv.ew>>; use it to unpack one square at a time and limit the
@@ -6272,7 +6272,7 @@ Synopsis::
 Elementwise scalar bitwise XOR
 
 Mnemonic::
-`mxor.ew.x md, xs1, ms2`
+`mxor.ew.x md, rs1, ms2`
 
 Encoding::
 +
@@ -6281,17 +6281,17 @@ This encoding is provisional and is not a final RISC-V allocation.
 +
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x29,"type":2}]}
+{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "md","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "rs1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x29,"type":2}]}
 ....
 
 Description::
-Computes the elementwise bitwise XOR of a scalar constant from integer register `xs1`
+Computes the elementwise bitwise XOR of a scalar constant from integer register `rs1`
 with every element of square `ms2`, stored into `md`.
 +
-The type of the scalar is determined by `CSR[ame_scalar_dtype]`. The scalar is converted
+The type of the scalar is determined by `CSR[amestype]`. The scalar is converted
 to the datatype of `ms2` before the operation and then applied to every element position `i`:
 +
-  md[i] = xs1 ^ ms2[i]
+  md[i] = rs1 ^ ms2[i]
 +
 If either `Md[md]` or `Md[ms2]` is uninitialized (zero), or the datatype combination
 is not supported, `amestatus.UN` is set and no register is written.
@@ -6346,7 +6346,7 @@ This operation uses the common rules in <<ame-common-register-groups>>.
 === `mzero.2d.m`
 
 Synopsis::
-Clear tensor register
+Clear matrix register
 
 Mnemonic::
 `mzero.2d.m md`
@@ -6364,7 +6364,7 @@ This encoding is provisional and is not a final RISC-V allocation.
 Description::
 Writes zero to every element of the M register group `md`.
 +
-Typically used to initialize a tensor register before an elementwise sequence.
+Typically used to initialize a matrix register before an elementwise sequence.
 
 Operation::
 +

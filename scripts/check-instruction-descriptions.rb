@@ -26,7 +26,7 @@ baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 audit_path = File.join(root, "docs", "migration", "ame-prose-migration-audit.md")
 errors = []
 
-expected_baseline_hash = "944ba452847bba95833dc88366a6aac989360055fff324c4776d7d875ea2178d"
+expected_baseline_hash = "7166004f45b00ca663a4427baaaab2e3d71ed534d75ff6f1ebe14728ef9ca68e"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
@@ -198,10 +198,10 @@ end
 
 {
   "agettyp" => [/zero_extend_XLEN\(Ad\[ad\]\)/, "zero-extended accumulator datatype read"],
-  "asettyp" => [/Ad\[ad\] = X\[xs1\]\[31:0\].*raw_bits\(Acc\[ad\]\) = 0/m, "32-bit datatype write and raw accumulator clear"],
-  "ame.acquire" => [/descriptor = X\[xs\]/, "acquisition-descriptor interpretation"],
+  "asettyp" => [/Ad\[ad\] = X\[rs1\]\[31:0\].*raw_bits\(Acc\[ad\]\) = 0/m, "32-bit datatype write and raw accumulator clear"],
+  "ame.acquire" => [/descriptor = X\[rs1\]/, "acquisition-descriptor interpretation"],
   "mgettyp" => [/zero_extend_XLEN\(Md\[ms1\]\)/, "zero-extended M datatype read"],
-  "msettyp" => [/new_dtype = X\[xs1\]\[31:0\].*raw_bits\(M\[md \.\. md\+group_size-1\]\) = 0/m, "32-bit datatype write and whole-group raw M-register clear"],
+  "msettyp" => [/new_dtype = X\[rs1\]\[31:0\].*raw_bits\(M\[md \.\. md\+group_size-1\]\) = 0/m, "32-bit datatype write and whole-group raw M-register clear"],
   "mbcast.m.x" => [/greater than XLEN.*zero-extended/m, "explicit scalar-ingress widening rule"],
   "mls" => [/AME_MATRIX_REGISTER_SIZE \/ 8/, "raw M-register byte count"],
   "mss" => [/AME_MATRIX_REGISTER_SIZE \/ 8/, "raw M-register byte count"],
@@ -217,8 +217,8 @@ end
   "mrowbcast.ew.x" => [/low 32 bits/, "U32 row-index width"],
   "mcolshift.ew.x" => [/low 32 bits/, "S32 column-offset width"],
   "mrowshift.ew.x" => [/low 32 bits/, "S32 row-offset width"],
-  "mpack.ew.x" => [/the index is the low\s+`log2\(pack_factor\)` bits of `X\[xs1\]`; higher X-register bits are ignored/m, "masked packed-slot index width"],
-  "munpack.ew.x" => [/the index is the low\s+`log2\(pack_factor\)` bits of `X\[xs1\]`; higher X-register bits are ignored/m, "masked packed-slot index width"]
+  "mpack.ew.x" => [/the index is the low\s+`log2\(pack_factor\)` bits of `X\[rs1\]`; higher X-register bits are ignored/m, "masked packed-slot index width"],
+  "munpack.ew.x" => [/the index is the low\s+`log2\(pack_factor\)` bits of `X\[rs1\]`; higher X-register bits are ignored/m, "masked packed-slot index width"]
 }.merge(
   %w[mcolunzip.ew mcolzip.ew mrowunzip.ew mrowzip.ew].map do |name|
     [name, [/must name distinct M registers/, "zip/unzip distinct-register requirement"]]
@@ -245,7 +245,7 @@ end
   /load ignores the unused high bits.*store writes those unused high bits as zero/m => "partial-byte load/store rule",
   /Segment `i` contains `P \* N \* E` bits/ => "strided segment size rule",
   /Segment `sq \* N \+ j` contains `N \* E` bits/ => "transposed-strided segment size rule",
-  /`base` is\s+the unsigned XLEN-bit value `X\[xs1\]`, and `stride` is the unsigned XLEN-bit\s+value `X\[xs2\]`/m => "strided address operand widths",
+  /`base` is\s+the unsigned XLEN-bit value `X\[rs1\]`, and `stride` is the unsigned XLEN-bit\s+value `X\[rs2\]`/m => "strided address operand widths",
   /`\(base \+ seg \* stride\) modulo 2\^XLEN`/ => "strided modulo-XLEN address arithmetic",
   /segments\s+in ascending segment-number order.*later segment therefore wins/m => "overlapping strided-store ordering",
   /lowest-addressed\s+byte transfers physical bits 7:0/m => "opaque memory byte order",

@@ -129,8 +129,8 @@ Description::
 +
 --
 The integer datatype used by `mldexp.ew.x` and `mldexpacc.ew.x` to interpret
-the scalar exponent in `X[xs1]`.  It must have the greatest element width
-among the implementation's supported integer datatypes.  `X[xs1]` is
+the scalar exponent in `X[rs1]`.  It must have the greatest element width
+among the implementation's supported integer datatypes.  `X[rs1]` is
 zero-extended to that element width when it is narrower, or truncated to the
 low `sizeof(AME_MAX_INT_DTYPE)` bits when it is wider, and the resulting bit
 pattern is interpreted according to `AME_MAX_INT_DTYPE`.
@@ -143,7 +143,7 @@ support an integer datatype merely to provide these optional instruction
 tuples.
 
 This parameter is part of an implementation's architectural configuration.
-It is independent of `ame_scalar_dtype`, and software cannot change it by
+It is independent of `amestype`, and software cannot change it by
 writing a CSR.  If several supported integer datatypes have the greatest
 supported size, the implementation must document which encoding is selected.
 --
