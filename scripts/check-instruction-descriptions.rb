@@ -291,8 +291,6 @@ required_root_includes = %w[
   parameters.adoc
   examples.adoc
   instructions.adoc
-  glossary.adoc
-  base-isa-anchors.adoc
 ]
 root_include_counts = Hash.new(0)
 conditional_depth = 0
