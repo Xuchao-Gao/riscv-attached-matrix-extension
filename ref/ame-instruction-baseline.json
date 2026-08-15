@@ -2101,21 +2101,6 @@
       "format": "R1",
       "mask": "0xfffff07f",
       "match": "0xa600802b"
-    },
-    {
-      "order": 141,
-      "name": "fence.ame",
-      "anchor": "ame:doc:inst:fence_ame",
-      "category": "State Management",
-      "synopsis": "Order selected AME memory transfers before selected non-AME memory transfers",
-      "mnemonic": "fence.ame sw, sr, pw, pr",
-      "description": "Orders AME memory transfers selected by the predecessor bits (`pr`, `pw`) before\nnon-AME memory transfers selected by the successor bits (`sr`, `sw`):\n+\n--\n* `pr` (bit 10) — predecessor set includes AME loads (reads from memory into `M` registers).\n* `pw` (bit 9) — predecessor set includes AME stores (writes from `M` registers to memory).\n* `sr` (bit 8) — successor set includes non-AME loads (reads into X, F, or V register files).\n* `sw` (bit 7) — successor set includes non-AME stores (writes from X, F, or V register files).\n--\n+\n`fence.ame` orders memory operations, not instructions: every AME memory operation\nin the predecessor set is ordered before every non-AME memory operation in the\nsuccessor set.  A predecessor load is ordered by the point at which it returns its\nvalue, and a predecessor store by the point at which its write becomes visible to\nother harts and devices.\nClearing a bit excludes the corresponding transfer class from the ordering constraint.\nAt least one of `pr`/`pw` must be set, and at least one of `sr`/`sw` must be set;\notherwise the instruction executes as a NOP with no ordering effect.\n+\nThis instruction is the AME-to-non-AME ordering primitive described in\n<<ame-consistency-model>>. It does *not* order non-AME transfers before AME transfers;\nfor that direction, software must use the standard RISC-V `fence` instruction.\n+\n`fence.ame` has no source or destination register operands. The four fence bits\nare encoded in the `rd` field position (bits 11:7), following the R1 instruction format.",
-      "operation": "order AME predecessors selected by pr/pw before non-AME successors selected by sr/sw",
-      "wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":1,\"name\": \"sw\",\"type\":4},{\"bits\":1,\"name\": \"sr\",\"type\":4},{\"bits\":1,\"name\": \"pw\",\"type\":4},{\"bits\":1,\"name\": \"pr\",\"type\":4},{\"bits\":1,\"name\": 0,\"type\":2},{\"bits\":3,\"name\": {ame-enc-funct3},\"type\":2},{\"bits\":5,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": 0x2,\"type\":2},{\"bits\":7,\"name\": {ame-enc-r1-bank-funct7},\"type\":2}]}",
-      "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":1,\"name\": \"sw\",\"type\":4},{\"bits\":1,\"name\": \"sr\",\"type\":4},{\"bits\":1,\"name\": \"pw\",\"type\":4},{\"bits\":1,\"name\": \"pr\",\"type\":4},{\"bits\":1,\"name\": 0,\"type\":2},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": 0x2,\"type\":2},{\"bits\":7,\"name\": 0x53,\"type\":2}]}",
-      "format": "R1",
-      "mask": "0xfffff87f",
-      "match": "0xa620002b"
     }
   ],
   "prose_semantics_baseline": "reviewed traditional-vector-style cutover"

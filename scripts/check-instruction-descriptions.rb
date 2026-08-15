@@ -25,7 +25,7 @@ allocations_path = File.join(root, "src", "instruction-encoding-allocations.adoc
 baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 errors = []
 
-expected_baseline_hash = "8ce97e425478cfa91404b52b67d07753833e62bb6690d16319aefe64f09d254e"
+expected_baseline_hash = "a68c1e605a8f9cbc061b62dc9006c19d4f460530d8220edecc6368d01ccedeaa"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
@@ -59,7 +59,7 @@ instructions.split("\n<<<\n", 2).first.each_line do |line|
 end
 
 sections = instructions.scan(/^\[#(ame:doc:inst:[^\]]+)\]\n=== `([^`]+)`\n(.*?)(?=^<<<\s*$|\z)/m)
-errors << "instruction coverage is #{sections.length}/141" unless sections.length == 141
+errors << "instruction coverage is #{sections.length}/140" unless sections.length == 140
 
 programming_model = active_asciidoc(File.read(File.join(root, "src", "programming_model.adoc")))
 operand_class_table = programming_model[/\[\[ame-common-operand-classes\]\].*?^\|===\n(.*?)^\|===/m, 1]
@@ -121,7 +121,7 @@ sections.each_with_index do |(anchor, name, section), index|
     errors << "#{name}: Operation source block contains AsciiDoc presentation markup"
   end
 
-  contract = name == "fence.ame" ? "ame-common-ordering" : primary_contract[category]
+  contract = primary_contract[category]
   if contract.nil?
     errors << "#{name}: category #{category.inspect} has no common-contract mapping"
   elsif !active_section.include?("<<#{contract}>>")
@@ -141,7 +141,7 @@ sections.each_with_index do |(anchor, name, section), index|
   end
 
   operand_class_exempt = ["Resource Management", "Datatype Management", "Memory"].include?(category) ||
-                         name == "fence.ame" || name.match?(/^mmove(?:8|16|32|64)\./)
+                         name.match?(/^mmove(?:8|16|32|64)\./)
   class_family_name = name.end_with?(".ew.x") ? name.sub(/\.ew\.x\z/, ".ew") : name
   unless operand_class_exempt || operand_class_tokens.include?(name) || operand_class_tokens.include?(class_family_name)
     errors << "#{name}: no entry in the shared operand-class requirements table"
@@ -440,7 +440,7 @@ end
 
 abort "instruction-description validation failed:\n  #{errors.join("\n  ")}" unless errors.empty?
 
-puts "checked 141/141 prose instruction pages against baseline #{expected_commit[0, 12]}: " \
+puts "checked 140/140 prose instruction pages against baseline #{expected_commit[0, 12]}: " \
      "stable anchors/order/categories/synopses/mnemonics/encodings, complete common contracts and operand classes, " \
      "description/operation semantics, unconditional root publication, " \
      "12/12 published normative anchors, " \

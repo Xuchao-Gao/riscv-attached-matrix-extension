@@ -6,7 +6,7 @@
 
 
 
-AME defines *141* instructions.
+AME defines *140* instructions.
 
 [IMPORTANT]
 ====
@@ -351,8 +351,6 @@ a| `mzero.2d.acc acc`
 | <<ame:doc:inst:mzero_2d_acc,Clear accumulator tile>>
 a| `mzero.2d.m md`
 | <<ame:doc:inst:mzero_2d_m,Clear matrix register>>
-a| `fence.ame sw, sr, pw, pr`
-| <<ame:doc:inst:fence_ame,Order selected AME transfers before selected non-AME transfers>>
 !===
 
 Matrix Multiply::
@@ -6371,60 +6369,3 @@ D[i] = zero(Md[md])
 ----
 +
 This operation uses the common rules in <<ame-common-register-groups>>.
-
-<<<
-
-[#ame:doc:inst:fence_ame]
-=== `fence.ame`
-
-Synopsis::
-Order selected AME memory transfers before selected non-AME memory transfers
-
-Mnemonic::
-`fence.ame sw, sr, pw, pr`
-
-Encoding::
-+
-[IMPORTANT]
-This encoding is provisional and is not a final RISC-V allocation.
-+
-[wavedrom, ,svg,subs='attributes',width="100%"]
-....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":1,"name": "sw","type":4},{"bits":1,"name": "sr","type":4},{"bits":1,"name": "pw","type":4},{"bits":1,"name": "pr","type":4},{"bits":1,"name": 0,"type":2},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": 0x0,"type":2},{"bits":5,"name": 0x2,"type":2},{"bits":7,"name": {ame-enc-r1-bank-funct7},"type":2}]}
-....
-
-Description::
-Orders AME memory transfers selected by the predecessor bits (`pr`, `pw`) before
-non-AME memory transfers selected by the successor bits (`sr`, `sw`):
-+
---
-* `pr` (bit 10) — predecessor set includes AME loads (reads from memory into `M` registers).
-* `pw` (bit 9) — predecessor set includes AME stores (writes from `M` registers to memory).
-* `sr` (bit 8) — successor set includes non-AME loads (reads into X, F, or V register files).
-* `sw` (bit 7) — successor set includes non-AME stores (writes from X, F, or V register files).
---
-+
-`fence.ame` orders memory operations, not instructions: every AME memory operation
-in the predecessor set is ordered before every non-AME memory operation in the
-successor set.  A predecessor load is ordered by the point at which it returns its
-value, and a predecessor store by the point at which its write becomes visible to
-other harts and devices.
-Clearing a bit excludes the corresponding transfer class from the ordering constraint.
-At least one of `pr`/`pw` must be set, and at least one of `sr`/`sw` must be set;
-otherwise the instruction executes as a NOP with no ordering effect.
-+
-This instruction is the AME-to-non-AME ordering primitive described in
-<<ame-consistency-model>>. It does *not* order non-AME transfers before AME transfers;
-for that direction, software must use the standard RISC-V `fence` instruction.
-+
-`fence.ame` has no source or destination register operands. The four fence bits
-are encoded in the `rd` field position (bits 11:7), following the R1 instruction format.
-
-Operation::
-+
-[source]
-----
-order AME predecessors selected by pr/pw before non-AME successors selected by sr/sw
-----
-+
-This operation uses the common rules in <<ame-common-ordering>>.
