@@ -32,7 +32,7 @@
   <rect x="390" y="230" width="220" height="250" fill="none" stroke="#1e1e1e" stroke-width="2"/>
   <text x="500" y="330" text-anchor="middle" class="label" fill="#1e1e1e">Acc</text>
   <text x="500" y="360" text-anchor="middle" font-size="20px" fill="#1e1e1e">(accumulator)</text>
-  <text x="500" y="390" text-anchor="middle" font-size="18px" fill="#888888">Acc0–Acc3</text>
+  <text x="500" y="390" text-anchor="middle" font-size="18px" fill="#888888">Acc0–Acc15</text>
 
   <!-- X (integer) register file -->
   <rect x="730" y="215" width="250" height="200" fill="none" stroke="#1e1e1e" stroke-width="2"/>

@@ -47,12 +47,11 @@ selector is reserved. This does not define an additional register format.
 | R3 | 95 | `0x00..0x50`, `0x54..0x63` except `0x49` and `0x4c` | n/a | 2 reserved values
 | R2 bank 0 | 28 | `{ame-enc-r2-bank0-funct7}` | `xfunct5=0..31` except `0x09..0x0C` | 4 reserved values
 | R2 bank 1 | 11 | `{ame-enc-r2-bank1-funct7}` | `xfunct5=0..0x0A`; `0x0A` fixes `rs1=rd=0` | 21
-| R1 | 5 | `{ame-enc-r1-bank-funct7}` | `xfunct10=0..3,64..79` | 959
+| R1 | 4 | `{ame-enc-r1-bank-funct7}` | `xfunct10=0..3` | 1020
 | Unallocated | 0 | `0x64..0x7f` | n/a | 28 `funct7` banks
 |===
 
 Within each register format, operation numbers follow the order of the encoded
 instructions in the category lists at the beginning of this chapter. The
-generated `INSTRUCTION_ENCODINGS.md` and `INSTRUCTION_ENCODINGS.html` files
-contain the complete `funct7`, `xfunct`, mask, and match values for those
+generated `INSTRUCTION_ENCODINGS.md` file contains the complete `funct7`, `xfunct`, mask, and match values for those
 instructions.

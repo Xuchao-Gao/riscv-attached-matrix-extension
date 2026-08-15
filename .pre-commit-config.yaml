@@ -45,14 +45,6 @@ repos:
         pass_filenames: false
         always_run: true
 
-      - id: check-instruction-encoding-html
-        name: check-instruction-encoding-html
-        entry: ruby scripts/generate-instruction-encoding-html.rb --check
-        language: system
-        files: ^(INSTRUCTION_ENCODINGS\.html|scripts/generate-instruction-encoding-html\.rb|src/(instruction-encoding-allocations|instructions)\.adoc)$
-        pass_filenames: false
-        always_run: true
-
       - id: check-legacy-names
         name: check-legacy-names
         entry: ruby scripts/check-legacy-names.rb

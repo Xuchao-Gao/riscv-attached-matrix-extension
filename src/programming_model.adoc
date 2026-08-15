@@ -1068,13 +1068,19 @@ def perm(range): implementation-defined permutation over range
 # sign is +1 for an accumulating form, -1 for a negated accumulating form
 terms = perm((s,q) for s in 0..N_sq-1, q in 0..N-1)
 
+product(i,j,s,q) = ordinary:    A_s[i,q] * B_s[q,j]
+                   transpose-A: A_s[q,i] * B_s[q,j]
+                   transpose-B: A_s[i,q] * B_s[j,q]
+
 for i in 0..N-1:
   for j in 0..N-1:
-    # C[i,j] on the right is the pre-instruction accumulator element, which seeds
-    # the dot product rather than being added to a separately rounded product sum
-    ordinary:   C[i,j] = C[i,j] + sign * sum(A_s[i,q] * B_s[q,j] for (s,q) in terms)
-    transpose-A:C[i,j] = C[i,j] + sign * sum(A_s[q,i] * B_s[q,j] for (s,q) in terms)
-    transpose-B:C[i,j] = C[i,j] + sign * sum(A_s[i,q] * B_s[j,q] for (s,q) in terms)
+    # The pre-instruction accumulator element seeds the fold, and each product is
+    # folded into it in turn.  The products are not reduced among themselves first:
+    # at finite precision the two differ, so this is not an equivalent rewriting.
+    acc = C[i,j]
+    for (s,q) in terms:
+      acc = acc + sign * product(i,j,s,q)
+    C[i,j] = acc
 --
 
 Matrix multiplication is not commutative (`A*B != B*A` in general),

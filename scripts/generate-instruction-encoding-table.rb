@@ -130,6 +130,13 @@ lines << "A `(funct7, funct3, opcode)` bank belongs to only one register format.
          "bank when every other encoding under the selector is reserved."
 # Derive the R3 banks from the encodings themselves, so this sentence cannot drift
 # from the instructions and so vacated values are reported as reserved.
+# Collapse a sorted value list into range strings so a run of reserved values reads
+# as one range rather than a chain of "and".
+hex_runs = lambda do |values, one, many|
+  values.sort.slice_when { |a, b| b != a + 1 }.map do |run|
+    run.length == 1 ? format(one, run.first) : format(many, run.first, run.last)
+  end
+end
 r3_used = entries.select { |e| e[:format] == "R3" }.map { |e| (e[:value] >> 25) & 0x7f }.uniq.sort
 r3_runs = r3_used.slice_when { |a, b| b != a + 1 }.map do |run|
   if run.length == 1
@@ -139,15 +146,35 @@ r3_runs = r3_used.slice_when { |a, b| b != a + 1 }.map do |run|
   end
 end
 all_used = entries.map { |e| (e[:value] >> 25) & 0x7f }.uniq
-r3_holes = ((r3_used.first..r3_used.last).to_a - all_used).map { |v| format("`0x%02x`", v) }
+r3_hole_values = (r3_used.first..r3_used.last).to_a - all_used
+r3_holes = hex_runs.call(r3_hole_values, "`0x%02x`", "`0x%02x..0x%02x`")
 r3_sentence = "R3 uses #{r3_runs.join(', ')}"
 r3_sentence += ", leaving #{r3_holes.join(' and ')} reserved" unless r3_holes.empty?
-lines << "#{r3_sentence}. R2 uses " \
-         "`funct7=0x51` with `xfunct5=0..31` except the reserved value `0x09`, " \
+# Derive the R2 bank-0 holes, the R1 selector range, and the unallocated funct7 tail
+# too, so that no part of this paragraph can disagree with the encodings it describes.
+r2_bank0 = entries.select { |e| ((e[:value] >> 25) & 0x7f) == 0x51 }
+                  .map { |e| (e[:value] >> 20) & 0x1f }.uniq.sort
+r2_hole_values = (0..r2_bank0.last).to_a - r2_bank0
+r2_holes = hex_runs.call(r2_hole_values, "`0x%02x`", "`0x%02x..0x%02x`")
+r2_clause = "`funct7=0x51` with `xfunct5=0..31`"
+unless r2_holes.empty?
+  noun = r2_hole_values.length == 1 ? "value" : "values"
+  r2_clause += " except the reserved #{noun} #{r2_holes.join(' and ')}"
+end
+r1_used = entries.select { |e| ((e[:value] >> 25) & 0x7f) == 0x53 }
+                 .map { |e| (e[:value] >> 15) & 0x3ff }.uniq.sort
+free = (0x00..0x7f).to_a - all_used - r3_hole_values
+free_clause = if free.empty?
+                "No `funct7` values remain free."
+              else
+                format("The %d `funct7` values %s remain free.", free.length,
+                       hex_runs.call(free, "`0x%02x`", "`0x%02x..0x%02x`").join(", "))
+              end
+lines << "#{r3_sentence}. R2 uses #{r2_clause}, " \
          "before continuing at `funct7=0x52`; R1 uses `funct7=0x53` with " \
-         "`xfunct10=0..3` and `xfunct10=64..79`. The fixed `ame.release` encoding " \
+         "`xfunct10=#{r1_used.first}..#{r1_used.last}`. The fixed `ame.release` encoding " \
          "shares the R2 `funct7=0x52` bank, using `xfunct5=0x0a` with `rs1=rd=0`. " \
-         "Values `0x61..0x7f` remain free."
+         "#{free_clause}"
 
 lines << ""
 lines << "## All instruction encodings"

@@ -208,7 +208,9 @@ end
 reserved_extensions = {
   ["R2", 0x51] => [9, 10, 11, 12],
   ["R2", 0x52] => [10],
-  ["R1", 0x53] => (4..63).to_a
+  # The 4..63 block was reserved so that fence.ame could sit at 64.  With that
+  # instruction removed nothing is held back, and the next R1 instruction takes 4.
+  ["R1", 0x53] => []
 }
 [["R2", 32], ["R1", 1024]].each do |format_name, capacity|
   entries.select { |entry| entry[:format] == format_name }

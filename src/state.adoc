@@ -44,14 +44,23 @@ is not compatible with an implementation that chooses <<ame:doc:param:AME_NUM_M_
 
 The width of `M` register is implementation-defined, and is equal to
 <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> * <<ame:doc:param:AME_NELEM,AME_NELEM>>.
-The layout of data in an `M` register is also implementation-defined;
-the only portable way to access data in an `M` register is through interoperability load/store
-instructions that convert to a standard layout (
+The layout of data in an `M` register is also implementation-defined.  Two portable
+routes exist, and they answer different questions.
+
+To access the register's data as *logical elements of its programmed datatype*, use the
+interoperability load and store instructions, which convert to a standard layout (
   <<ame:doc:inst:mls_rm,mls.rm>>,
   <<ame:doc:inst:mls_cm,mls.cm>>,
   <<ame:doc:inst:mss_rm,mss.rm>>,
   and/or <<ame:doc:inst:mss_cm,mss.cm>>
 ).
+
+To move a register's *image* without regard to its programmed datatype — for register
+spilling, context switching, and calling conventions — use
+<<ame:doc:inst:mls_1r,mls.1r>> and <<ame:doc:inst:mss_1r,mss.1r>>.  Their transfer is
+row-major at a fixed element size of
+<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>, so it does not depend on
+the internal layout either, and it neither reads nor requires a supported datatype.
 
 ==== Matrix datatype registers (`Md0-Md15` or `Md0-Md31`)
 

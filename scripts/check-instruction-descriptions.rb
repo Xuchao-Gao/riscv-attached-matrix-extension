@@ -365,7 +365,11 @@ forbidden = {
   "Bits<" => "IDL bit-vector type",
   "ame:doc:func:" => "legacy helper anchor or reference",
   "NumPy Equivalent::" => "NumPy semantic block",
-  "Decode Variables::" => "generated decode-variable block"
+  "Decode Variables::" => "generated decode-variable block",
+  # mls.1r/mss.1r were once defined as copying a raw physical bit pattern, which
+  # contradicts the fixed-U row-major definition.  Keep the retired wording out.
+  "physical M-register raw bit pattern" => "retired raw whole-register definition",
+  "memory in the implementation-defined register format" => "retired implementation-defined whole-register transfer"
 }
 closure.each do |path|
   text = File.read(path)

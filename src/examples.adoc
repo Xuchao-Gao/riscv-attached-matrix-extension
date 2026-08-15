@@ -2,19 +2,6 @@
 == Examples
 :imagesdir: ../images
 
-=== Datatype setting
-
-// not really bash, but gives us # comment highlighting
-[source,bash]
-----
-
-.equ INT4_DATATYPE, 0x40000004
-
-
-----
-
-<<<
-
 [[gemm_examples]]
 === GEMM
 

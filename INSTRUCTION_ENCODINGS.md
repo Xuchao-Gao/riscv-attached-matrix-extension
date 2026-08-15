@@ -21,7 +21,7 @@ The canonical decoder test is `(instruction_word & mask) == match`. Fixed fields
 Every encoding retains `funct7[31:25]`, `funct3[14:12]`, and `opcode[6:0]`. R2 converts only `src2[24:20]` to `xfunct5`; R1 also converts `src1[19:15]`, yielding `xfunct10`. All instructions use `funct3=000`. The no-operand `ame.release` encoding uses a reserved R2 selector and fixes both R2 operand fields to zero; it does not define another register format.
 
 A `(funct7, funct3, opcode)` bank belongs to only one register format. A fixed no-operand instruction may occupy a reserved selector in that bank when every other encoding under the selector is reserved.
-R3 uses `funct7=0x00..0x48`, `funct7=0x4a..0x4b`, `funct7=0x4d..0x50`, `funct7=0x54..0x63`, leaving `0x49` and `0x4c` reserved. R2 uses `funct7=0x51` with `xfunct5=0..31` except the reserved value `0x09`, before continuing at `funct7=0x52`; R1 uses `funct7=0x53` with `xfunct10=0..3` and `xfunct10=64..79`. The fixed `ame.release` encoding shares the R2 `funct7=0x52` bank, using `xfunct5=0x0a` with `rs1=rd=0`. Values `0x61..0x7f` remain free.
+R3 uses `funct7=0x00..0x48`, `funct7=0x4a..0x4b`, `funct7=0x4d..0x50`, `funct7=0x54..0x63`, leaving `0x49` and `0x4c` reserved. R2 uses `funct7=0x51` with `xfunct5=0..31` except the reserved values `0x09..0x0c`, before continuing at `funct7=0x52`; R1 uses `funct7=0x53` with `xfunct10=0..3`. The fixed `ame.release` encoding shares the R2 `funct7=0x52` bank, using `xfunct5=0x0a` with `rs1=rd=0`. The 28 `funct7` values `0x64..0x7f` remain free.
 
 ## All instruction encodings
 
