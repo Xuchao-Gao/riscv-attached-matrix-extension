@@ -128,7 +128,21 @@ lines << ""
 lines << "A `(funct7, funct3, opcode)` bank belongs to only one register format. " \
          "A fixed no-operand instruction may occupy a reserved selector in that " \
          "bank when every other encoding under the selector is reserved."
-lines << "R3 uses `funct7=0x00..0x50` and `funct7=0x54..0x60`. R2 uses " \
+# Derive the R3 banks from the encodings themselves, so this sentence cannot drift
+# from the instructions and so vacated values are reported as reserved.
+r3_used = entries.select { |e| e[:format] == "R3" }.map { |e| (e[:value] >> 25) & 0x7f }.uniq.sort
+r3_runs = r3_used.slice_when { |a, b| b != a + 1 }.map do |run|
+  if run.length == 1
+    format("`funct7=0x%02x`", run.first)
+  else
+    format("`funct7=0x%02x..0x%02x`", run.first, run.last)
+  end
+end
+all_used = entries.map { |e| (e[:value] >> 25) & 0x7f }.uniq
+r3_holes = ((r3_used.first..r3_used.last).to_a - all_used).map { |v| format("`0x%02x`", v) }
+r3_sentence = "R3 uses #{r3_runs.join(', ')}"
+r3_sentence += ", leaving #{r3_holes.join(' and ')} reserved" unless r3_holes.empty?
+lines << "#{r3_sentence}. R2 uses " \
          "`funct7=0x51` with `xfunct5=0..31` except the reserved value `0x09`, " \
          "before continuing at `funct7=0x52`; R1 uses `funct7=0x53` with " \
          "`xfunct10=0..3` and `xfunct10=64..79`. The fixed `ame.release` encoding " \

@@ -686,11 +686,12 @@ with an earlier segment.  This ordering selects the staged result but does not
 permit partial completion: if any access faults, none of the staged bytes are
 written.
 
-`mls.1r` and `mss.1r` transfer exactly
-`AME_MATRIX_REGISTER_SIZE / 8` bytes.  Their transfer
-bit string is the physical M-register raw bit pattern: the lowest-addressed
-byte transfers physical bits 7:0, and subsequent byte addresses transfer
-successively more-significant groups of eight physical bits.
+`mls.1r` and `mss.1r` use the row-major layout above with `E` fixed at
+`AME_UNIT_DATATYPE_SIZE` and `P = 1`, so their complete bit string contains
+`AME_NELEM * AME_UNIT_DATATYPE_SIZE` bits and
+`total_bytes = AME_MATRIX_REGISTER_SIZE / 8`.  They do not transfer a raw physical
+bit pattern: the memory image is the one `mss.rm` produces for a unit datatype, and
+does not depend on how an implementation arranges a register internally.
 
 Every memory instruction requires its base address to be naturally aligned to
 `element_bytes = ceil(E / 8)`, the byte size of one element.  A base address that is
@@ -1064,13 +1065,16 @@ Formally:
 def perm(range): implementation-defined permutation over range
 
 # mode is ordinary, transpose-A, or transpose-B
+# sign is +1 for an accumulating form, -1 for a negated accumulating form
 terms = perm((s,q) for s in 0..N_sq-1, q in 0..N-1)
 
 for i in 0..N-1:
   for j in 0..N-1:
-    ordinary:   C[i,j] = sum(A_s[i,q] * B_s[q,j] for (s,q) in terms)
-    transpose-A:C[i,j] = sum(A_s[q,i] * B_s[q,j] for (s,q) in terms)
-    transpose-B:C[i,j] = sum(A_s[i,q] * B_s[j,q] for (s,q) in terms)
+    # C[i,j] on the right is the pre-instruction accumulator element, which seeds
+    # the dot product rather than being added to a separately rounded product sum
+    ordinary:   C[i,j] = C[i,j] + sign * sum(A_s[i,q] * B_s[q,j] for (s,q) in terms)
+    transpose-A:C[i,j] = C[i,j] + sign * sum(A_s[q,i] * B_s[q,j] for (s,q) in terms)
+    transpose-B:C[i,j] = C[i,j] + sign * sum(A_s[i,q] * B_s[j,q] for (s,q) in terms)
 --
 
 Matrix multiplication is not commutative (`A*B != B*A` in general),
@@ -1092,16 +1096,16 @@ and whether the product is added to or subtracted from the accumulator.
 | `C = C - A × B`
 | Negated matrix multiply accumulate
 | <<ame:doc:inst:mmulatacc_2d,mmulatacc.2d>>
-| `C = C + sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)`
+| `C = C + sum(transpose(A[s]) × B[s], s = 0 .. N_sq-1)`
 | Matrix multiply with transposed A, accumulate
 | <<ame:doc:inst:mmulataccneg_2d,mmulataccneg.2d>>
-| `C = C - sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)`
+| `C = C - sum(transpose(A[s]) × B[s], s = 0 .. N_sq-1)`
 | Matrix multiply with transposed A, negated accumulate
 | <<ame:doc:inst:mmulbtacc_2d,mmulbtacc.2d>>
-| `C = C + sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)`
+| `C = C + sum(A[s] × transpose(B[s]), s = 0 .. N_sq-1)`
 | Matrix multiply with transposed B, accumulate
 | <<ame:doc:inst:mmulbtaccneg_2d,mmulbtaccneg.2d>>
-| `C = C - sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)`
+| `C = C - sum(A[s] × transpose(B[s]), s = 0 .. N_sq-1)`
 | Matrix multiply with transposed B, negated accumulate
 |===
 

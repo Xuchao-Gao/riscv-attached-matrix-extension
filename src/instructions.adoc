@@ -3326,7 +3326,6 @@ Accumulates the matrix product of `ms1` and `ms2` into `acc`.
 product is added, and the result is written back.
 +
 For the subtracting form, see `mmulaccneg.2d`.
-For the subtracting form, see `mmulaccneg.2d`.
 
 Operation::
 +
@@ -3670,7 +3669,7 @@ Operation::
 +
 [source]
 ----
-C = C + sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)
+C = C + sum(transpose(A[s]) × B[s], s = 0 .. N_sq-1)
 ----
 +
 This operation uses the common rules in <<ame-common-matmul>>.
@@ -3710,7 +3709,7 @@ Operation::
 +
 [source]
 ----
-C = C - sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)
+C = C - sum(transpose(A[s]) × B[s], s = 0 .. N_sq-1)
 ----
 +
 This operation uses the common rules in <<ame-common-matmul>>.
@@ -3750,7 +3749,7 @@ Operation::
 +
 [source]
 ----
-C = C + sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)
+C = C + sum(A[s] × transpose(B[s]), s = 0 .. N_sq-1)
 ----
 +
 This operation uses the common rules in <<ame-common-matmul>>.
@@ -3790,7 +3789,7 @@ Operation::
 +
 [source]
 ----
-C = C - sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)
+C = C - sum(A[s] × transpose(B[s]), s = 0 .. N_sq-1)
 ----
 +
 This operation uses the common rules in <<ame-common-matmul>>.

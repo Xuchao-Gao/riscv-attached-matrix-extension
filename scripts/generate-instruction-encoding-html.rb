@@ -142,6 +142,21 @@ category_options = category_counts.sort.map do |category, count|
   %(<option value="#{escape.call(category)}">#{escape.call(category)} (#{count})</option>)
 end.join
 
+# Derive the R3 banks from the encodings themselves, so this sentence cannot drift
+# from the instructions and so vacated values are reported as reserved.
+r3_used = entries.select { |e| e[:format] == "R3" }.map { |e| (e[:value] >> 25) & 0x7f }.uniq.sort
+r3_runs = r3_used.slice_when { |a, b| b != a + 1 }.map do |run|
+  if run.length == 1
+    format("<code>funct7=0x%02x</code>", run.first)
+  else
+    format("<code>funct7=0x%02x..0x%02x</code>", run.first, run.last)
+  end
+end
+all_used = entries.map { |e| (e[:value] >> 25) & 0x7f }.uniq
+r3_holes = ((r3_used.first..r3_used.last).to_a - all_used).map { |v| format("<code>0x%02x</code>", v) }
+r3_sentence = r3_runs.join(", ")
+r3_sentence += ", leaving #{r3_holes.join(' and ')} reserved" unless r3_holes.empty?
+
 html = <<~HTML
   <!doctype html>
   <html lang="en">
@@ -199,7 +214,7 @@ html = <<~HTML
 
     <h2>Encoding formats</h2>
     <p class="note"><b>Invariant:</b> <code>funct7[31:25]</code>, <code>funct3[14:12]</code>, and <code>opcode[6:0]</code> remain independent fields. Every instruction uses <code>funct3=000</code>.</p>
-    <p>R3 occupies <code>funct7=0x00..0x50</code> and <code>funct7=0x54..0x60</code>. R2 uses bank <code>0x51</code> with <code>xfunct5=0..31</code> except reserved value <code>0x09</code>, then continues in bank <code>0x52</code>. R1 uses bank <code>0x53</code> with <code>xfunct10=0..3</code> and <code>xfunct10=64..79</code>. The fixed, no-operand <code>ame.release</code> encoding shares the R2 <code>funct7=0x52</code> bank, using <code>xfunct5=0x0a</code> with <code>rs1=rd=0</code>; every other encoding under that selector is reserved. The 31 <code>funct7</code> values <code>0x61..0x7f</code> remain unallocated.</p>
+    <p>R3 occupies #{r3_sentence}. R2 uses bank <code>0x51</code> with <code>xfunct5=0..31</code> except reserved value <code>0x09</code>, then continues in bank <code>0x52</code>. R1 uses bank <code>0x53</code> with <code>xfunct10=0..3</code> and <code>xfunct10=64..79</code>. The fixed, no-operand <code>ame.release</code> encoding shares the R2 <code>funct7=0x52</code> bank, using <code>xfunct5=0x0a</code> with <code>rs1=rd=0</code>; every other encoding under that selector is reserved. The 31 <code>funct7</code> values <code>0x61..0x7f</code> remain unallocated.</p>
     <div class="formats">
       <div class="format-row"><b>R3</b><div class="bitbar"><span class="bit fixed w7"><b>funct7</b><small>31:25</small></span><span class="bit operand w5"><b>src2</b><small>24:20</small></span><span class="bit operand w5"><b>src1</b><small>19:15</small></span><span class="bit fixed w3"><b>funct3=0</b><small>14:12</small></span><span class="bit operand w5"><b>dest</b><small>11:7</small></span><span class="bit fixed w7"><b>opcode</b><small>6:0</small></span></div></div>
       <div class="format-row"><b>R2</b><div class="bitbar"><span class="bit fixed w7"><b>funct7</b><small>31:25</small></span><span class="bit fixed w5"><b>xfunct5</b><small>24:20</small></span><span class="bit operand w5"><b>src1</b><small>19:15</small></span><span class="bit fixed w3"><b>funct3=0</b><small>14:12</small></span><span class="bit operand w5"><b>dest</b><small>11:7</small></span><span class="bit fixed w7"><b>opcode</b><small>6:0</small></span></div></div>

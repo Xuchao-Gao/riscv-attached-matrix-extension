@@ -25,7 +25,7 @@ allocations_path = File.join(root, "src", "instruction-encoding-allocations.adoc
 baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 errors = []
 
-expected_baseline_hash = "41fa902e43ea320fd67bf36f266ec6c21432edcfa9f6e8ab4833995a9df75c46"
+expected_baseline_hash = "ea373d808e9b80f518057b9c506d02227ae679cc2c22843a069b8d3fe6c97ccc"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
@@ -246,7 +246,7 @@ end
   /`base` is\s+the unsigned XLEN-bit value `X\[rs1\]`, and `stride` is the unsigned XLEN-bit\s+value `X\[rs2\]`/m => "strided address operand widths",
   /`\(base \+ seg \* stride\) modulo 2\^XLEN`/ => "strided modulo-XLEN address arithmetic",
   /segments\s+in ascending segment-number order.*later segment therefore wins/m => "overlapping strided-store ordering",
-  /lowest-addressed\s+byte transfers physical bits 7:0/m => "opaque memory byte order",
+  /use the row-major layout above with `E` fixed at\s+`AME_UNIT_DATATYPE_SIZE`/m => "whole-register layout rule",
   /Checks occur in the following architectural order/ => "memory exception-priority rule",
   /most\s+significant bit of the raw predicate-element encoding/m => "raw sign-bit predicate rule",
   /low 32 raw bits of each matrix-index element/m => "U32 matrix-index rule",

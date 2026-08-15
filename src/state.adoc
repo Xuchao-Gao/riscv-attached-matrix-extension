@@ -70,7 +70,7 @@ into `Md[1]` will be retained even though it has no effect on the group.
 
 The encoding format of `Md` datatypes is specified in <<datatypes>>.
 
-==== Accumulator registers (`Acc0`. `Acc0-Acc1`, or `Acc0-Acc3`)
+==== Accumulator registers (`Acc0` through `Acc[AME_NUM_ACC_REGS-1]`)
 
 AME adds an implementation-defined number of matrix accumulator registers.
 The number is determined by <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> and may be 1, 2, 4, 8, or 16.
@@ -80,7 +80,7 @@ implements will not run on that implementation.
 The behavior of encodings corresponding to unimplemented `Acc` registers is implementation-defined,
 and is determined by the <<ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR,AME_UNIMPL_ACC_BEHAVIOR>>.
 
-The architectural register file may contain only 1, 2, or 4 accumulators, but
+The architectural register file may contain fewer than 32 accumulators, but
 instruction encodings use standard 5-bit register slots for `Acc` and `Ad`
 specifiers.  This keeps the instruction formats uniform with M and integer
 register operands; it does not require 32 physical accumulator registers.
@@ -91,7 +91,7 @@ Note, this is unlike the `M` registers, which may be grouped to hold a single sq
 `Acc` registers are the destination of all AME matrix multiply instructions.
 `Acc` registers can also be source or destination of AME move instructions.
 
-==== Accumulator datatype registers (`Ad0`. `Ad0-Ad1`, or `Ad0-Ad3`)
+==== Accumulator datatype registers (`Ad0` through `Ad[AME_NUM_ACC_REGS-1]`)
 
 AME adds an implementation-defined number of 32-bit accumulator datatype registers.
 The number is determined by <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> and may be 1, 2, 4, 8, or 16 (same as the `Acc` registers).
