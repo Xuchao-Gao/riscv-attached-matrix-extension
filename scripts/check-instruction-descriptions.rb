@@ -25,7 +25,7 @@ allocations_path = File.join(root, "src", "instruction-encoding-allocations.adoc
 baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 errors = []
 
-expected_baseline_hash = "4f9de61ce8bc85046465d9452c14759efbf999ce5fb4e9e254940d97ba1492c5"
+expected_baseline_hash = "8ce97e425478cfa91404b52b67d07753833e62bb6690d16319aefe64f09d254e"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"

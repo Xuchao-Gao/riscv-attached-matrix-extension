@@ -24,6 +24,12 @@ on the right-hand side means the pre-instruction destination value.  Coordinates
 index.  Formulas describe all squares and registers selected by the common
 operand-formation rules, including packed and wide datatypes.
 
+`M[i]` and `Acc[i]` name a physical register rather than a formed operand, and
+`raw_bits(...)` is the raw bit pattern of the named register or register range.
+An operation written with `raw_bits(M[i])` therefore bypasses operand formation
+entirely: it transfers exactly one physical register and does not interpret its
+programmed datatype.
+
 The pre-instruction RHS rule has one explicit exception for scatter collisions.
 Each scatter target is initialized from its pre-instruction `D` value, and a
 later contribution to the same target reads the staged result left by the
@@ -2238,14 +2244,14 @@ unconditionally.
 +
 Let `total_bytes = ceil(pack_factor * AME_NELEM * sizeof(Md[md]) / 8)` be the
 transfer size and `element_bytes = ceil(sizeof(Md[md]) / 8)` the size of one
-element.  The address must be aligned to `element_bytes`.
+element.  The base address must be aligned to `element_bytes`.
 Otherwise, `mls.cm` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-M[md] = mem[X[rs1]]
+D = mem[X[rs1]]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -2284,14 +2290,14 @@ unconditionally.
 +
 Let `total_bytes = ceil(pack_factor * AME_NELEM * sizeof(Md[md]) / 8)` be the
 transfer size and `element_bytes = ceil(sizeof(Md[md]) / 8)` the size of one
-element.  The address must be aligned to `element_bytes`.
+element.  The base address must be aligned to `element_bytes`.
 Otherwise, `mls.rm` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-M[md] = mem[X[rs1]]
+D = mem[X[rs1]]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -2331,14 +2337,15 @@ side within each row, so segment `i` holds row `i` of every sub-square.  Segment
 sizes, segment addresses, byte rounding, and sub-byte packing follow the common
 memory rules.
 +
-Let `element_bytes = ceil(sizeof(Md[md]) / 8)`.  The address must be aligned
-to `element_bytes`. Otherwise, `mls.st` raises an address-misaligned exception.
+Let `element_bytes = ceil(sizeof(Md[md]) / 8)`.  The base address must be
+aligned to `element_bytes`. Otherwise, `mls.st` raises an address-misaligned
+exception.
 
 Operation::
 +
 [source]
 ----
-M[md] = mem[X[rs1], stride=X[rs2]]
+D = mem[X[rs1], stride=X[rs2]]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -2378,14 +2385,15 @@ packed datatype the sub-squares are stacked vertically, giving one segment per
 column of each sub-square.  Segment counts, segment sizes, segment addresses,
 byte rounding, and sub-byte packing follow the common memory rules.
 +
-Let `element_bytes = ceil(sizeof(Md[md]) / 8)`.  The address must be aligned
-to `element_bytes`. Otherwise, `mls.tst` raises an address-misaligned exception.
+Let `element_bytes = ceil(sizeof(Md[md]) / 8)`.  The base address must be
+aligned to `element_bytes`. Otherwise, `mls.tst` raises an address-misaligned
+exception.
 
 Operation::
 +
 [source]
 ----
-M[md] = mem[X[rs1], stride=X[rs2]]
+D = mem[X[rs1], stride=X[rs2]]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5821,14 +5829,14 @@ unconditionally.
 +
 Let `total_bytes = ceil(pack_factor * AME_NELEM * sizeof(Md[ms1]) / 8)` be the
 transfer size and `element_bytes = ceil(sizeof(Md[ms1]) / 8)` the size of one
-element.  The address must be aligned to `element_bytes`.
+element.  The base address must be aligned to `element_bytes`.
 Otherwise, `mss.cm` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-mem[X[rs1]] = M[ms1]
+mem[X[rs1]] = A
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5867,14 +5875,14 @@ unconditionally.
 +
 Let `total_bytes = ceil(pack_factor * AME_NELEM * sizeof(Md[ms1]) / 8)` be the
 transfer size and `element_bytes = ceil(sizeof(Md[ms1]) / 8)` the size of one
-element.  The address must be aligned to `element_bytes`.
+element.  The base address must be aligned to `element_bytes`.
 Otherwise, `mss.rm` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-mem[X[rs1]] = M[ms1]
+mem[X[rs1]] = A
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5914,14 +5922,15 @@ side within each row, so segment `i` holds row `i` of every sub-square.  Segment
 sizes, segment addresses, byte rounding, and sub-byte packing follow the common
 memory rules.
 +
-Let `element_bytes = ceil(sizeof(Md[ms1]) / 8)`.  The address must be aligned
-to `element_bytes`. Otherwise, `mss.st` raises an address-misaligned exception.
+Let `element_bytes = ceil(sizeof(Md[ms1]) / 8)`.  The base address must be
+aligned to `element_bytes`. Otherwise, `mss.st` raises an address-misaligned
+exception.
 
 Operation::
 +
 [source]
 ----
-mem[X[rs1], stride=X[rs2]] = M[ms1]
+mem[X[rs1], stride=X[rs2]] = A
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5961,14 +5970,15 @@ packed datatype the sub-squares are stacked vertically, giving one segment per
 column of each sub-square.  Segment counts, segment sizes, segment addresses,
 byte rounding, and sub-byte packing follow the common memory rules.
 +
-Let `element_bytes = ceil(sizeof(Md[ms1]) / 8)`.  The address must be aligned
-to `element_bytes`. Otherwise, `mss.tst` raises an address-misaligned exception.
+Let `element_bytes = ceil(sizeof(Md[ms1]) / 8)`.  The base address must be
+aligned to `element_bytes`. Otherwise, `mss.tst` raises an address-misaligned
+exception.
 
 Operation::
 +
 [source]
 ----
-mem[X[rs1], stride=X[rs2]] = M[ms1]
+mem[X[rs1], stride=X[rs2]] = A
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -6394,8 +6404,11 @@ non-AME memory transfers selected by the successor bits (`sr`, `sw`):
 * `sw` (bit 7) — successor set includes non-AME stores (writes from X, F, or V register files).
 --
 +
-When all four bits are set (`fence.ame sw, sr, pw, pr`), all AME memory transfers are
-guaranteed to be globally visible before any subsequent non-AME memory transfer.
+`fence.ame` orders memory operations, not instructions: every AME memory operation
+in the predecessor set is ordered before every non-AME memory operation in the
+successor set.  A predecessor load is ordered by the point at which it returns its
+value, and a predecessor store by the point at which its write becomes visible to
+other harts and devices.
 Clearing a bit excludes the corresponding transfer class from the ordering constraint.
 At least one of `pr`/`pw` must be set, and at least one of `sr`/`sw` must be set;
 otherwise the instruction executes as a NOP with no ordering effect.
