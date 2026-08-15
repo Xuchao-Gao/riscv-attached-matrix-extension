@@ -45,7 +45,7 @@ is not compatible with an implementation that chooses <<ame:doc:param:AME_NUM_M_
 The width of `M` register is implementation-defined, and is equal to
 <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> * <<ame:doc:param:AME_NELEM,AME_NELEM>>.
 The layout of data in an `M` register is also implementation-defined.  Two portable
-routes exist, and they answer different questions.
+routes exist with distinct semantics.
 
 To access the register's data as *logical elements of its programmed datatype*, use the
 interoperability load and store instructions, which convert to a standard layout (

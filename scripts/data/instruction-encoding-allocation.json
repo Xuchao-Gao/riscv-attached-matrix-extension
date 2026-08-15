@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "attributes": {
+    "ame-enc-funct3": "0x0",
+    "ame-enc-r2-bank0-funct7": "0x51",
+    "ame-enc-r2-bank1-funct7": "0x52",
+    "ame-enc-r1-bank-funct7": "0x53"
+  },
+  "opcode": "0x2b",
+  "funct3": "0x0",
+  "r3": {
+    "allocated_funct7_ranges": [
+      ["0x00", "0x50"],
+      ["0x54", "0x63"]
+    ],
+    "reserved_funct7": ["0x49", "0x4c"]
+  },
+  "banks": [
+    {
+      "id": "r2-bank0",
+      "label": "R2 bank 0",
+      "format": "R2",
+      "funct7_attribute": "ame-enc-r2-bank0-funct7",
+      "selector_name": "xfunct5",
+      "selector_bits": 5,
+      "reserved_selectors": ["0x09", "0x0a", "0x0b", "0x0c"]
+    },
+    {
+      "id": "r2-bank1",
+      "label": "R2 bank 1",
+      "format": "R2",
+      "funct7_attribute": "ame-enc-r2-bank1-funct7",
+      "selector_name": "xfunct5",
+      "selector_bits": 5,
+      "reserved_selectors": ["0x0a"]
+    },
+    {
+      "id": "r1-bank",
+      "label": "R1",
+      "format": "R1",
+      "funct7_attribute": "ame-enc-r1-bank-funct7",
+      "selector_name": "xfunct10",
+      "selector_bits": 10,
+      "reserved_selectors": []
+    }
+  ],
+  "fixed_members": [
+    {
+      "name": "ame.release",
+      "bank": "r2-bank1",
+      "selector": "0x0a",
+      "match": "0xa4a0002b"
+    }
+  ]
+}
