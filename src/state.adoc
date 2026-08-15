@@ -73,7 +73,7 @@ The encoding format of `Md` datatypes is specified in <<datatypes>>.
 ==== Accumulator registers (`Acc0`. `Acc0-Acc1`, or `Acc0-Acc3`)
 
 AME adds an implementation-defined number of matrix accumulator registers.
-The number is determined by <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> and may be either 1, 2, or 4.
+The number is determined by <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> and may be 1, 2, 4, 8, or 16.
 Software written for <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> greater than an implementation
 implements will not run on that implementation.
 
@@ -94,7 +94,7 @@ Note, this is unlike the `M` registers, which may be grouped to hold a single sq
 ==== Accumulator datatype registers (`Ad0`. `Ad0-Ad1`, or `Ad0-Ad3`)
 
 AME adds an implementation-defined number of 32-bit accumulator datatype registers.
-The number is determined by <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> and may be either 1, 2, or 4 (same as the `Acc` registers).
+The number is determined by <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> and may be 1, 2, 4, 8, or 16 (same as the `Acc` registers).
 
 `Ad` registers can only be read or written with the <<ame:doc:inst:agettyp,agettyp>> and <<ame:doc:inst:asettyp,asettyp>> instructions.
 

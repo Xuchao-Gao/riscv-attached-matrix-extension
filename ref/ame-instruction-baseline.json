@@ -649,13 +649,13 @@
     },
     {
       "order": 44,
-      "name": "mls",
-      "anchor": "ame:doc:inst:mls",
+      "name": "mls.1r",
+      "anchor": "ame:doc:inst:mls_1r",
       "category": "Memory",
-      "synopsis": "Load raw M register from implementation-defined format",
-      "mnemonic": "mls md, rs1",
-      "description": "Loads exactly one physical M register from memory in the implementation-defined\nregister format into matrix register `md`.\n+\nThe data in memory must have been previously stored in the implementation-defined\nregister format (e.g., by a matching `mss` instruction). No datatype conversion is\nperformed; the in-memory layout is the exact physical-register representation.\nThe datatype in `Md[md]` is not interpreted.  Consequently, packed sub-squares\nresident in `md` are transferred together, while a wide logical square requires\none `mls` for each physical M register in its group.\n+\nFor portable interoperability with other implementations, use\n<<ame:doc:inst:mls_rm,mls.rm>> or <<ame:doc:inst:mls_cm,mls.cm>>.\n+\nThe transfer size is `AME_MATRIX_REGISTER_SIZE / 8` bytes.  Because this form\ndoes not interpret `Md[md]`, it imposes no alignment requirement: the address\nmay be any byte address, and `mls` never raises an address-misaligned exception.",
-      "operation": "raw_bits(M[md]) = mem[X[rs1]]",
+      "synopsis": "Load one whole M register",
+      "mnemonic": "mls.1r md, rs1",
+      "description": "Loads one whole physical M register from memory into matrix register `md`.\n+\nThe transfer is row-major with a fixed element size of\n`AME_UNIT_DATATYPE_SIZE`, and is `AME_MATRIX_REGISTER_SIZE / 8` bytes — exactly one\nregister's worth of elements, since\n`AME_MATRIX_REGISTER_SIZE = AME_NELEM * AME_UNIT_DATATYPE_SIZE`.  It is therefore the\nsame transfer <<ame:doc:inst:mls_rm,mls.rm>> performs for a unit datatype, except that\nthe element size is fixed by the instruction.\n+\n`Md[md]` is neither read nor required to name a supported datatype, so `mls.1r` restores\na register whose programmed datatype is uninitialized or unsupported.  This is what\nregister spilling, context switching, and calling conventions need.  It transfers exactly\none physical register: a wide logical square requires one `mls.1r` per register in its\ngroup.\n+\nThe base address must be aligned to `ceil(AME_UNIT_DATATYPE_SIZE / 8)`.  Otherwise,\n`mls.1r` raises an address-misaligned exception.",
+      "operation": "M[md] = mem[X[rs1]]",
       "wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": {ame-enc-funct3},\"type\":2},{\"bits\":5,\"name\": \"rs1\",\"type\":4},{\"bits\":5,\"name\": 0x16,\"type\":2},{\"bits\":7,\"name\": {ame-enc-r2-bank0-funct7},\"type\":2}]}",
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"md\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"rs1\",\"type\":4},{\"bits\":5,\"name\": 0x16,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
@@ -979,21 +979,6 @@
     },
     {
       "order": 66,
-      "name": "mmul.2d",
-      "anchor": "ame:doc:inst:mmul_2d",
-      "category": "Matrix Multiply",
-      "synopsis": "Matrix multiply",
-      "mnemonic": "mmul.2d acc, ms1, ms2",
-      "description": "Computes the matrix product of `ms1` and `ms2` and stores the result into `acc`,\ndiscarding any previous value in `acc`.\n+\n`acc[i,k] = sum over j of (ms1[i,j] * ms2[j,k])`\n+\nFor the accumulating form, see `mmulacc.2d`.",
-      "operation": "C = A × B",
-      "wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": {ame-enc-funct3},\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x49,\"type\":2}]}",
-      "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x49,\"type\":2}]}",
-      "format": "R3",
-      "mask": "0xfe00707f",
-      "match": "0x9200002b"
-    },
-    {
-      "order": 67,
       "name": "mmul.ew",
       "anchor": "ame:doc:inst:mmul_ew",
       "category": "Elementwise Arithmetic",
@@ -1008,7 +993,7 @@
       "match": "0x1800002b"
     },
     {
-      "order": 68,
+      "order": 67,
       "name": "mmul.ew.x",
       "anchor": "ame:doc:inst:mmul_ew_x",
       "category": "Elementwise Arithmetic",
@@ -1023,13 +1008,13 @@
       "match": "0x1a00002b"
     },
     {
-      "order": 69,
+      "order": 68,
       "name": "mmulacc.2d",
       "anchor": "ame:doc:inst:mmulacc_2d",
       "category": "Matrix Multiply",
       "synopsis": "Matrix multiply accumulate",
       "mnemonic": "mmulacc.2d acc, ms1, ms2",
-      "description": "Accumulates the matrix product of `ms1` and `ms2` into `acc`.\n+\n`acc[i,k] += sum over j of (ms1[i,j] * ms2[j,k])`\n+\n`acc` is both a source and destination: its current value is read, the matrix\nproduct is added, and the result is written back.\n+\nFor the non-accumulating form, see `mmul.2d`.\nFor the subtracting form, see `mmulaccneg.2d`.",
+      "description": "Accumulates the matrix product of `ms1` and `ms2` into `acc`.\n+\n`acc[i,k] += sum over j of (ms1[i,j] * ms2[j,k])`\n+\n`acc` is both a source and destination: its current value is read, the matrix\nproduct is added, and the result is written back.\n+\nFor the subtracting form, see `mmulaccneg.2d`.\nFor the subtracting form, see `mmulaccneg.2d`.",
       "operation": "C = C + A × B",
       "wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": {ame-enc-funct3},\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4a,\"type\":2}]}",
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4a,\"type\":2}]}",
@@ -1038,7 +1023,7 @@
       "match": "0x9400002b"
     },
     {
-      "order": 70,
+      "order": 69,
       "name": "mmulacc.ew",
       "anchor": "ame:doc:inst:mmulacc_ew",
       "category": "Elementwise Arithmetic",
@@ -1053,7 +1038,7 @@
       "match": "0x1c00002b"
     },
     {
-      "order": 71,
+      "order": 70,
       "name": "mmulacc.ew.x",
       "anchor": "ame:doc:inst:mmulacc_ew_x",
       "category": "Elementwise Arithmetic",
@@ -1068,7 +1053,7 @@
       "match": "0x1e00002b"
     },
     {
-      "order": 72,
+      "order": 71,
       "name": "mmulaccneg.2d",
       "anchor": "ame:doc:inst:mmulaccneg_2d",
       "category": "Matrix Multiply",
@@ -1083,7 +1068,7 @@
       "match": "0x9600002b"
     },
     {
-      "order": 73,
+      "order": 72,
       "name": "mmulaccneg.ew",
       "anchor": "ame:doc:inst:mmulaccneg_ew",
       "category": "Elementwise Arithmetic",
@@ -1098,7 +1083,7 @@
       "match": "0x2000002b"
     },
     {
-      "order": 74,
+      "order": 73,
       "name": "mmulaccneg.ew.x",
       "anchor": "ame:doc:inst:mmulaccneg_ew_x",
       "category": "Elementwise Arithmetic",
@@ -1113,7 +1098,7 @@
       "match": "0x2200002b"
     },
     {
-      "order": 75,
+      "order": 74,
       "name": "mmuladd.ew",
       "anchor": "ame:doc:inst:mmuladd_ew",
       "category": "Elementwise Arithmetic",
@@ -1128,7 +1113,7 @@
       "match": "0x2400002b"
     },
     {
-      "order": 76,
+      "order": 75,
       "name": "mmuladd.ew.x",
       "anchor": "ame:doc:inst:mmuladd_ew_x",
       "category": "Elementwise Arithmetic",
@@ -1143,28 +1128,13 @@
       "match": "0x2600002b"
     },
     {
-      "order": 77,
-      "name": "mmulat.2d",
-      "anchor": "ame:doc:inst:mmulat_2d",
-      "category": "Matrix Multiply",
-      "synopsis": "Matrix multiply with transposed A",
-      "mnemonic": "mmulat.2d acc, ms1, ms2",
-      "description": "Computes the matrix product of the transpose of `ms1` with `ms2` and stores the\nresult into `acc`, discarding any previous value in `acc`.\n+\n`acc[i,k] = sum over j of (ms1[j,i] * ms2[j,k])`\n+\nFor the accumulating form, see `mmulatacc.2d`.",
-      "operation": "C = sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)",
-      "wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": {ame-enc-funct3},\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4c,\"type\":2}]}",
-      "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4c,\"type\":2}]}",
-      "format": "R3",
-      "mask": "0xfe00707f",
-      "match": "0x9800002b"
-    },
-    {
-      "order": 78,
+      "order": 76,
       "name": "mmulatacc.2d",
       "anchor": "ame:doc:inst:mmulatacc_2d",
       "category": "Matrix Multiply",
       "synopsis": "Matrix multiply with transposed A, accumulate",
       "mnemonic": "mmulatacc.2d acc, ms1, ms2",
-      "description": "Accumulates the matrix product of the transpose of `ms1` with `ms2` into `acc`.\n+\n`acc[i,k] += sum over j of (ms1[j,i] * ms2[j,k])`\n+\n`acc` is both a source and destination: its current value is read, the transposed-A\nmatrix product is added, and the result is written back.\n+\nFor the non-accumulating form, see `mmulat.2d`.",
+      "description": "Accumulates the matrix product of the transpose of `ms1` with `ms2` into `acc`.\n+\n`acc[i,k] += sum over j of (ms1[j,i] * ms2[j,k])`\n+\n`acc` is both a source and destination: its current value is read, the transposed-A\nmatrix product is added, and the result is written back.\n+\nFor the subtracting form, see `mmulataccneg.2d`.",
       "operation": "C = C + sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)",
       "wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": {ame-enc-funct3},\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4d,\"type\":2}]}",
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4d,\"type\":2}]}",
@@ -1173,14 +1143,14 @@
       "match": "0x9a00002b"
     },
     {
-      "order": 79,
-      "name": "mmulbt.2d",
-      "anchor": "ame:doc:inst:mmulbt_2d",
+      "order": 77,
+      "name": "mmulataccneg.2d",
+      "anchor": "ame:doc:inst:mmulataccneg_2d",
       "category": "Matrix Multiply",
-      "synopsis": "Matrix multiply with transposed B",
-      "mnemonic": "mmulbt.2d acc, ms1, ms2",
-      "description": "Computes the matrix product of `ms1` with the transpose of `ms2` and stores the\nresult into `acc`, discarding any previous value in `acc`.\n+\n`acc[i,k] = sum over j of (ms1[i,j] * ms2[k,j])`\n+\nFor the accumulating form, see `mmulbtacc.2d`.",
-      "operation": "C = sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)",
+      "synopsis": "Matrix multiply with transposed A, negated accumulate",
+      "mnemonic": "mmulataccneg.2d acc, ms1, ms2",
+      "description": "Subtracts the matrix product of the transpose of `ms1` with `ms2` from `acc`.\n+\n`acc[i,k] -= sum over j of (ms1[j,i] * ms2[j,k])`\n+\n`acc` is both a source and destination: its current value is read, the transposed-A\nmatrix product is subtracted, and the result is written back.\n+\nFor the adding form, see `mmulatacc.2d`.",
+      "operation": "C = C - sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)",
       "wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": {ame-enc-funct3},\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4e,\"type\":2}]}",
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4e,\"type\":2}]}",
       "format": "R3",
@@ -1188,13 +1158,13 @@
       "match": "0x9c00002b"
     },
     {
-      "order": 80,
+      "order": 78,
       "name": "mmulbtacc.2d",
       "anchor": "ame:doc:inst:mmulbtacc_2d",
       "category": "Matrix Multiply",
       "synopsis": "Matrix multiply with transposed B, accumulate",
       "mnemonic": "mmulbtacc.2d acc, ms1, ms2",
-      "description": "Accumulates the matrix product of `ms1` with the transpose of `ms2` into `acc`.\n+\n`acc[i,k] += sum over j of (ms1[i,j] * ms2[k,j])`\n+\n`acc` is both a source and destination: its current value is read, the transposed-B\nmatrix product is added, and the result is written back.\n+\nFor the non-accumulating form, see `mmulbt.2d`.",
+      "description": "Accumulates the matrix product of `ms1` with the transpose of `ms2` into `acc`.\n+\n`acc[i,k] += sum over j of (ms1[i,j] * ms2[k,j])`\n+\n`acc` is both a source and destination: its current value is read, the transposed-B\nmatrix product is added, and the result is written back.\n+\nFor the subtracting form, see `mmulbtaccneg.2d`.",
       "operation": "C = C + sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)",
       "wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": {ame-enc-funct3},\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4f,\"type\":2}]}",
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x4f,\"type\":2}]}",
@@ -1203,14 +1173,14 @@
       "match": "0x9e00002b"
     },
     {
-      "order": 81,
-      "name": "mmulneg.2d",
-      "anchor": "ame:doc:inst:mmulneg_2d",
+      "order": 79,
+      "name": "mmulbtaccneg.2d",
+      "anchor": "ame:doc:inst:mmulbtaccneg_2d",
       "category": "Matrix Multiply",
-      "synopsis": "Negated matrix multiply",
-      "mnemonic": "mmulneg.2d acc, ms1, ms2",
-      "description": "Computes the negated matrix product of `ms1` and `ms2` and stores the result into `acc`,\ndiscarding any previous value in `acc`.\n+\n`acc[i,k] = -(sum over j of (ms1[i,j] * ms2[j,k]))`\n+\nFor the accumulating negated form, see `mmulaccneg.2d`.",
-      "operation": "C = -(A × B)",
+      "synopsis": "Matrix multiply with transposed B, negated accumulate",
+      "mnemonic": "mmulbtaccneg.2d acc, ms1, ms2",
+      "description": "Subtracts the matrix product of `ms1` with the transpose of `ms2` from `acc`.\n+\n`acc[i,k] -= sum over j of (ms1[i,j] * ms2[k,j])`\n+\n`acc` is both a source and destination: its current value is read, the transposed-B\nmatrix product is subtracted, and the result is written back.\n+\nFor the adding form, see `mmulbtacc.2d`.",
+      "operation": "C = C - sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)",
       "wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": {ame-enc-funct3},\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x50,\"type\":2}]}",
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"acc\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":5,\"name\": \"ms2\",\"type\":4},{\"bits\":7,\"name\": 0x50,\"type\":2}]}",
       "format": "R3",
@@ -1218,7 +1188,7 @@
       "match": "0xa000002b"
     },
     {
-      "order": 82,
+      "order": 80,
       "name": "mmulneg.ew",
       "anchor": "ame:doc:inst:mmulneg_ew",
       "category": "Elementwise Arithmetic",
@@ -1233,7 +1203,7 @@
       "match": "0x2800002b"
     },
     {
-      "order": 83,
+      "order": 81,
       "name": "mmulneg.ew.x",
       "anchor": "ame:doc:inst:mmulneg_ew_x",
       "category": "Elementwise Arithmetic",
@@ -1248,7 +1218,7 @@
       "match": "0x2a00002b"
     },
     {
-      "order": 84,
+      "order": 82,
       "name": "mmulsub.ew",
       "anchor": "ame:doc:inst:mmulsub_ew",
       "category": "Elementwise Arithmetic",
@@ -1263,7 +1233,7 @@
       "match": "0x2c00002b"
     },
     {
-      "order": 85,
+      "order": 83,
       "name": "mmulsub.ew.x",
       "anchor": "ame:doc:inst:mmulsub_ew_x",
       "category": "Elementwise Arithmetic",
@@ -1278,7 +1248,7 @@
       "match": "0x2e00002b"
     },
     {
-      "order": 86,
+      "order": 84,
       "name": "mor.ew",
       "anchor": "ame:doc:inst:mor_ew",
       "category": "Bitwise",
@@ -1293,7 +1263,7 @@
       "match": "0x3c00002b"
     },
     {
-      "order": 87,
+      "order": 85,
       "name": "mor.ew.x",
       "anchor": "ame:doc:inst:mor_ew_x",
       "category": "Bitwise",
@@ -1308,7 +1278,7 @@
       "match": "0x3e00002b"
     },
     {
-      "order": 88,
+      "order": 86,
       "name": "mornot.ew",
       "anchor": "ame:doc:inst:mornot_ew",
       "category": "Bitwise",
@@ -1323,7 +1293,7 @@
       "match": "0x4000002b"
     },
     {
-      "order": 89,
+      "order": 87,
       "name": "mornot.ew.x",
       "anchor": "ame:doc:inst:mornot_ew_x",
       "category": "Bitwise",
@@ -1338,7 +1308,7 @@
       "match": "0x4200002b"
     },
     {
-      "order": 90,
+      "order": 88,
       "name": "mpack.ew.x",
       "anchor": "ame:doc:inst:mpack_ew_x",
       "category": "Register move / data conversion",
@@ -1353,7 +1323,7 @@
       "match": "0x7a00002b"
     },
     {
-      "order": 91,
+      "order": 89,
       "name": "mprefixadd.col",
       "anchor": "ame:doc:inst:mprefixadd_col",
       "category": "Reduction",
@@ -1368,7 +1338,7 @@
       "match": "0xa3f0002b"
     },
     {
-      "order": 92,
+      "order": 90,
       "name": "mprefixadd.row",
       "anchor": "ame:doc:inst:mprefixadd_row",
       "category": "Reduction",
@@ -1383,7 +1353,7 @@
       "match": "0xa400002b"
     },
     {
-      "order": 93,
+      "order": 91,
       "name": "mprefixmax.col",
       "anchor": "ame:doc:inst:mprefixmax_col",
       "category": "Reduction",
@@ -1398,7 +1368,7 @@
       "match": "0xa410002b"
     },
     {
-      "order": 94,
+      "order": 92,
       "name": "mprefixmax.row",
       "anchor": "ame:doc:inst:mprefixmax_row",
       "category": "Reduction",
@@ -1413,7 +1383,7 @@
       "match": "0xa420002b"
     },
     {
-      "order": 95,
+      "order": 93,
       "name": "mrdexp.ew",
       "anchor": "ame:doc:inst:mrdexp_ew",
       "category": "Elementwise Math Functions",
@@ -1428,7 +1398,7 @@
       "match": "0x8a00002b"
     },
     {
-      "order": 96,
+      "order": 94,
       "name": "mrdexpacc.ew",
       "anchor": "ame:doc:inst:mrdexpacc_ew",
       "category": "Elementwise Math Functions",
@@ -1443,7 +1413,7 @@
       "match": "0x8c00002b"
     },
     {
-      "order": 97,
+      "order": 95,
       "name": "mrec.ew",
       "anchor": "ame:doc:inst:mrec_ew",
       "category": "Elementwise Math Functions",
@@ -1458,7 +1428,7 @@
       "match": "0xa310002b"
     },
     {
-      "order": 98,
+      "order": 96,
       "name": "mreduceadd.col",
       "anchor": "ame:doc:inst:mreduceadd_col",
       "category": "Reduction",
@@ -1473,7 +1443,7 @@
       "match": "0xa430002b"
     },
     {
-      "order": 99,
+      "order": 97,
       "name": "mreduceadd.row",
       "anchor": "ame:doc:inst:mreduceadd_row",
       "category": "Reduction",
@@ -1488,7 +1458,7 @@
       "match": "0xa440002b"
     },
     {
-      "order": 100,
+      "order": 98,
       "name": "mreducemax.col",
       "anchor": "ame:doc:inst:mreducemax_col",
       "category": "Reduction",
@@ -1503,7 +1473,7 @@
       "match": "0xa450002b"
     },
     {
-      "order": 101,
+      "order": 99,
       "name": "mreducemax.row",
       "anchor": "ame:doc:inst:mreducemax_row",
       "category": "Reduction",
@@ -1518,7 +1488,7 @@
       "match": "0xa460002b"
     },
     {
-      "order": 102,
+      "order": 100,
       "name": "mreducemin.col",
       "anchor": "ame:doc:inst:mreducemin_col",
       "category": "Reduction",
@@ -1533,7 +1503,7 @@
       "match": "0xa470002b"
     },
     {
-      "order": 103,
+      "order": 101,
       "name": "mreducemin.row",
       "anchor": "ame:doc:inst:mreducemin_row",
       "category": "Reduction",
@@ -1548,7 +1518,7 @@
       "match": "0xa480002b"
     },
     {
-      "order": 104,
+      "order": 102,
       "name": "mrowbcast.ew.x",
       "anchor": "ame:doc:inst:mrowbcast_ew_x",
       "category": "Permutation",
@@ -1563,7 +1533,7 @@
       "match": "0x6a00002b"
     },
     {
-      "order": 105,
+      "order": 103,
       "name": "mrowgather.ew",
       "anchor": "ame:doc:inst:mrowgather_ew",
       "category": "Permutation",
@@ -1578,7 +1548,7 @@
       "match": "0x6c00002b"
     },
     {
-      "order": 106,
+      "order": 104,
       "name": "mrowid.ew",
       "anchor": "ame:doc:inst:mrowid_ew",
       "category": "State Management",
@@ -1593,7 +1563,7 @@
       "match": "0xa601802b"
     },
     {
-      "order": 107,
+      "order": 105,
       "name": "mrowshift.ew.x",
       "anchor": "ame:doc:inst:mrowshift_ew_x",
       "category": "Permutation",
@@ -1608,7 +1578,7 @@
       "match": "0x6e00002b"
     },
     {
-      "order": 108,
+      "order": 106,
       "name": "mrowunzip.ew",
       "anchor": "ame:doc:inst:mrowunzip_ew",
       "category": "Permutation",
@@ -1623,7 +1593,7 @@
       "match": "0xc600002b"
     },
     {
-      "order": 109,
+      "order": 107,
       "name": "mrowzip.ew",
       "anchor": "ame:doc:inst:mrowzip_ew",
       "category": "Permutation",
@@ -1638,7 +1608,7 @@
       "match": "0x7000002b"
     },
     {
-      "order": 110,
+      "order": 108,
       "name": "mrsqrt.ew",
       "anchor": "ame:doc:inst:mrsqrt_ew",
       "category": "Elementwise Math Functions",
@@ -1653,7 +1623,7 @@
       "match": "0xa320002b"
     },
     {
-      "order": 111,
+      "order": 109,
       "name": "mrowscatadd.ew",
       "anchor": "ame:doc:inst:mrowscatadd_ew",
       "category": "Permutation",
@@ -1668,7 +1638,7 @@
       "match": "0x7200002b"
     },
     {
-      "order": 112,
+      "order": 110,
       "name": "mcolscatadd.ew",
       "anchor": "ame:doc:inst:mcolscatadd_ew",
       "category": "Permutation",
@@ -1683,7 +1653,7 @@
       "match": "0x7400002b"
     },
     {
-      "order": 113,
+      "order": 111,
       "name": "mrowscatmax.ew",
       "anchor": "ame:doc:inst:mrowscatmax_ew",
       "category": "Permutation",
@@ -1698,7 +1668,7 @@
       "match": "0x7600002b"
     },
     {
-      "order": 114,
+      "order": 112,
       "name": "mcolscatmax.ew",
       "anchor": "ame:doc:inst:mcolscatmax_ew",
       "category": "Permutation",
@@ -1713,7 +1683,7 @@
       "match": "0x7800002b"
     },
     {
-      "order": 115,
+      "order": 113,
       "name": "mselge.ew",
       "anchor": "ame:doc:inst:mselge_ew",
       "category": "Compare and Predication",
@@ -1728,7 +1698,7 @@
       "match": "0x6000002b"
     },
     {
-      "order": 116,
+      "order": 114,
       "name": "msellt.ew",
       "anchor": "ame:doc:inst:msellt_ew",
       "category": "Compare and Predication",
@@ -1743,7 +1713,7 @@
       "match": "0x6200002b"
     },
     {
-      "order": 117,
+      "order": 115,
       "name": "msettyp",
       "anchor": "ame:doc:inst:msettyp",
       "category": "Datatype Management",
@@ -1758,7 +1728,7 @@
       "match": "0xa230002b"
     },
     {
-      "order": 118,
+      "order": 116,
       "name": "msin.ew",
       "anchor": "ame:doc:inst:msin_ew",
       "category": "Elementwise Math Functions",
@@ -1773,7 +1743,7 @@
       "match": "0xa330002b"
     },
     {
-      "order": 119,
+      "order": 117,
       "name": "msll.ew",
       "anchor": "ame:doc:inst:msll_ew",
       "category": "Bitwise",
@@ -1788,7 +1758,7 @@
       "match": "0x4400002b"
     },
     {
-      "order": 120,
+      "order": 118,
       "name": "msll.ew.x",
       "anchor": "ame:doc:inst:msll_ew_x",
       "category": "Bitwise",
@@ -1803,7 +1773,7 @@
       "match": "0x4600002b"
     },
     {
-      "order": 121,
+      "order": 119,
       "name": "msqrt.ew",
       "anchor": "ame:doc:inst:msqrt_ew",
       "category": "Elementwise Math Functions",
@@ -1818,7 +1788,7 @@
       "match": "0xa340002b"
     },
     {
-      "order": 122,
+      "order": 120,
       "name": "msra.ew",
       "anchor": "ame:doc:inst:msra_ew",
       "category": "Bitwise",
@@ -1833,7 +1803,7 @@
       "match": "0x4800002b"
     },
     {
-      "order": 123,
+      "order": 121,
       "name": "msra.ew.x",
       "anchor": "ame:doc:inst:msra_ew_x",
       "category": "Bitwise",
@@ -1848,7 +1818,7 @@
       "match": "0x4a00002b"
     },
     {
-      "order": 124,
+      "order": 122,
       "name": "msrl.ew",
       "anchor": "ame:doc:inst:msrl_ew",
       "category": "Bitwise",
@@ -1863,7 +1833,7 @@
       "match": "0x4c00002b"
     },
     {
-      "order": 125,
+      "order": 123,
       "name": "msrl.ew.x",
       "anchor": "ame:doc:inst:msrl_ew_x",
       "category": "Bitwise",
@@ -1878,14 +1848,14 @@
       "match": "0x4e00002b"
     },
     {
-      "order": 126,
-      "name": "mss",
-      "anchor": "ame:doc:inst:mss",
+      "order": 124,
+      "name": "mss.1r",
+      "anchor": "ame:doc:inst:mss_1r",
       "category": "Memory",
-      "synopsis": "Store raw M register in implementation-defined format",
-      "mnemonic": "mss ms1, rs1",
-      "description": "Stores exactly one physical M register `ms1` into memory in the\nimplementation-defined register format.\n+\nThe data written to memory is in the same implementation-defined format used by the\nmatching load instruction (`mls`). No datatype conversion is performed, and\nthe datatype in `Md[ms1]` is not interpreted.  Packed sub-squares resident in\n`ms1` are transferred together, while a wide logical square requires one\n`mss` for each physical M register in its group.\n+\nFor portable interoperability with other implementations, use\n<<ame:doc:inst:mss_rm,mss.rm>> or <<ame:doc:inst:mss_cm,mss.cm>>.\n+\nThe transfer size is `AME_MATRIX_REGISTER_SIZE / 8` bytes.  Because this form\ndoes not interpret `Md[ms1]`, it imposes no alignment requirement: the address\nmay be any byte address, and `mss` never raises an address-misaligned\nexception.",
-      "operation": "mem[X[rs1]] = raw_bits(M[ms1])",
+      "synopsis": "Store one whole M register",
+      "mnemonic": "mss.1r ms1, rs1",
+      "description": "Stores one whole physical M register `ms1` into memory.\n+\nThe transfer is row-major with a fixed element size of\n`AME_UNIT_DATATYPE_SIZE`, and is `AME_MATRIX_REGISTER_SIZE / 8` bytes — exactly one\nregister's worth of elements, since\n`AME_MATRIX_REGISTER_SIZE = AME_NELEM * AME_UNIT_DATATYPE_SIZE`.  It is therefore the\nsame transfer <<ame:doc:inst:mss_rm,mss.rm>> performs for a unit datatype, except that\nthe element size is fixed by the instruction.\n+\n`Md[ms1]` is neither read nor required to name a supported datatype, so `mss.1r` saves a\nregister whose programmed datatype is uninitialized or unsupported.  This is what\nregister spilling, context switching, and calling conventions need.  It transfers exactly\none physical register: a wide logical square requires one `mss.1r` per register in its\ngroup.\n+\nThe base address must be aligned to `ceil(AME_UNIT_DATATYPE_SIZE / 8)`.  Otherwise,\n`mss.1r` raises an address-misaligned exception.",
+      "operation": "mem[X[rs1]] = M[ms1]",
       "wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":3,\"name\": {ame-enc-funct3},\"type\":2},{\"bits\":5,\"name\": \"rs1\",\"type\":4},{\"bits\":5,\"name\": 0x19,\"type\":2},{\"bits\":7,\"name\": {ame-enc-r2-bank0-funct7},\"type\":2}]}",
       "resolved_wavedrom": "{\"reg\":[{\"bits\":7,\"name\": 0x2b,\"type\":2},{\"bits\":5,\"name\": \"ms1\",\"type\":4},{\"bits\":3,\"name\": 0x0,\"type\":2},{\"bits\":5,\"name\": \"rs1\",\"type\":4},{\"bits\":5,\"name\": 0x19,\"type\":2},{\"bits\":7,\"name\": 0x51,\"type\":2}]}",
       "format": "R2",
@@ -1893,7 +1863,7 @@
       "match": "0xa390002b"
     },
     {
-      "order": 127,
+      "order": 125,
       "name": "mss.cm",
       "anchor": "ame:doc:inst:mss_cm",
       "category": "Memory",
@@ -1908,7 +1878,7 @@
       "match": "0xa3a0002b"
     },
     {
-      "order": 128,
+      "order": 126,
       "name": "mss.rm",
       "anchor": "ame:doc:inst:mss_rm",
       "category": "Memory",
@@ -1923,7 +1893,7 @@
       "match": "0xa3b0002b"
     },
     {
-      "order": 129,
+      "order": 127,
       "name": "mss.st",
       "anchor": "ame:doc:inst:mss_st",
       "category": "Memory",
@@ -1938,7 +1908,7 @@
       "match": "0xac00002b"
     },
     {
-      "order": 130,
+      "order": 128,
       "name": "mss.tst",
       "anchor": "ame:doc:inst:mss_tst",
       "category": "Memory",
@@ -1953,7 +1923,7 @@
       "match": "0xae00002b"
     },
     {
-      "order": 131,
+      "order": 129,
       "name": "msub.ew",
       "anchor": "ame:doc:inst:msub_ew",
       "category": "Elementwise Arithmetic",
@@ -1968,7 +1938,7 @@
       "match": "0x3000002b"
     },
     {
-      "order": 132,
+      "order": 130,
       "name": "msub.ew.x",
       "anchor": "ame:doc:inst:msub_ew_x",
       "category": "Elementwise Arithmetic",
@@ -1983,7 +1953,7 @@
       "match": "0x3200002b"
     },
     {
-      "order": 133,
+      "order": 131,
       "name": "msublog2.ew",
       "anchor": "ame:doc:inst:msublog2_ew",
       "category": "Elementwise Math Functions",
@@ -1998,7 +1968,7 @@
       "match": "0x8e00002b"
     },
     {
-      "order": 134,
+      "order": 132,
       "name": "msublog2.ew.x",
       "anchor": "ame:doc:inst:msublog2_ew_x",
       "category": "Elementwise Math Functions",
@@ -2013,7 +1983,7 @@
       "match": "0x9000002b"
     },
     {
-      "order": 135,
+      "order": 133,
       "name": "mtanh.ew",
       "anchor": "ame:doc:inst:mtanh_ew",
       "category": "Elementwise Math Functions",
@@ -2028,7 +1998,7 @@
       "match": "0xa350002b"
     },
     {
-      "order": 136,
+      "order": 134,
       "name": "munpack.ew.x",
       "anchor": "ame:doc:inst:munpack_ew_x",
       "category": "Register move / data conversion",
@@ -2043,7 +2013,7 @@
       "match": "0x7c00002b"
     },
     {
-      "order": 137,
+      "order": 135,
       "name": "mxor.ew",
       "anchor": "ame:doc:inst:mxor_ew",
       "category": "Bitwise",
@@ -2058,7 +2028,7 @@
       "match": "0x5000002b"
     },
     {
-      "order": 138,
+      "order": 136,
       "name": "mxor.ew.x",
       "anchor": "ame:doc:inst:mxor_ew_x",
       "category": "Bitwise",
@@ -2073,7 +2043,7 @@
       "match": "0x5200002b"
     },
     {
-      "order": 139,
+      "order": 137,
       "name": "mzero.2d.acc",
       "anchor": "ame:doc:inst:mzero_2d_acc",
       "category": "State Management",
@@ -2088,7 +2058,7 @@
       "match": "0xa600002b"
     },
     {
-      "order": 140,
+      "order": 138,
       "name": "mzero.2d.m",
       "anchor": "ame:doc:inst:mzero_2d_m",
       "category": "State Management",

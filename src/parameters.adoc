@@ -73,16 +73,23 @@ When `AME_NUM_ACC_REGS` is 2, registers `acc0-acc1` and `ad0-ad1` are available.
 
 When `AME_NUM_ACC_REGS` is 4, registers `acc0-acc3` and `ad0-ad3` are available.
 
+When `AME_NUM_ACC_REGS` is 8, registers `acc0-acc7` and `ad0-ad7` are available.
+
+When `AME_NUM_ACC_REGS` is 16, registers `acc0-acc15` and `ad0-ad15` are
+available.
+
 Instructions encode `Acc` and `Ad` specifiers in the standard 5-bit destination
-or source register slots.  An index greater than or equal to
-`AME_NUM_ACC_REGS` names an unimplemented accumulator register.  The behavior
-of such an instruction is determined by `AME_UNIMPL_ACC_BEHAVIOR`; this also
-applies to indices 4–31, which are reserved by this version of AME.
+or source register slots, so indices 0–31 are encodable regardless of
+`AME_NUM_ACC_REGS`.  An index greater than or equal to `AME_NUM_ACC_REGS` names
+an unimplemented accumulator register, and the behavior of such an instruction is
+determined by `AME_UNIMPL_ACC_BEHAVIOR`.  Indices 16–31 are reserved by this
+version of AME and are never implemented, so they take that behavior on every
+implementation.
 
 --
 
 Type::
-one of: [1, 2, 4]
+one of: [1, 2, 4, 8, 16]
 
 
 

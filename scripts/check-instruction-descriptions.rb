@@ -25,7 +25,7 @@ allocations_path = File.join(root, "src", "instruction-encoding-allocations.adoc
 baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
 errors = []
 
-expected_baseline_hash = "a68c1e605a8f9cbc061b62dc9006c19d4f460530d8220edecc6368d01ccedeaa"
+expected_baseline_hash = "41fa902e43ea320fd67bf36f266ec6c21432edcfa9f6e8ab4833995a9df75c46"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
@@ -59,7 +59,7 @@ instructions.split("\n<<<\n", 2).first.each_line do |line|
 end
 
 sections = instructions.scan(/^\[#(ame:doc:inst:[^\]]+)\]\n=== `([^`]+)`\n(.*?)(?=^<<<\s*$|\z)/m)
-errors << "instruction coverage is #{sections.length}/140" unless sections.length == 140
+errors << "instruction coverage is #{sections.length}/138" unless sections.length == 138
 
 programming_model = active_asciidoc(File.read(File.join(root, "src", "programming_model.adoc")))
 operand_class_table = programming_model[/\[\[ame-common-operand-classes\]\].*?^\|===\n(.*?)^\|===/m, 1]
@@ -201,8 +201,8 @@ end
   "mgettyp" => [/zero_extend_XLEN\(Md\[ms1\]\)/, "zero-extended M datatype read"],
   "msettyp" => [/new_dtype = X\[rs1\]\[31:0\].*raw_bits\(M\[md \.\. md\+group_size-1\]\) = 0/m, "32-bit datatype write and whole-group raw M-register clear"],
   "mbcast.m.x" => [/greater than XLEN.*zero-extended/m, "explicit scalar-ingress widening rule"],
-  "mls" => [/AME_MATRIX_REGISTER_SIZE \/ 8/, "raw M-register byte count"],
-  "mss" => [/AME_MATRIX_REGISTER_SIZE \/ 8/, "raw M-register byte count"],
+  "mls.1r" => [/AME_MATRIX_REGISTER_SIZE \/ 8/, "whole M-register byte count"],
+  "mss.1r" => [/AME_MATRIX_REGISTER_SIZE \/ 8/, "whole M-register byte count"],
   "mls.cm" => [/total_bytes = ceil\(pack_factor \* AME_NELEM \* sizeof\(Md\[md\]\) \/ 8\)/, "column-major byte-rounded transfer size"],
   "mls.rm" => [/total_bytes = ceil\(pack_factor \* AME_NELEM \* sizeof\(Md\[md\]\) \/ 8\)/, "row-major byte-rounded transfer size"],
   "mss.cm" => [/total_bytes = ceil\(pack_factor \* AME_NELEM \* sizeof\(Md\[ms1\]\) \/ 8\)/, "column-major byte-rounded transfer size"],
@@ -238,7 +238,7 @@ end
   /the\s+requirement\s+that\s+`ms1`\s+and\s+`ms2`\s+name\s+distinct\s+M\s+registers\s+is\s+likewise\s+checked\s+immediately\s+after\s+decode/m => "zip/unzip distinct-register validation stage",
   /Datatype\s+compatibility\s+between\s+the\s+two\s+operands\s+is\s+a\s+separate\s+operand-class\s+requirement/m => "zip/unzip datatype-mismatch UN rule",
   /The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed\s+datatypes are not supported/m => "Permutation unit-or-wide datatype rule",
-  /The opaque `mls` and `mss` instructions do not inspect `Md`/ => "opaque load/store datatype exemption",
+  /`mls\.1r` and `mss\.1r` do not read `Md` and are therefore not subject to it/ => "whole-register datatype exemption",
   /Elements are packed\s+back-to-back as E-bit fields/m => "typed memory bit packing",
   /load ignores the unused high bits.*store writes those unused high bits as zero/m => "partial-byte load/store rule",
   /Segment `i` contains `P \* N \* E` bits/ => "strided segment size rule",
@@ -259,7 +259,7 @@ end
   /Scatter source elements are processed in ascending logical row-major order/ => "scatter collision ordering rule",
   /prefix or reduction fold is seeded from the first source element/ => "prefix/reduction seed rule",
   /transposes each `N x N` logical square/ => "dimensionally valid transposed matrix formation",
-  /seeds each dot product with the accumulator datatype's semantic\s+additive zero/m => "overwriting matrix semantic-zero seed",
+  /semantic\s+additive zero rather than an all-zero raw bit pattern/m => "accumulator semantic-zero clear rule",
   /`NV` is set for a signaling NaN or an invalid operation/ => "floating-point invalid-flag rule",
   /`UF` is set when the result is tiny after rounding and inexact/ => "floating-point underflow-flag rule",
   /`mhdiff\.ew\.x`, `mmean\.ew`/ => "scalar half-difference/mean integer rounding rule"
@@ -440,7 +440,7 @@ end
 
 abort "instruction-description validation failed:\n  #{errors.join("\n  ")}" unless errors.empty?
 
-puts "checked 140/140 prose instruction pages against baseline #{expected_commit[0, 12]}: " \
+puts "checked 138/138 prose instruction pages against baseline #{expected_commit[0, 12]}: " \
      "stable anchors/order/categories/synopses/mnemonics/encodings, complete common contracts and operand classes, " \
      "description/operation semantics, unconditional root publication, " \
      "12/12 published normative anchors, " \

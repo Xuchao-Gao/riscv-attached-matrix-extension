@@ -529,8 +529,8 @@ destination datatypes are identical.
 `.ew.x` forms
 | The explicit data sources and destination are supported numeric datatypes.
 
-| `mmul.2d`, `mmulacc.2d`, `mmulaccneg.2d`, `mmulat.2d`, `mmulatacc.2d`,
-`mmulbt.2d`, `mmulbtacc.2d`, `mmulneg.2d`
+| `mmulacc.2d`, `mmulaccneg.2d`, `mmulatacc.2d`, `mmulataccneg.2d`,
+`mmulbtacc.2d`, `mmulbtaccneg.2d`
 | The matrix sources and accumulator destination are supported numeric
 datatypes for that matrix operation.
 
@@ -643,9 +643,11 @@ attribute, and access-fault checks as ordinary RISC-V memory accesses.  Within
 each element, increasing byte addresses correspond to successively more
 significant groups of eight bits; the lowest-addressed byte contains bits 7:0.
 
-For the typed memory instructions, let `E = sizeof(dtype)` be the element size
-in bits, `P = pack_factor`, and `N = sqrt(AME_NELEM)`, so that
-`AME_NELEM = N * N`.  These three abbreviations are local to this section; the
+For every memory instruction, let `E` be the element size in bits, `P = pack_factor`,
+and `N = sqrt(AME_NELEM)`, so that `AME_NELEM = N * N`.  For an interoperability or
+strided instruction `E = sizeof(dtype)`, the size of the programmed datatype.  For
+`mls.1r` and `mss.1r`, `E = AME_UNIT_DATATYPE_SIZE` and `P = 1`: those instructions fix
+the element size instead of reading it from a datatype register.  These three abbreviations are local to this section; the
 instruction pages spell the same quantities out as `sizeof(Md[md])`,
 `pack_factor`, and `sqrt(AME_NELEM)`.  Sizes written as `sizeof(...)`, as `E`,
 or as an `AME_*_SIZE` parameter are counts of bits, while every quantity whose
@@ -684,21 +686,18 @@ with an earlier segment.  This ordering selects the staged result but does not
 permit partial completion: if any access faults, none of the staged bytes are
 written.
 
-The opaque `mls` and `mss` transfer exactly
+`mls.1r` and `mss.1r` transfer exactly
 `AME_MATRIX_REGISTER_SIZE / 8` bytes.  Their transfer
 bit string is the physical M-register raw bit pattern: the lowest-addressed
 byte transfers physical bits 7:0, and subsequent byte addresses transfer
 successively more-significant groups of eight physical bits.
 
-Every typed memory instruction, interoperability and strided alike, requires
-its base address to be naturally aligned to `element_bytes = ceil(E / 8)`, the
-byte size of one element of the programmed datatype.  A base address that is not
-so aligned raises an address-misaligned exception, as specified in
-<<Memory exceptions>>.
-
-The opaque `mls` and `mss` do not interpret `Md` and impose no alignment
-requirement at all: their base address may be any byte address, and they never
-raise an address-misaligned exception.
+Every memory instruction requires its base address to be naturally aligned to
+`element_bytes = ceil(E / 8)`, the byte size of one element.  A base address that is
+not so aligned raises an address-misaligned exception, as specified in
+<<Memory exceptions>>.  Because `mls.1r` and `mss.1r` fix `E` at
+`AME_UNIT_DATATYPE_SIZE`, their requirement is the same on every transfer and does not
+depend on any datatype register.
 
 No other alignment is architecturally required.  In particular the transfer
 size, the segment size, and the value of `stride` place no constraint on the
@@ -723,12 +722,6 @@ transfer extends the same property to every segment when `stride` is also a
 multiple of `element_bytes`; software that intends scalar consumption of a
 strided region should choose such a stride.
 
-A byte-aligned opaque transfer requires no capability an implementation does not
-already need.  A datatype of eight bits or fewer gives an `element_bytes` of one
-byte and a `total_bytes` of at least `AME_MATRIX_REGISTER_SIZE / 8`, so `mls.rm`
-and `mss.rm` already transfer at least a whole physical register's worth of bytes
-starting at an arbitrary byte address.
-
 An implementation may complete more strongly aligned transfers faster, and a
 profile or ABI may mandate stronger alignment.  The architecture does not:
 software that wants block-aligned or page-aligned buffers can always align them
@@ -742,7 +735,7 @@ AME provides memory storage variants that operate on one of three memory layouts
 
 *  Row-major (`mls.rm` / `mss.rm`)
 *  Column-major (`mls.cm` / `mss.cm`)
-*  Opaque, implementation-defined (`mls` / `mss`)
+*  Whole register (`mls.1r` / `mss.1r`)
 
 The row-major and column-major variants are called the _interoperability_ storage instructions.
 They transfer data as a contiguous block — no striding, partial-tile, or predicated variants
@@ -759,15 +752,17 @@ image::packed-square-instructions.png[Packed square load/store illustration]
 * **Store:** The single packed M register is unpacked and `pack_factor` squares are written
   to contiguous memory using the same layout.
 
-The opaque-format instructions (`mls`, `mss`) transfer exactly one physical M
-register without interpreting its datatype. They are per-register raw
-save/restore operations: a wide logical square that occupies multiple M
-registers requires one opaque instruction for each physical register. Packed
-sub-squares resident in the selected register are transferred together.
-Behavior is only well-defined when loading an opaque tensor layout that was previously stored
-opaquely on the same implementation.
-Generally, software should assume that loads / stores using the opaque format will be more
-performant than loads / stores using one of the formats with a standard layout.
+The whole-register instructions (`mls.1r`, `mss.1r`) transfer one physical M register
+in row-major order at a fixed element size of `AME_UNIT_DATATYPE_SIZE`, which is exactly
+one register's worth of elements because
+`AME_MATRIX_REGISTER_SIZE = AME_NELEM * AME_UNIT_DATATYPE_SIZE`.  They behave as
+`mls.rm` and `mss.rm` do for a unit datatype, except that the element size is fixed by
+the instruction rather than taken from a datatype register.
+They therefore neither read nor require a supported datatype, which is what register
+spilling, context switching, and calling conventions need: the register is saved and
+restored whatever its programmed datatype happens to be, including an uninitialized or
+unsupported one.  A wide logical square that occupies multiple M registers requires one
+instruction for each register in the group.
 
 ==== Strided memory access
 
@@ -797,8 +792,7 @@ architectural state change — neither the `M` register group nor memory is modi
 This is an unsupported-operation report as described in <<datatypes>> and not a
 synchronous exception, but it is defined here because it precedes both exception
 classes below in the check order.
-The opaque `mls` and `mss` instructions do not inspect `Md` and are therefore not
-subject to it.
+`mls.1r` and `mss.1r` do not read `Md` and are therefore not subject to it.
 
 In addition to the illegal-instruction exceptions covered by
 <<Operand validation and exception priority>>, AME load and store instructions raise
@@ -809,7 +803,7 @@ two classes of precise exception:
   misaligned` for a load and `Store/AMO address misaligned` for a store.  The exception is
   raised before any memory access is attempted: the instruction commits no update to its
   destination `M` register group and performs no explicit data-memory write.  The
-  opaque `mls` and `mss` have no alignment requirement and never raise it.
+  `mls.1r` and `mss.1r` are subject to it with `E` fixed at `AME_UNIT_DATATYPE_SIZE`.
 
 * **Memory fault:** When a load or store takes any fault the base architecture defines
   for an explicit memory access — a page fault, guest-page fault, access fault,
@@ -835,9 +829,8 @@ the encoded M-register index.  An interoperability or strided form then
 checks datatype support, reporting `amestatus.UN` and stopping when the tuple
 is unsupported; if supported, it validates the complete register-group span
 and then checks the base-address alignment before attempting any memory
-access.  The opaque `mls` and `mss` forms skip the datatype, group, and
-alignment checks and proceed from the encoded index directly to the memory
-access.  A memory fault can be reported only after these preceding checks have
+access.  `mls.1r` and `mss.1r` skip the datatype and group checks, then check the
+base-address alignment before attempting any memory access.  A memory fault can be reported only after these preceding checks have
 passed.
 
 [[ame-consistency-model]]
@@ -1049,10 +1042,11 @@ source and accumulator datatypes.  The implementation uses its fixed
 permutation of the `K` terms and applies the documented overflow, saturation,
 floating-point, rounding, and optional fused-product behavior.  Encoded
 register bits are never accumulated as untyped bit-vector integers.
-An overwriting matrix multiply (`mmul.2d`, `mmulat.2d`, `mmulbt.2d`, or
-`mmulneg.2d`) seeds each dot product with the accumulator datatype's semantic
-additive zero, not an all-zero raw bit pattern.  An accumulating form instead
-seeds the dot product with the pre-instruction accumulator element.
+Every matrix multiply accumulates: each dot product is seeded with the
+pre-instruction accumulator element, and the product is then added to or
+subtracted from it.  Software that wants a product alone clears the accumulator
+first with `mzero.2d.acc`, which writes the accumulator datatype's semantic
+additive zero rather than an all-zero raw bit pattern.
 Until a tighter matrix-precision profile is defined, these finite-precision
 choices are implementation-defined.  An implementation shall document the
 selected behavior, and that behavior shall be deterministic for a given
@@ -1085,37 +1079,30 @@ so operand order must be preserved by software using AME primitives.
 AME defines the matrix-multiply instruction variants listed below.
 The destination of matrix multiply operations is always an accumulator register.
 The operations differ in
-whether or not they accumulate into the destination register (versus overwrite it),
 whether or not they transpose an input before multiplying,
-and whether or not they negate a result.
+and whether the product is added to or subtracted from the accumulator.
 
 [cols="1,2,3",options="header"]
 |===
 | Instruction   | Operation  | Description
-| <<ame:doc:inst:mmul_2d,mmul.2d>>
-| `C = A × B`
-| Matrix multiply
 | <<ame:doc:inst:mmulacc_2d,mmulacc.2d>>
 | `C = C + A × B`
 | Matrix multiply accumulate
 | <<ame:doc:inst:mmulaccneg_2d,mmulaccneg.2d>>
 | `C = C - A × B`
 | Negated matrix multiply accumulate
-| <<ame:doc:inst:mmulat_2d,mmulat.2d>>
-| `C = sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)`
-| Matrix multiply with transposed A
 | <<ame:doc:inst:mmulatacc_2d,mmulatacc.2d>>
 | `C = C + sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)`
 | Matrix multiply with transposed A, accumulate
-| <<ame:doc:inst:mmulbt_2d,mmulbt.2d>>
-| `C = sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)`
-| Matrix multiply with transposed B
+| <<ame:doc:inst:mmulataccneg_2d,mmulataccneg.2d>>
+| `C = C - sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)`
+| Matrix multiply with transposed A, negated accumulate
 | <<ame:doc:inst:mmulbtacc_2d,mmulbtacc.2d>>
 | `C = C + sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)`
 | Matrix multiply with transposed B, accumulate
-| <<ame:doc:inst:mmulneg_2d,mmulneg.2d>>
-| `C = -(A × B)`
-| Negated matrix multiply
+| <<ame:doc:inst:mmulbtaccneg_2d,mmulbtaccneg.2d>>
+| `C = C - sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)`
+| Matrix multiply with transposed B, negated accumulate
 |===
 
 [[ame-common-arithmetic]]
@@ -1837,8 +1824,9 @@ AME load and store instructions transfer squares between `M` registers and memor
 Square variants (`mls.rm`, `mls.cm`, `mss.rm`, `mss.cm`) access contiguous memory,
 while strided variants (`mls.st`, `mls.tst`, `mss.st`, `mss.tst`) access
 non-contiguous memory through a programmable byte stride supplied in an integer register.
-The opaque-format instructions (`mls`, `mss`) transfer one physical M register without
-interpreting its datatype.  The interoperability and strided instructions determine the
+The whole-register instructions (`mls.1r`, `mss.1r`) transfer one physical M register in
+row-major order at a fixed element size of `AME_UNIT_DATATYPE_SIZE`, without reading a
+datatype register.  The interoperability and strided instructions determine the
 element datatype from the programmed datatype of the destination or source register.
 The memory layouts, the base-address alignment requirement, and the exception behavior of
 these instructions are defined in <<ame-common-memory>>.
@@ -1846,9 +1834,9 @@ these instructions are defined in <<ame-common-memory>>.
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
-| <<ame:doc:inst:mls,mls>>
-| `raw_bits(M[md]) = mem[X[rs1]]`
-| Load raw M register from implementation-defined format
+| <<ame:doc:inst:mls_1r,mls.1r>>
+| `M[md] = mem[X[rs1]]` (row-major, `E = AME_UNIT_DATATYPE_SIZE`)
+| Load one whole M register
 | <<ame:doc:inst:mls_cm,mls.cm>>
 | `D = mem[X[rs1]]` (column-major)
 | Load square from column-major format
@@ -1861,9 +1849,9 @@ these instructions are defined in <<ame-common-memory>>.
 | <<ame:doc:inst:mls_tst,mls.tst>>
 | `D = mem[X[rs1], stride=X[rs2]]` (transposed)
 | Load square from transposed strided memory format
-| <<ame:doc:inst:mss,mss>>
-| `mem[X[rs1]] = raw_bits(M[ms1])`
-| Store raw M register in implementation-defined format
+| <<ame:doc:inst:mss_1r,mss.1r>>
+| `mem[X[rs1]] = M[ms1]` (row-major, `E = AME_UNIT_DATATYPE_SIZE`)
+| Store one whole M register
 | <<ame:doc:inst:mss_cm,mss.cm>>
 | `mem[X[rs1]] = A` (column-major)
 | Store square to column-major format

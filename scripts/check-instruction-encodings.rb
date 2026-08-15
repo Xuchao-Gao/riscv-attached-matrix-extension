@@ -128,7 +128,10 @@ funct3_values = entries.map { |entry| entry[:funct3] }.uniq
 abort "AME instructions must all use funct3=0, found #{funct3_values.sort.join(', ')}" unless funct3_values == [0]
 
 reserved_funct7 = {
-  "R3" => [],
+  # 0x49 and 0x4c were vacated when the overwriting matrix multiplies were removed;
+  # every surviving matrix multiply accumulates.  Holes rather than a dense renumber,
+  # so that no surviving instruction changes encoding.
+  "R3" => [0x49, 0x4c],
   "R2" => [],
   "R1" => [],
   "Fixed" => []

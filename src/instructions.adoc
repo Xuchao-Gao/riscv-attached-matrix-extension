@@ -6,7 +6,7 @@
 
 
 
-AME defines *140* instructions.
+AME defines *138* instructions.
 
 [IMPORTANT]
 ====
@@ -27,8 +27,7 @@ operand-formation rules, including packed and wide datatypes.
 `M[i]` and `Acc[i]` name a physical register rather than a formed operand, and
 `raw_bits(...)` is the raw bit pattern of the named register or register range.
 An operation written with `raw_bits(M[i])` therefore bypasses operand formation
-entirely: it transfers exactly one physical register and does not interpret its
-programmed datatype.
+entirely and does not interpret the programmed datatype.
 
 The pre-instruction RHS rule has one explicit exception for scatter collisions.
 Each scatter target is initialized from its pre-instruction `D` value, and a
@@ -310,8 +309,8 @@ Memory::
 !===
 | Mnemonic | Name
 
-a| `mls md, rs1`
-| <<ame:doc:inst:mls,Load raw M register from implementation-defined format>>
+a| `mls.1r md, rs1`
+| <<ame:doc:inst:mls_1r,Load one whole M register>>
 a| `mls.cm md, rs1`
 | <<ame:doc:inst:mls_cm,Load square from column-major format>>
 a| `mls.rm md, rs1`
@@ -320,8 +319,8 @@ a| `mls.st md, (rs1), rs2`
 | <<ame:doc:inst:mls_st,Load square from strided memory format>>
 a| `mls.tst md, (rs1), rs2`
 | <<ame:doc:inst:mls_tst,Load square from transposed strided memory format>>
-a| `mss ms1, rs1`
-| <<ame:doc:inst:mss,Store raw M register in implementation-defined format>>
+a| `mss.1r ms1, rs1`
+| <<ame:doc:inst:mss_1r,Store one whole M register>>
 a| `mss.cm ms1, rs1`
 | <<ame:doc:inst:mss_cm,Store square to column-major format>>
 a| `mss.rm ms1, rs1`
@@ -358,22 +357,18 @@ Matrix Multiply::
 !===
 | Mnemonic | Name
 
-a| `mmul.2d acc, ms1, ms2`
-| <<ame:doc:inst:mmul_2d,Matrix multiply>>
 a| `mmulacc.2d acc, ms1, ms2`
 | <<ame:doc:inst:mmulacc_2d,Matrix multiply accumulate>>
 a| `mmulaccneg.2d acc, ms1, ms2`
 | <<ame:doc:inst:mmulaccneg_2d,Negated matrix multiply accumulate>>
-a| `mmulat.2d acc, ms1, ms2`
-| <<ame:doc:inst:mmulat_2d,Matrix multiply with transposed A>>
 a| `mmulatacc.2d acc, ms1, ms2`
 | <<ame:doc:inst:mmulatacc_2d,Matrix multiply with transposed A, accumulate>>
-a| `mmulbt.2d acc, ms1, ms2`
-| <<ame:doc:inst:mmulbt_2d,Matrix multiply with transposed B>>
+a| `mmulataccneg.2d acc, ms1, ms2`
+| <<ame:doc:inst:mmulataccneg_2d,Matrix multiply with transposed A, negated accumulate>>
 a| `mmulbtacc.2d acc, ms1, ms2`
 | <<ame:doc:inst:mmulbtacc_2d,Matrix multiply with transposed B, accumulate>>
-a| `mmulneg.2d acc, ms1, ms2`
-| <<ame:doc:inst:mmulneg_2d,Negated matrix multiply>>
+a| `mmulbtaccneg.2d acc, ms1, ms2`
+| <<ame:doc:inst:mmulbtaccneg_2d,Matrix multiply with transposed B, negated accumulate>>
 !===
 
 Reduction::
@@ -2162,14 +2157,14 @@ This operation uses the common rules in <<ame-common-arithmetic>> and <<ame-comm
 
 <<<
 
-[#ame:doc:inst:mls]
-=== `mls`
+[#ame:doc:inst:mls_1r]
+=== `mls.1r`
 
 Synopsis::
-Load raw M register from implementation-defined format
+Load one whole M register
 
 Mnemonic::
-`mls md, rs1`
+`mls.1r md, rs1`
 
 Encoding::
 +
@@ -2182,28 +2177,29 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Loads exactly one physical M register from memory in the implementation-defined
-register format into matrix register `md`.
+Loads one whole physical M register from memory into matrix register `md`.
 +
-The data in memory must have been previously stored in the implementation-defined
-register format (e.g., by a matching `mss` instruction). No datatype conversion is
-performed; the in-memory layout is the exact physical-register representation.
-The datatype in `Md[md]` is not interpreted.  Consequently, packed sub-squares
-resident in `md` are transferred together, while a wide logical square requires
-one `mls` for each physical M register in its group.
+The transfer is row-major with a fixed element size of
+`AME_UNIT_DATATYPE_SIZE`, and is `AME_MATRIX_REGISTER_SIZE / 8` bytes — exactly one
+register's worth of elements, since
+`AME_MATRIX_REGISTER_SIZE = AME_NELEM * AME_UNIT_DATATYPE_SIZE`.  It is therefore the
+same transfer <<ame:doc:inst:mls_rm,mls.rm>> performs for a unit datatype, except that
+the element size is fixed by the instruction.
 +
-For portable interoperability with other implementations, use
-<<ame:doc:inst:mls_rm,mls.rm>> or <<ame:doc:inst:mls_cm,mls.cm>>.
+`Md[md]` is neither read nor required to name a supported datatype, so `mls.1r` restores
+a register whose programmed datatype is uninitialized or unsupported.  This is what
+register spilling, context switching, and calling conventions need.  It transfers exactly
+one physical register: a wide logical square requires one `mls.1r` per register in its
+group.
 +
-The transfer size is `AME_MATRIX_REGISTER_SIZE / 8` bytes.  Because this form
-does not interpret `Md[md]`, it imposes no alignment requirement: the address
-may be any byte address, and `mls` never raises an address-misaligned exception.
+The base address must be aligned to `ceil(AME_UNIT_DATATYPE_SIZE / 8)`.  Otherwise,
+`mls.1r` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-raw_bits(M[md]) = mem[X[rs1]]
+M[md] = mem[X[rs1]]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -3227,44 +3223,6 @@ This operation uses the common rules in <<ame-common-register-groups>>.
 
 <<<
 
-[#ame:doc:inst:mmul_2d]
-=== `mmul.2d`
-
-Synopsis::
-Matrix multiply
-
-Mnemonic::
-`mmul.2d acc, ms1, ms2`
-
-Encoding::
-+
-[IMPORTANT]
-This encoding is provisional and is not a final RISC-V allocation.
-+
-[wavedrom, ,svg,subs='attributes',width="100%"]
-....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "acc","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x49,"type":2}]}
-....
-
-Description::
-Computes the matrix product of `ms1` and `ms2` and stores the result into `acc`,
-discarding any previous value in `acc`.
-+
-`acc[i,k] = sum over j of (ms1[i,j] * ms2[j,k])`
-+
-For the accumulating form, see `mmulacc.2d`.
-
-Operation::
-+
-[source]
-----
-C = A × B
-----
-+
-This operation uses the common rules in <<ame-common-matmul>>.
-
-<<<
-
 [#ame:doc:inst:mmul_ew]
 === `mmul.ew`
 
@@ -3367,7 +3325,7 @@ Accumulates the matrix product of `ms1` and `ms2` into `acc`.
 `acc` is both a source and destination: its current value is read, the matrix
 product is added, and the result is written back.
 +
-For the non-accumulating form, see `mmul.2d`.
+For the subtracting form, see `mmulaccneg.2d`.
 For the subtracting form, see `mmulaccneg.2d`.
 
 Operation::
@@ -3679,44 +3637,6 @@ This operation uses the common rules in <<ame-common-arithmetic>> and <<ame-comm
 
 <<<
 
-[#ame:doc:inst:mmulat_2d]
-=== `mmulat.2d`
-
-Synopsis::
-Matrix multiply with transposed A
-
-Mnemonic::
-`mmulat.2d acc, ms1, ms2`
-
-Encoding::
-+
-[IMPORTANT]
-This encoding is provisional and is not a final RISC-V allocation.
-+
-[wavedrom, ,svg,subs='attributes',width="100%"]
-....
-{"reg":[{"bits":7,"name": 0x2b,"type":2},{"bits":5,"name": "acc","type":4},{"bits":3,"name": {ame-enc-funct3},"type":2},{"bits":5,"name": "ms1","type":4},{"bits":5,"name": "ms2","type":4},{"bits":7,"name": 0x4c,"type":2}]}
-....
-
-Description::
-Computes the matrix product of the transpose of `ms1` with `ms2` and stores the
-result into `acc`, discarding any previous value in `acc`.
-+
-`acc[i,k] = sum over j of (ms1[j,i] * ms2[j,k])`
-+
-For the accumulating form, see `mmulatacc.2d`.
-
-Operation::
-+
-[source]
-----
-C = sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)
-----
-+
-This operation uses the common rules in <<ame-common-matmul>>.
-
-<<<
-
 [#ame:doc:inst:mmulatacc_2d]
 === `mmulatacc.2d`
 
@@ -3744,7 +3664,7 @@ Accumulates the matrix product of the transpose of `ms1` with `ms2` into `acc`.
 `acc` is both a source and destination: its current value is read, the transposed-A
 matrix product is added, and the result is written back.
 +
-For the non-accumulating form, see `mmulat.2d`.
+For the subtracting form, see `mmulataccneg.2d`.
 
 Operation::
 +
@@ -3757,14 +3677,14 @@ This operation uses the common rules in <<ame-common-matmul>>.
 
 <<<
 
-[#ame:doc:inst:mmulbt_2d]
-=== `mmulbt.2d`
+[#ame:doc:inst:mmulataccneg_2d]
+=== `mmulataccneg.2d`
 
 Synopsis::
-Matrix multiply with transposed B
+Matrix multiply with transposed A, negated accumulate
 
 Mnemonic::
-`mmulbt.2d acc, ms1, ms2`
+`mmulataccneg.2d acc, ms1, ms2`
 
 Encoding::
 +
@@ -3777,18 +3697,20 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Computes the matrix product of `ms1` with the transpose of `ms2` and stores the
-result into `acc`, discarding any previous value in `acc`.
+Subtracts the matrix product of the transpose of `ms1` with `ms2` from `acc`.
 +
-`acc[i,k] = sum over j of (ms1[i,j] * ms2[k,j])`
+`acc[i,k] -= sum over j of (ms1[j,i] * ms2[j,k])`
 +
-For the accumulating form, see `mmulbtacc.2d`.
+`acc` is both a source and destination: its current value is read, the transposed-A
+matrix product is subtracted, and the result is written back.
++
+For the adding form, see `mmulatacc.2d`.
 
 Operation::
 +
 [source]
 ----
-C = sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)
+C = C - sum(transpose(A[s]) × B[s], s = 0 .. pack_factor-1)
 ----
 +
 This operation uses the common rules in <<ame-common-matmul>>.
@@ -3822,7 +3744,7 @@ Accumulates the matrix product of `ms1` with the transpose of `ms2` into `acc`.
 `acc` is both a source and destination: its current value is read, the transposed-B
 matrix product is added, and the result is written back.
 +
-For the non-accumulating form, see `mmulbt.2d`.
+For the subtracting form, see `mmulbtaccneg.2d`.
 
 Operation::
 +
@@ -3835,14 +3757,14 @@ This operation uses the common rules in <<ame-common-matmul>>.
 
 <<<
 
-[#ame:doc:inst:mmulneg_2d]
-=== `mmulneg.2d`
+[#ame:doc:inst:mmulbtaccneg_2d]
+=== `mmulbtaccneg.2d`
 
 Synopsis::
-Negated matrix multiply
+Matrix multiply with transposed B, negated accumulate
 
 Mnemonic::
-`mmulneg.2d acc, ms1, ms2`
+`mmulbtaccneg.2d acc, ms1, ms2`
 
 Encoding::
 +
@@ -3855,18 +3777,20 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Computes the negated matrix product of `ms1` and `ms2` and stores the result into `acc`,
-discarding any previous value in `acc`.
+Subtracts the matrix product of `ms1` with the transpose of `ms2` from `acc`.
 +
-`acc[i,k] = -(sum over j of (ms1[i,j] * ms2[j,k]))`
+`acc[i,k] -= sum over j of (ms1[i,j] * ms2[k,j])`
 +
-For the accumulating negated form, see `mmulaccneg.2d`.
+`acc` is both a source and destination: its current value is read, the transposed-B
+matrix product is subtracted, and the result is written back.
++
+For the adding form, see `mmulbtacc.2d`.
 
 Operation::
 +
 [source]
 ----
-C = -(A × B)
+C = C - sum(A[s] × transpose(B[s]), s = 0 .. pack_factor-1)
 ----
 +
 This operation uses the common rules in <<ame-common-matmul>>.
@@ -5747,14 +5671,14 @@ This operation uses the common rules in <<ame-common-arithmetic>>.
 
 <<<
 
-[#ame:doc:inst:mss]
-=== `mss`
+[#ame:doc:inst:mss_1r]
+=== `mss.1r`
 
 Synopsis::
-Store raw M register in implementation-defined format
+Store one whole M register
 
 Mnemonic::
-`mss ms1, rs1`
+`mss.1r ms1, rs1`
 
 Encoding::
 +
@@ -5767,28 +5691,29 @@ This encoding is provisional and is not a final RISC-V allocation.
 ....
 
 Description::
-Stores exactly one physical M register `ms1` into memory in the
-implementation-defined register format.
+Stores one whole physical M register `ms1` into memory.
 +
-The data written to memory is in the same implementation-defined format used by the
-matching load instruction (`mls`). No datatype conversion is performed, and
-the datatype in `Md[ms1]` is not interpreted.  Packed sub-squares resident in
-`ms1` are transferred together, while a wide logical square requires one
-`mss` for each physical M register in its group.
+The transfer is row-major with a fixed element size of
+`AME_UNIT_DATATYPE_SIZE`, and is `AME_MATRIX_REGISTER_SIZE / 8` bytes — exactly one
+register's worth of elements, since
+`AME_MATRIX_REGISTER_SIZE = AME_NELEM * AME_UNIT_DATATYPE_SIZE`.  It is therefore the
+same transfer <<ame:doc:inst:mss_rm,mss.rm>> performs for a unit datatype, except that
+the element size is fixed by the instruction.
 +
-For portable interoperability with other implementations, use
-<<ame:doc:inst:mss_rm,mss.rm>> or <<ame:doc:inst:mss_cm,mss.cm>>.
+`Md[ms1]` is neither read nor required to name a supported datatype, so `mss.1r` saves a
+register whose programmed datatype is uninitialized or unsupported.  This is what
+register spilling, context switching, and calling conventions need.  It transfers exactly
+one physical register: a wide logical square requires one `mss.1r` per register in its
+group.
 +
-The transfer size is `AME_MATRIX_REGISTER_SIZE / 8` bytes.  Because this form
-does not interpret `Md[ms1]`, it imposes no alignment requirement: the address
-may be any byte address, and `mss` never raises an address-misaligned
-exception.
+The base address must be aligned to `ceil(AME_UNIT_DATATYPE_SIZE / 8)`.  Otherwise,
+`mss.1r` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-mem[X[rs1]] = raw_bits(M[ms1])
+mem[X[rs1]] = M[ms1]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
