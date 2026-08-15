@@ -1,6 +1,40 @@
 [[datatypes]]
-== Datatypes
-:imagesdir: ../images
+=== Datatypes
+
+AME supports up to `2^32 - 1` unique datatypes, half of which are reserved for
+custom use.  The value zero is reserved to mean uninitialized.  Here,
+"uninitialized" describes the datatype descriptor, not whether the
+corresponding `M` or `Acc` register data has previously been written.
+Instruction handling of zero, unknown, and unsupported descriptors is defined
+by <<ame-common-datatype-support,the common datatype-tuple rules>>.
+
+[NOTE]
+--
+The datatype registers are similar to WARL CSR fields, so implementations only
+need to support enough state to represent the datatypes they support.  For
+example, an implementation that supports only two datatypes needs only enough
+physical state to represent those datatypes plus uninitialized.
+--
+
+Implementations may choose which standard and custom datatypes they support.
+A legal implementation may support no standard datatypes or no custom
+datatypes.
+
+[NOTE]
+--
+Profiles will likely mandate a minimum supported set.
+--
+
+`M` register datatype descriptors are written with
+<<ame:doc:inst:msettyp,msettyp>> and read with
+<<ame:doc:inst:mgettyp,mgettyp>>.  `Acc` register datatype descriptors are
+written with <<ame:doc:inst:asettyp,asettyp>> and read with
+<<ame:doc:inst:agettyp,agettyp>>.  Their validation and architectural effects
+are defined by the detailed instruction descriptions and
+<<ame-common-datatype-support,the common datatype contract>>.
+
+[[datatype-descriptor-encoding]]
+==== Datatype descriptor encoding
 
 AME uses a 32-bit datatype specifier encoded as follows:
 
@@ -15,8 +49,6 @@ AME uses a 32-bit datatype specifier encoded as follows:
 Standard datatype encodings will never begin with '1'.
 Conforming implementations must encode custom datatypes with a leading '1'.
 
-A zero datatype encoding is reserved to mean 'uninitialized'.
-
 By convention, the lowest bits after the datatype size are used to specify the datatype family
 (e.g., integer, floating-point) and the upper bits are used first to distinguish types within the
 family. This allows the number of families to grow over time if needed without needing to know
@@ -28,7 +60,7 @@ that software should decode by assumption.
 RISC-V may introduce future data types that do not follow the current convention.
 
 
-=== Integer datatype class
+==== Integer datatype class
 
 Integer type properties occupy bits `30:9` when bit 8 is `0`.
 Integer types are distinguished by size/precision, signedness, saturation behavior,
@@ -69,41 +101,6 @@ and rounding mode.
 
 Integer types are two's complement binary numbers.
 
-The *Rounding mode* field applies to integer operations whose exact
-mathematical intermediate result has fraction bits below the LSB of the
-destination datatype (for example `mmean.ew` and `mhdiff.ew`).  Let `v` be the
-exact intermediate result and `d` the number of fraction bits discarded when
-producing the destination-width integer result.  `v` is treated as a two's
-complement value and `>>` denotes an arithmetic right shift.  When `d == 1`,
-the term `v[d-2:0]` is treated as zero.  The rounded result is
-selected by the destination datatype's rounding mode:
-
-|===
-| Encoding | Mode | Rounded result
-
-| `00`
-| RNU (round-to-nearest-up)
-| `(v >> d) + v[d-1]`
-
-| `01`
-| RNE (round-to-nearest-even)
-| `(v >> d) + r`, where `r = 1` if `v[d-1] == 1` and `(v[d-2:0] != 0 or
-v[d] == 1)`, else `r = 0`
-
-| `10`
-| RDN (round-down, truncate)
-| `v >> d`
-
-| `11`
-| ROD (round-to-odd, jam)
-| `(v >> d) {vbar} (v[d-1:0] != 0)`
-
-|===
-
-Operations whose exact result is already integral are unaffected by the
-rounding mode.  The rounding mode does not apply to floating-point datatypes,
-whose rounding follows the IEEE floating-point class rules.
-
 .Standard Integer Types
 |===
 ^| Type 7+^| Encoding
@@ -140,8 +137,10 @@ The `Rnd` column is shown as `xx` (don't care): each standard integer type
 name denotes the four encodings obtained with the four rounding-mode values.
 These encodings share size, signedness, and saturation behavior, and differ
 only in the rounding of sub-LSB intermediate results.
+The operation-level meaning of these modes is defined by
+<<ame-common-integer,the standard integer operation semantics>>.
 
-=== IEEE floating-point class
+==== IEEE floating-point class
 
 The IEEE floating-point class holds data types that either are IEEE 754 floating point or
 behave similarly to it with small modifications.
@@ -149,10 +148,6 @@ behave similarly to it with small modifications.
 We classify datatype in the class by whether or not it is signed, exponent size, presence of NaN,
 presence of infinity, and rounding mode. The mantissa width is implicit:
 `mantissa_bits = element_size - exp_width - 1` (one bit for the sign).
-
-Note that AME ties rounding mode to the datatype.
-There is no global/dynamic rounding mode like `fcsr.FRM` provides in the RISC-V F/D/V extensions.
-The rounding mode of an operation is determined by the datatype of the destination register.
 
 .IEEE floating-point class encoding convention
 |===
@@ -206,106 +201,20 @@ The rounding mode of an operation is determined by the datatype of the destinati
 | OCP_E5M2    | `0`   | `00101`   | `xxxx`    | `1`   | `1`       | `0..0`  | `1`   | `00001000`
 |===
 
+The operation-level use of the floating-point rounding mode is defined by
+<<ame-common-floating-point,the standard floating-point operation semantics>>.
 
+[[datatype-discovery]]
+==== Datatype and operation discovery
 
-=== Packed datatypes
+The AME datatype namespace and the set of possible operation/datatype tuples
+are intentionally larger than an implementation is expected to support.
+Software discovers whether an `M` or `Acc` datatype is accepted by executing
+`msettyp` or `asettyp` and inspecting
+<<ame:doc:csr_field:amestatus:UN,amestatus.UN>>.  It discovers whether an exact
+operation/datatype tuple is supported by executing that operation and checking
+the same field.  Unsupported tuples follow
+<<norm:ame_op_supported_contract,the common unsupported-datatype-tuple contract>>.
 
-A datatype whose size (bits 7:0) is greater than zero and less than
-`<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>` is called a *packed datatype*.
-
-Whether any particular datatype is packed is entirely a function of the
-implementation-defined base element size `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`,
-so the same datatype may be packed on one implementation and non-packed on another.
-An implementation that sets `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`
-equal to its smallest supported element size has no packed datatypes at all; one that sets it
-larger treats every smaller supported datatype as packed.
-For this reason the specification does not designate any specific datatype as packed.
-
-The *pack factor* (`pack_factor`) of a datatype — the number of squares stored
-per M register — is defined in <<Squares>>, together with the rule that a packed
-datatype size must divide `AME_UNIT_DATATYPE_SIZE`.  It is always at least two
-for a packed datatype and exactly one for every other datatype.
-
-Packed datatypes can be used directly as operands in compute instructions.
-When an instruction has multiple tensor operands, each operand must contain the same total
-number of squares: `N_sq = max(pack_factor)` across all tensor operands.
-Each operand's register span is sized to hold exactly `N_sq` squares.
-Accumulator operands are not subject to this rule — they always hold exactly one square.
-
-See <<operand-formation>> in the programming model for the complete rules and a worked example.
-
-Because a packed M register holds multiple squares, packed formats increase register
-pressure when combined with wide datatypes — for example, in kernels such as flash
-attention. Explicit pack/unpack instructions (see <<ame:doc:inst:mconv_ew,mconv.ew>>,
-<<ame:doc:inst:mpack_ew_x,mpack.ew.x>>, and <<ame:doc:inst:munpack_ew_x,munpack.ew.x>>)
-therefore remain necessary to convert between packed and non-packed layouts and to manage
-that pressure.
-
-If a packed datatype/operation combination is not supported by an implementation,
-`amestatus.UN` is set and the instruction returns without writing any output register.
-Software can probe compute support by attempting a compute instruction and
-inspecting `amestatus.UN`. Whether any given packed datatype is supported is
-implementation-defined.
-
-=== Discovery
-
-The AME specification represents a large state space of possible datatypes and operations.
-
-The probe sequences below assume that `MS` is enabled and the current context
-owns the AME backend.
-
-Implementations are expected to support a small fraction of the possible space.
-Because of this, AME includes a discovery mechanism for software to determine which
-datatypes, conversions, and operations are supported.
-
-The <<ame:doc:csr:amestatus,amestatus>> CSR contains a <<ame:doc:csr_field:amestatus:UN,amestatus.UN>>
-field that is set whenever an implemented AME instruction is executed with unsupported datatypes.
-This serves as a reliable way to test any combination of operation/datatype.
-
-The overall datatypes supported can also be tested by checking
-<<ame:doc:csr_field:amestatus:UN,amestatus.UN>> after an `msettyp` instruction.
-
-.Testing for datatype support in an `M` register
-[source,bash]
-----
-  csrwi amestatus, 0
-  li t0, 0x40000004    # Int4
-  msettyp m0, t0
-  csrr t1, amestatus
-  andi t1, t1, 1
-  beqz t1, int4_m_supported
-----
-
-.Testing for datatype support in an `Acc` register
-[source,bash]
-----
-  csrwi amestatus, 0
-
-  li t0, 0x40000020    # Int32
-  asettyp acc0, t0
-
-  csrr t1, amestatus
-  andi t1, t1, 1
-  beqz t1, int32_acc_supported
-----
-
-A specific operation can also be tested by trying it and checking <<ame:doc:csr_field:amestatus:UN,amestatus.UN>>.
-
-.Testing for int8 -> int32 widening accumulation
-[source,bash]
-----
-  # assume that Int8 is supported in M and Int32 is supported in Acc
-
-  li t0, 0x40000008    # Int8
-  msettyp m0, t0
-  li t1, 0x40000020    # Int32
-  asettyp acc0, t1
-
-  csrwi amestatus, 0   # clear amestatus.UN
-
-  mmulacc.2d acc0, m0, m0
-
-  csrr t1, amestatus
-  andi t1, t1, 1
-  beqz t1, widening_8_32_matmul_supported
-----
+Example probe sequences are provided in
+<<datatype-discovery-examples,the datatype and operation discovery examples>>.

@@ -1,0 +1,281 @@
+[[ame-common-instruction-semantics]]
+=== Common instruction semantics
+
+[[ame-common-operand-validation]]
+==== Operand validation and exception priority
+
+For every AME instruction, the applicable validation checks occur in the
+following architectural order unless its detailed definition states otherwise:
+
+. State-access checks in <<ame-common-state-access>> complete first.
+. Every encoded register specifier and every instruction-specific constraint
+  determined solely from encoded fields is checked before the addressed AME
+  register or datatype state is read.  Failure raises an Illegal Instruction
+  exception.
+. The exact operation/datatype tuple is then checked.  An unsupported tuple
+  sets `amestatus.UN` and returns without a destination write; it is not a
+  synchronous exception.  Derived group geometry is not interpreted for an
+  unsupported tuple.
+. For a supported tuple, operands are formed under
+  <<operand-formation,the operand-formation rules>> and
+  every derived base alignment and complete physical-register span is checked,
+  including any derived accumulator span.  A zero span, misalignment, or span
+  outside the implemented register file raises an Illegal Instruction
+  exception.
+. Only after those checks may operand data be accessed and the instruction
+  commit under <<norm:ame_source_snapshot,the source-snapshot rule>> and
+  <<norm:ame_atomic_register_writeback,the atomic-writeback rule>>.
+
+[[register-group-overlap]]
+==== Register group overlap and atomic writeback
+
+[#norm:ame_register_group_overlap]#Unless an instruction explicitly states an
+overlap restriction, any source `M` or `Acc` register group may overlap any
+destination register group, including complete overlap where the base register
+numbers are equal.#
+
+[#norm:ame_source_snapshot]#All source register values, source datatype values,
+scalar operands, and index operands are read from the architectural state that
+exists immediately before the instruction begins.# Destination overlap does
+not alter that source snapshot unless an instruction explicitly defines an
+ordered destination update.
+
+[#norm:ame_atomic_register_writeback]#For register-only AME instructions, all
+destination `M`, `Md`, `Acc`, and `Ad` writes, together with accrued
+`amefflags` and `amexsat` updates, become architecturally visible as one commit
+only after the instruction completes successfully.#
+
+[#norm:ame_register_exception_atomicity]#If a register-only AME instruction
+raises a synchronous exception, none of its destination writes or accrued
+`amefflags` or `amexsat` updates occur; only architectural trap state written by
+exception handling may change.#
+
+[[ame-common-datatype-support]]
+==== Datatype tuple support
+
+[#norm:ame_op_supported_contract]#An instruction datatype tuple is unsupported
+when a required datatype is zero or unknown, the operation is not implemented,
+the exact operation/datatype combination is not supported, or a datatype
+definition lacks a semantic capability required by the instruction's
+`Operation` and applicable family rules.#
+An unsupported tuple sets `amestatus.UN` and leaves every destination register
+unchanged; it does not raise a synchronous exception.
+
+Standard datatypes obtain their arithmetic, comparison, conversion, rounding,
+raw-bit, sign, zero, and status-flag behavior from this specification.  An
+accepted tuple containing a custom datatype shall have definitions for every
+such capability used by its `Operation`, including any required ordering,
+semantic zero, source-to-destination conversion, raw-bit or sign
+interpretation, and result or flag behavior; otherwise the tuple is
+unsupported.
+
+[#norm:ame_op_supported_defined_result]#Once an implementation accepts an
+operation/datatype tuple, the result is the mathematical operation stated by
+the instruction, interpreted and converted according to the common datatype
+rules and applicable instruction-family semantics in this specification.#
+
+[#norm:ame_op_precondition]#No source data is consumed and no destination data
+is produced until the encoded indices and required datatype tuple have passed
+their common validation checks.#
+
+[#norm:ame_op_result_width]#An element result is represented in the destination
+datatype.  Bits outside that datatype representation are not architectural
+state and cannot affect a later AME operation.#
+
+Datatype applicability is therefore determined by exact operation/datatype
+capability, not by a global operand-class whitelist.
+
+[[ame-common-integer]]
+==== Standard integer operation semantics
+
+The *Rounding mode* field applies to integer operations whose exact
+mathematical intermediate result has fraction bits below the LSB of the
+destination datatype.  Let `v` be the
+exact intermediate result and `d` the number of fraction bits discarded when
+producing the destination-width integer result.  `v` is treated as a two's
+complement value and `>>` denotes an arithmetic right shift.  When `d == 1`,
+the term `v[d-2:0]` is treated as zero.  The rounded result is
+selected by the destination datatype's rounding mode:
+
+|===
+| Encoding | Mode | Rounded result
+
+| `00`
+| RNU (round-to-nearest-up)
+| `(v >> d) + v[d-1]`
+
+| `01`
+| RNE (round-to-nearest-even)
+| `(v >> d) + r`, where `r = 1` if `v[d-1] == 1` and `(v[d-2:0] != 0 or
+v[d] == 1)`, else `r = 0`
+
+| `10`
+| RDN (round-down, truncate)
+| `v >> d`
+
+| `11`
+| ROD (round-to-odd, jam)
+| `(v >> d) {vbar} (v[d-1:0] != 0)`
+
+|===
+
+Operations whose exact result is already integral are unaffected by the
+rounding mode.  The rounding mode does not apply to floating-point datatypes,
+whose rounding follows the IEEE floating-point class rules.
+
+[[ame-operation-notation]]
+==== Operation notation
+
+In an architectural `Operation`, `A` denotes the formed M-register source
+selected by `ms1`, or the sole M-register source named `ms` or `ms2` when there
+is no `ms1`. `B` denotes `ms2` in a two-source form, `D` denotes `md`, `C`
+denotes an accumulator operand, and `c` denotes an instruction-defined scalar
+value. The applicable common contract defines the formula's element or square
+domain and the meaning of its index variables. Unless that contract defines an
+ordered update, `D` or `C` on the right-hand side denotes the pre-instruction
+destination value under
+<<norm:ame_source_snapshot,the pre-instruction source snapshot rule>>.
+
+`M[r]` and `Acc[r]` denote physical registers rather than formed operands.
+`raw_bits(...)` denotes the uninterpreted bit pattern of the named physical
+register or contiguous register range; it bypasses operand formation and
+datatype interpretation.
+
+<<<
+
+=== Instruction-family semantics
+
+[[ame-common-matmul]]
+==== 2-dimensional matrix multiply operations
+
+Every logical source square is `N x N`.  Square `s` of the two formed source
+operands is paired as `A[s]` and `B[s]`; the accumulator is one `N x N` square,
+so each output element folds `N_sq * N` scalar products.  Transposition applies
+within each paired square:
+
+[source]
+--
+ordinary(i,j,s,q)    = A[s][i,q] * B[s][q,j]
+transpose-A(i,j,s,q) = A[s][q,i] * B[s][q,j]
+transpose-B(i,j,s,q) = A[s][i,q] * B[s][j,q]
+--
+
+For each output element, the implementation uses a fixed, deterministic
+permutation of all `(s,q)` terms.  It seeds the fold with the pre-instruction
+accumulator element and adds or subtracts each product in that order; it does
+not first reduce the products separately.  The accepted tuple defines the
+typed multiplication and accumulation.  The implementation shall document its
+overflow, saturation, floating-point rounding, and optional fused-product
+behavior, which shall be deterministic for that tuple.  Register encodings are
+never accumulated as untyped bit vectors, and the fold is never implicitly
+seeded with zero.
+
+
+[[ame-common-arithmetic]]
+==== 1-dimensional elementwise operations
+
+Each instruction applies the `Operation` defined on its detailed instruction
+page independently to every logical element of every square selected by operand
+formation, as required by <<norm:ame_nsq_1d,the common operand-formation rule>>.
+
+Among standard datatypes, `mexp2.ew`, `mlog2.ew`, `mcos.ew`, `msin.ew`,
+`mtanh.ew`, `mrec.ew`, `mrsqrt.ew`, `msqrt.ew`, and the `mfrint*.ew` family
+require floating-point source and destination datatypes.  For the
+`mlog2sub.ew` and `msublog2.ew` families, including their `.ew.x` forms, the
+operand of `log2`, and the destination, are standard floating-point datatypes;
+the bias is governed by the exact tuple's conversion and subtraction
+capabilities.  Custom tuples may define these operations under
+<<ame-common-datatype-support,the exact-tuple capability contract>>.
+Standard floating-point operations additionally follow
+<<ame-common-floating-point,the standard floating-point operation semantics>>.
+
+===== Integer evaluation and destination conversion
+
+For standard integer arithmetic, the mathematical expression is evaluated
+without intermediate truncation and converted once to the destination integer
+datatype.  A saturating destination clamps an out-of-range result and sets
+`amexsat.SAT`; a non-saturating destination retains the low destination-width
+bits.  `mhdiff.ew`, `mhdiff.ew.x`, `mmean.ew`, and `mmean.ew.x` round fraction
+bits below the destination LSB according to
+<<ame-common-integer,the common standard-integer rounding rules>> before that
+conversion.  Custom
+datatype tuples may define different conversion rules.
+
+[[ame-common-floating-point]]
+==== Standard floating-point operation semantics
+
+This subsection supplies the default result, rounding, and flag behavior for
+accepted standard floating-point tuples of the 1-dimensional elementwise
+operations in <<ame-common-arithmetic>> and of the prefix, reduction, and
+scatter instructions whose detailed definitions add floating-point rules.  It
+does not apply to raw-bit or raw-sign behavior and does not override the
+implementation-defined product and accumulation behavior of
+<<ame-common-matmul>>.
+
+AME floating-point rounding is selected by the destination datatype; AME has no
+global dynamic rounding mode analogous to `fcsr.FRM`.  Standard floating-point
+operations accrue IEEE exception flags in `amefflags` and do not modify
+`fflags`; they OR the accrued flags into `amefflags` at the commit defined by
+<<norm:ame_atomic_register_writeback,the atomic register-writeback rule>>.
+
+[#norm:ame_fp_special_values]
+Unless the detailed instruction states an exception, an operation covered by
+this subsection follows its exact mathematical expression and rounds a finite
+result once using the destination datatype's rounding mode.  Any NaN input or
+invalid operation produces the destination datatype's canonical quiet NaN; a
+signaling NaN is quieted.  Invalid operations include indeterminate infinity
+addition or subtraction and zero multiplied by infinity.  Ordered comparisons
+and raw-sign predication instead follow their detailed instruction definitions.
+
+Floating-point exceptional conditions are data results after tuple acceptance:
+they neither trap nor set `amestatus.UN`.  If the destination cannot represent a
+required infinity, the result saturates to the appropriate signed minimum or
+maximum; if it cannot represent a required NaN, the tuple is unsupported.
+
+For standard floating-point datatypes, `amefflags` uses the same five accrued
+exception classes as RISC-V `fflags`, with tininess detected after rounding:
+
+* `NV` is set for a signaling NaN or an invalid operation, including an
+  infinity-minus-itself form, zero multiplied by infinity, a finite negative
+  square root, or an invalid floating-point-to-integer conversion.  Propagating
+  a quiet NaN alone does not set `NV`.
+* `DZ` is set when an exact infinite result arises from finite inputs because
+  of a pole at zero, including reciprocal or reciprocal-square-root of zero
+  and `log2(±0)`.
+* `OF` is set when the rounded result's magnitude exceeds the destination's
+  finite range.  Such a result also sets `NX`.
+* `UF` is set when the result is tiny after rounding and inexact.  Such a
+  result also sets `NX`.
+* `NX` is set whenever the delivered finite result differs from the exact
+  mathematical result because of rounding, including an implementation-defined
+  approximation that is not exact.
+
+Exact operations and exact conversions set none of these flags.  A custom
+floating-point datatype definition must specify equivalent flag conditions
+for every supported tuple that can update `amefflags`; otherwise that tuple is
+unsupported.
+
+
+==== Scalars
+
+[[ame-common-scalar-operands]]
+===== Scalar ingress and data scalar operands
+
+For a data-scalar `.ew.x` instruction, let
+`scalar_dtype = CSR[amestype]`.  The required tuple includes `Md[md]`,
+`Md[ms2]`, and `scalar_dtype`; a zero, unknown, or unsupported descriptor makes
+the tuple unsupported.  The instruction uses the low `sizeof(scalar_dtype)`
+bits of the X-register operand when XLEN is at least that width and ignores
+higher bits.  When `sizeof(scalar_dtype)` exceeds XLEN, it zero-extends the
+X-register bit pattern to that width.  It interprets the resulting bits using
+`scalar_dtype` and converts the value to `Md[ms2]`; the detailed `Operation`
+then uses that value as `c` and converts its result to `Md[md]` under the
+applicable family rules.  If the exact tuple does not define the required
+scalar-to-`Md[ms2]` conversion, the tuple is unsupported.
+
+Control scalars, including indices, offsets, shift amounts, strides, and
+packed-slot selectors, are the signed or unsigned integer quantities defined by
+their instruction.  They do not use `amestype` or undergo AME datatype
+conversion.
+
+<<<

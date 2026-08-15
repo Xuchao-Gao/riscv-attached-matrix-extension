@@ -9,7 +9,6 @@ They are executed in program order, and their memory accesses follow RVWMO at th
 instruction level (see <<ame-consistency-model>>).
 
 [[ame-state-enablement]]
-[[ame-common-state-access]]
 ==== AME state enablement
 
 AME adds a two-bit matrix context status field, `MS[1:0]`, to `mstatus`.
@@ -51,68 +50,16 @@ field. When `V=1`, both `mstatus.MS` and `vsstatus.MS` are applicable. AME is
 enabled only when every applicable field is non-Off, and state changes update
 every applicable field. A Dirty `vsstatus.MS` sets `vsstatus.SD`.
 
-[[shared-ame-backend]]
-==== Shared AME backend
-
-An AME backend contains the execution resources and architectural context
-state. It may be shared by multiple harts. Base AME exposes the entire backend
-as one indivisible ownership unit, held by at most one software execution
-context.
-
-[[ame-backend-ownership]]
-===== Ownership and access rules
-
-The read-only `ameown.OWNED` field reports whether the current context owns the
-backend. `ame.acquire` requests ownership and `ame.release` relinquishes it;
-<<ame-backend-management-operators>> defines their semantics.
-
-If any applicable `MS` field is Off:
-
-* Every AME instruction raises an illegal-instruction exception, including
-  `ame.acquire` and `ame.release`.
-* Every read or write of every AME CSR raises an illegal-instruction exception,
-  including a read of `ameown`.
-
-If every applicable `MS` field is non-Off but `ameown.OWNED=0`:
-
-* Every AME instruction other than `ame.acquire` and `ame.release` raises an
-  illegal-instruction exception.
-* Every access to a writable AME context CSR raises an illegal-instruction
-  exception.
-* Read-only capability CSRs and `ameown` may be read.
-
-These exceptions precede all other AME validation and change no AME state.
-
-If `ameown.OWNED=1`, a CSR instruction that attempts to set any applicable
-`MS` field to Off raises an illegal-instruction exception and changes no state.
-No implicit release occurs; software must execute `ame.release` first.
-
-[[ame-backend-ms]]
-===== Interaction with `MS`
-
-A newly granted backend is bound to the current context in architectural
-initial state, with `ameown.OWNED=1` and each applicable `MS` field Initial.
-Reacquiring an already-owned backend preserves its state and `MS`. Releasing
-an owned backend clears `OWNED` and sets each applicable `MS` field to Initial.
-`MS` alone does not grant ownership.
-
-[[ame-backend-context-switch]]
-===== OS context switch
-
-Software saves `ameown.OWNED` with the execution context. Before switching out
-an owner, it saves required AME state and releases the backend.
-
-To restore a saved owner, software enables `MS`, executes `ame.acquire`, and
-waits for success. It then restores any saved AME state and sets `MS` to Clean,
-or retains the initial state and Initial status established by acquisition.
-AME execution resumes only after acquisition succeeds and any required restore
-completes.
+A non-Off `MS` value enables AME state but does not by itself grant access to
+an AME backend. Backend ownership and state-access requirements are defined in
+<<ame-common-state-access>>.
 
 === State
 
-An acquired AME backend binds its AME registers and writable context CSRs to
-the current software execution context. AME instructions access that state and
-control data transfer between AME registers and memory.
+AME architectural state consists of its registers and writable context CSRs.
+When the current software execution context owns a backend, that state is bound
+to the context as defined in <<shared-ame-backend>>. AME instructions access
+the bound state and control data transfer between AME registers and memory.
 
 .Register state and data movement paths for AME. The F/D and V extensions are _optional_ with AME. The only architectural datapath between vector (if present) and AME is through memory. The scalar datapath(s) is/are one-way. AME accumulator state can only be moved to/from the AME matrix registers.
 image::ame_state.svg[AME state and architectural datapaths]
@@ -131,6 +78,15 @@ In contrast, an `Acc` register always holds exactly one square.
 
 === Squares
 
+A datatype whose size is greater than zero and less than
+<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> is a *packed
+datatype*.  Whether a datatype is packed therefore depends on the
+implementation-defined unit datatype size: the same datatype can be packed on
+one implementation and non-packed on another.  An implementation whose unit
+datatype size equals its smallest supported datatype size has no packed
+datatypes.  AME does not designate any particular datatype as inherently
+packed.
+
 The *pack_factor* of a datatype is the number of squares contained in a single M register:
 
 * **Packed** (`sizeof(dtype) < AME_UNIT_DATATYPE_SIZE`): `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(dtype)`
@@ -144,9 +100,7 @@ through `amestatus.UN`.  Consequently the `ceil` in the general group-size
 formula is equal to exact division for every supported wide datatype, and every
 M-register group spans a power-of-two number of registers.
 
-When the programmed datatype is a *packed datatype*
-(size < `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`),
-a single M register holds `pack_factor` logical squares.
+A packed M register holds `pack_factor` logical squares.
 
 The number of elements processed by an AME matrix multiply instruction depends on the datatype.
 For non-packed datatypes (`pack_factor = 1`), the operands are `N x N` squares.
@@ -154,45 +108,17 @@ When operand formation produces `N_sq > 1`, the input operands span
 `N x (N_sq * N)` and `(N_sq * N) x N` elements respectively, while the
 accumulator output remains `N x N`.
 
-[NOTE]
---
-This constraint keeps the ISA simple: instruction encoding does not need per-operand shape fields
-and register mapping is uniform. The accumulator operand always holds exactly one `N x N` square.
-
-For contrast, general matrix multiply on non-square inputs (`M x K` by `K x N`) produces `M x N`.
-AME handles this by tiling into squares and zero-padding boundary tiles in software.
-
-.Example (`N = 8`)
-* Multiply `A(3x5)` by `B(5x2)`.
-* Software packs `A` and `B` into zero-padded `8x8` squares.
-* AME computes a full `8x8` result square.
-* Software keeps only the valid `3x2` upper-left region and discards padded rows/columns.
-+
-image::ame-square-padding-example.svg[Matrix padding example for N=8]
-
-Larger non-square problems are handled the same way: process full interior `N x N` tiles normally,
-and pad only edge tiles.
---
-
 The row/column dimension, N, is implementation-defined and is equal to the
 square root of <<ame:doc:param:AME_NELEM,AME_NELEM>>.
 <<ame:doc:param:AME_NELEM,AME_NELEM>> can be any power of 4.
 
-[NOTE]
---
-It is possible to create portable AME binaries regardless of the chosen value of
-<<ame:doc:param:AME_NELEM,AME_NELEM>>.
-
-Highly-tuned binaries may produce a better result by targeting a specific value of
-<<ame:doc:param:AME_NELEM,AME_NELEM>>, similar to how auto-vectorizing compilers can generate
-more efficient code for RISC-V Vector when VLEN is known.
---
-
 All elements within a single square have the same datatype, for example unsigned 8-bit integer or
 single-precision IEEE floating point.
 
-A single operation may reference squares with different datatypes (for example, 8-bit integer inputs widening to a 16-bit integer output).
-Mixed-datatype operations are optional; see <<datatypes>> for the implementation discovery mechanism.
+A single operation may reference squares with different datatypes (for
+example, 8-bit integer inputs widening to a 16-bit integer output).
+Mixed-datatype operations are optional; see
+<<datatype-discovery,the datatype and operation discovery rules>>.
 
 [[mapping-squares-to-m-registers]]
 ==== Mapping squares to M registers
@@ -214,7 +140,8 @@ Illegal Instruction exception.
 This mechanism is analogous to the `LMUL` facility used in the RISC-V vector (`V`) extension.
 
 Packed datatypes can be used directly as operands in compute instructions;
-see <<operand-formation>> for how multi-operand instructions determine register spans.
+see <<operand-formation,the operand-formation rules>> for how multi-operand
+instructions determine register spans.
 
 .Square-to-M-register mapping examples
 image::ame-square-reg-mapping.svg[Square to M register mapping examples]
@@ -234,10 +161,12 @@ madd.ew m2, m3, m3  # raises Illegal Instruction
 madd.ew m3, m2, m2  # raises Illegal Instruction
 ----
 
-[[operand-formation]]
-[[ame-common-register-groups]]
+<<<
+
+[#ame-common-register-groups]
 ==== Operand formation
 
+[[operand-formation]]
 When a compute instruction references multiple tensor operands, all operands must contain
 the same total number of squares.
 The instruction's square count is `N_sq = max(pack_factor)` across all tensor operands.
@@ -247,17 +176,22 @@ Each operand's register span is then sized to hold exactly `N_sq` squares:
 * **Packed operand** (`pack_factor > 1`): `N_sq / pack_factor` registers
 * **Unit or Wide operand** (`pack_factor = 1`): `N_sq x ceil(sizeof(dtype) / AME_UNIT_DATATYPE_SIZE)` registers
 
+For a wide operand, each logical square shall be assembled from its complete
+consecutive M-register group before the implementation-defined physical layout
+is mapped into logical row-major element order.  Logical element positions
+shall not be derived from an element count truncated to one physical M register.
 
-Consider an ADD instruction with three tensor operands of different datatypes:
+Consider `madd.ew md, ms1, ms2` with three tensor operands of different
+datatypes:
 
 .Operand formation example (`AME_UNIT_DATATYPE_SIZE` = 8 bits)
-[cols="1,1,1,1,1",options="header"]
+[cols="1,1,1,1,1",options="header",%unbreakable]
 |===
 | Operand | Dtype | pack_factor | Register Span | Total Squares
 
-| Tsrc0 | Int4  | 2 | N_sq / 2 = 1 register  | 2
-| Tsrc1 | Int8  | 1 | N_sq x 1 = 2 registers | 2
-| Tdst  | Int16 | 1 | N_sq x 2 = 4 registers | 2
+| `ms1` | Int4  | 2 | N_sq / 2 = 1 register   | 2
+| `ms2` | Int8  | 1 | N_sq x 1 = 2 registers | 2
+| `md`  | Int16 | 1 | N_sq x 2 = 4 registers | 2
 |===
 
 `N_sq = max(2, 1, 1) = 2` (set by the Int4 operand with `pack_factor = 2`).
@@ -269,7 +203,7 @@ they always hold exactly one square regardless of datatype.
 This rule applies uniformly to both 1D (element-wise) and 2D (matrix multiply) instructions.
 For 1D instructions, each operand processes `N_sq` squares element-wise — a packed
 operand's `pack_factor` squares are stored contiguously in a single register, while a
-non-packed operand's `N_sq` squares span `N_sq` registers.
+non-packed operand's `N_sq` squares span `N_sq` register groups.
 For 2D matrix multiply instructions, the inner product dimension extends to
 `N_sq * N` elements; see <<ame-common-matmul>>.
 
@@ -291,20 +225,6 @@ no separate destination operand is allocated and each operand spans only its
 own register requirement.  `ms1` and `ms2` must name distinct M registers;
 an equal pair raises an `Illegal Instruction` exception before any register
 is read or written.
-
-All Permutation instructions -- the row/column broadcast, gather, scatter,
-and shift forms together with the fixed-shape zip/unzip forms -- support only
-datatypes whose size is no smaller than `AME_UNIT_DATATYPE_SIZE`; a packed
-datatype follows <<norm:ame_op_supported_contract>>.  The broadcast, gather,
-scatter, and shift operands therefore always form exactly one logical square
-(`N_sq = 1`).
-
-For `mcolgather.ew`, `mrowgather.ew`, and all four scatter instructions, the
-low 32 raw bits of each matrix-index element form an unsigned value; any higher
-element bits are ignored, and an element narrower than 32 bits is zero-extended
-to U32.  The index is the low `log2(sqrt(AME_NELEM))` bits of that U32 value;
-higher U32 bits are ignored, so an index element never raises an exception
-regardless of its value.
 
 [#norm:ame_nsq_1d]#For an ordinary 1D element-wise instruction, the logical
 element count is `N_sq * AME_NELEM`.  The operator is applied to corresponding
@@ -328,292 +248,15 @@ placing all `A_s` side by side and stacking all `B_s` expresses this as an
 transposes each `N x N` logical square before summing its product; it does not
 transpose either aggregate rectangular matrix.
 
-==== Operand validation and exception priority
-
-Every encoded `M` or `Md` register specifier is validated immediately after
-decode and before any `Md` or `M` state is read.  Thus an index greater than or
-equal to `AME_NUM_M_REGS` raises an Illegal Instruction exception before any
-datatype-dependent validation.
-For the `mcolunzip.ew`, `mcolzip.ew`, `mrowunzip.ew`, and `mrowzip.ew`
-instructions, the requirement that `ms1` and `ms2` name distinct M registers
-is likewise checked immediately after decode, together with these base-index
-checks; an equal pair raises an Illegal Instruction exception.
-Datatype compatibility between the two operands is a separate operand-class
-requirement: a datatype mismatch reports `amestatus.UN` rather than an
-exception.
-
-Every encoded `Acc` or `Ad` register specifier is likewise checked immediately
-after decode and before any `Ad`, `Acc`, or datatype-dependent `M` state is
-read.  An index greater than or equal to `AME_NUM_ACC_REGS` raises an
-`Illegal Instruction` exception.  All
-encoded M/Md and Acc/Ad base-index checks therefore precede datatype-support
-checks and any `amestatus.UN` report.  A derived accumulator span, such as the
-packed span used by `mmov.m.a` or `mmov.a.m`, is checked after the operation
-tuple is supported but before any operand data access or architectural write.
-
-After the required datatypes and operation tuple have been found to be
-supported, but before any `M` data access or architectural write, each tensor
-operand is formed according to <<operand-formation>>.  Its base, per-square
-alignment, and complete physical-register span are then validated.  The
-complete span, rather than only the first square's group size, is checked.  A
-zero-sized span, a misaligned group, or a group whose final register would be
-outside the implemented register file raises an Illegal Instruction exception.
-
-For an instruction that does not use the multi-operand `N_sq` rule, the same
-validation applies using the physical span explicitly defined by that
-instruction.  Existing per-instruction base and alignment tests are redundant
-clarifications of these common checks and do not alter this exception
-priority.  An unsupported datatype or operation sets `amestatus.UN` only after
-all encoded base indices have passed the first-stage index check; group
-alignment and span are not interpreted for an unsupported datatype.
-
-Every logical source element is read from the complete formed operand in
-logical row-major order.  A wide square is assembled from its complete
-register group before the implementation-defined register layout is converted
-to logical row-major order.  Packed slots and `N_sq` squares participate in
-the logical element sequence defined in <<operand-formation>>; implementations
-must not derive element locations using a truncated per-register element
-count.
-
-[[register-group-overlap]]
-==== Register group overlap and atomic writeback
-
-Register operands name groups rather than individual storage locations, so two
-operands can overlap completely or partially when their datatypes require
-different register spans.
-
-[#norm:ame_register_group_overlap]#Unless an instruction explicitly states an
-overlap restriction, any source `M` or `Acc` register group may overlap any
-destination register group, including complete overlap where the base register
-numbers are equal.#
-
-[#norm:ame_source_snapshot]#All source register values, source datatype values,
-scalar operands, and index operands are read from the architectural state that
-exists immediately before the instruction begins.# Consequently, an
-instruction such as a gather, broadcast, shift, or reduction produces the same
-result when its destination overlaps a source as it does when the destination
-is disjoint.  Writes performed by the instruction do not change the source
-snapshot used by later element operations.
-
-[#norm:ame_atomic_register_writeback]#For register-only AME instructions, all
-destination `M`, `Md`, `Acc`, and `Ad` writes are staged and become visible
-together only after every operand, datatype, alignment, bounds, and index check
-has completed successfully.# Accrued status-flag updates to `amefflags` and
-`amexsat` are staged in the same way and commit together with the destination
-writes.
-
-[#norm:ame_register_exception_atomicity]#If a register-only AME instruction
-raises a synchronous exception, none of its staged destination writes commit;
-only architectural trap state written by exception handling may change.# Such
-an instruction likewise commits no staged `amefflags` or `amexsat`
-update.  An
-unsupported datatype or operation is not a synchronous exception: it sets
-`amestatus.UN` and returns without committing any destination write, as
-described in <<datatypes>>.
-
 === Polymorphic instructions
 
 AME instructions do not encode operand datatypes; instead, datatypes are determined by dedicated datatype registers.
 
-[NOTE]
-This feature makes AME analogous to polymorphic programming languages
-– a single function (instruction) is defined for all datatype combinations (polymorphic argument types).
-
-[[ame-common-datatype-support]]
-=== Datatypes
-
-AME supports up to `2^32 - 1` unique datatypes, half of which are reserved for custom use.
-The value 0 is reserved to mean uninitialized.
-
-[NOTE]
---
-The datatype registers are similar to WARL CSR fields, so implementations only need to support
-enough state to represent the datatypes they support.
-
-For example, an implementation that only supports two datatypes would only need two bits to
-represent those datatypes plus uninitialized.
---
-
-Standard datatypes and encoding rules are listed in <<datatypes>>.
-
-Implementations may choose which standard datatypes are supported and which custom datatypes
-are supported.
-
-[#norm:ame_op_supported_contract]#An instruction datatype tuple is unsupported
-when a required datatype is zero or unknown, the operation is not implemented,
-the datatype classes do not meet the instruction requirements, or the
-implementation does not support that exact operation/datatype combination.#
-An unsupported tuple sets `amestatus.UN` and leaves every destination register
-unchanged; it does not raise a synchronous exception.
-
-[#norm:ame_op_supported_defined_result]#Once an implementation accepts an
-operation/datatype tuple, the result is the mathematical operation stated by
-the instruction, interpreted and converted according to the common datatype
-rules in this chapter.#
-
-[#norm:ame_op_precondition]#No source data is consumed and no destination data
-is produced until the encoded indices and required datatype tuple have passed
-their common validation checks.#
-
-[#norm:ame_op_result_width]#An element result is represented in the destination
-datatype.  Bits outside that datatype representation are not architectural
-state and cannot affect a later AME operation.#
-
-[[ame-common-operand-classes]]
-.Operand-class requirements
-[cols="2,5",options="header"]
-|===
-| Instruction family | Required operand classes
-
-| `mcolbcast.ew.x`, `mrowbcast.ew.x`, `mcolshift.ew.x`, `mrowshift.ew.x`
-| The data source and destination datatypes are identical.  The X-register
-index or offset is the fixed integer control operand defined by the instruction.
-
-| `mcolgather.ew`, `mrowgather.ew`
-| The data source and destination datatypes are identical, and the matrix index
-operand has an integer datatype.
-
-| `mconv.ew`, `mpack.ew.x`, `munpack.ew.x`, `mbcast.m.x`
-| The named source-to-destination conversion tuple is supported.
-
-| `mabs.ew`; `mabsdiff.ew`, `mabsdiff.ew.x`; `mhdiff.ew`, `mhdiff.ew.x`;
-`mmean.ew`, `mmean.ew.x`; `mmul.ew`, `mmul.ew.x`; `mmulneg.ew`,
-`mmulneg.ew.x`; `madd.ew`, `madd.ew.x`; `msub.ew`, `msub.ew.x`
-| The data sources and destination are supported numeric datatypes.  A data
-scalar is converted as described below before the ordinary tensor operation.
-
-| `mand.ew`, `mandnot.ew`, `mor.ew`, `mornot.ew`, `mxor.ew`, including
-their `.ew.x` forms
-| The source and destination datatypes are identical integer datatypes.
-
-| `mcmpge.ew`, `mcmplt.ew`, including their `.ew.x` forms
-| The sources have ordered numeric datatypes and the destination has an integer
-datatype.
-
-| `mcolunzip.ew`, `mcolzip.ew`, `mrowunzip.ew`, `mrowzip.ew`
-| The two operands share one common datatype; the operation is a bit-exact
-copy after the instruction-specific source selection and result placement.
-
-| `mcolbcast.ew.x`, `mrowbcast.ew.x`, `mcolgather.ew`, `mrowgather.ew`,
-`mcolshift.ew.x`, `mrowshift.ew.x`, `mcolscatadd.ew`, `mrowscatadd.ew`,
-`mcolscatmax.ew`, `mrowscatmax.ew`, `mcolunzip.ew`, `mcolzip.ew`,
-`mrowunzip.ew`, `mrowzip.ew`
-| The common datatype size is no smaller than `AME_UNIT_DATATYPE_SIZE`; packed
-datatypes are not supported.
-
-| `mexp2.ew`, `mlog2.ew`, `mcos.ew`, `msin.ew`, `mtanh.ew`, `mrec.ew`,
-`mrsqrt.ew`, `msqrt.ew`, `mfrintm.ew`, `mfrintn.ew`, `mfrintp.ew`, `mfrintz.ew`
-| Source and destination datatypes are floating-point datatypes.
-
-| `mldexp.ew`, `mldexp.ew.x`, `mrdexp.ew`, `mldexpacc.ew`,
-`mldexpacc.ew.x`, `mrdexpacc.ew`
-| The data source and destination are numeric datatypes, and the exponent is an
-integer datatype or the fixed integer control operand defined by the `.ew.x`
-instruction.  A `.ew.x` tuple is unsupported if
-<<ame:doc:param:AME_MAX_INT_DTYPE,AME_MAX_INT_DTYPE>> is absent.
-
-| `mlog2sub.ew`, `msublog2.ew`, including their `.ew.x` forms
-| The logarithm data source and destination are floating-point datatypes and the
-bias is a numeric datatype.  A `.ew.x` bias is a data scalar converted under
-the common scalar datatype rules below.
-
-| `mselge.ew`, `msellt.ew`
-| The predicate datatype has a defined sign bit; the selected data source and
-destination datatypes are identical.
-
-| `mcmovge.ew`, `mcmovlt.ew`
-| The predicate datatype has a defined sign bit; the selected data source and
-destination datatypes are identical.
-
-| `mmulacc.ew`, `mmulaccneg.ew`, `mmuladd.ew`, `mmulsub.ew`, including their
-`.ew.x` forms
-| The explicit data sources and destination are supported numeric datatypes.
-
-| `mmulacc.2d`, `mmulaccneg.2d`, `mmulatacc.2d`, `mmulataccneg.2d`,
-`mmulbtacc.2d`, `mmulbtaccneg.2d`
-| The matrix sources and accumulator destination are supported numeric
-datatypes for that matrix operation.
-
-| `mmin.ew`, including `mmin.ew.x`, and `mreducemin.col`, `mreducemin.row`
-| Source and destination datatypes are identical ordered numeric datatypes.
-
-| `mmax.ew`, including `mmax.ew.x`, `mprefixmax.col`, `mprefixmax.row`,
-`mreducemax.col`, `mreducemax.row`
-| Source and destination datatypes are identical ordered numeric datatypes.
-
-| `mprefixadd.col`, `mprefixadd.row`, `mreduceadd.col`, `mreduceadd.row`
-| Source and destination datatypes are identical numeric datatypes.
-
-| `mcolscatadd.ew`, `mrowscatadd.ew`
-| The contribution source is numeric, the matrix index source is integer, and
-the current destination value and result use the destination datatype.
-
-| `mcolscatmax.ew`, `mrowscatmax.ew`
-| The contribution source is ordered numeric, the matrix index source is
-integer, and the current destination value and result use the destination datatype.
-
-| `mzero.2d.m`, `mzero.2d.acc`
-| The destination has any supported datatype.
-
-| `mrowid.ew`, `mcolid.ew`
-| The destination is an integer datatype in which
-`sqrt(AME_NELEM) - 1` is exactly representable.
-
-| `msll.ew`, including `msll.ew.x`, and `msrl.ew`, including `msrl.ew.x`
-| The data and matrix shift-amount datatypes are integer datatypes, and the data
-element width is a power of two.  A `.ew.x` shift amount is the fixed integer
-control operand defined by that instruction.
-
-| `msra.ew`, including `msra.ew.x`
-| The data datatype is signed integer with a power-of-two element width; a
-matrix shift-amount datatype is integer, and a `.ew.x` shift amount is the
-fixed integer control operand defined by that instruction.
-
-| `mmov.m.m`, `mmov.m.a`, `mmov.a.m`
-| Source and destination datatypes are identical.
-|===
-
-These requirements apply after encoded register indices have passed the
-first-stage index checks.  A tuple that violates a requirement is unsupported
-and follows <<norm:ame_op_supported_contract>>.
-
-Data-scalar `.ew.x` instructions interpret exactly the low
-`sizeof(amestype)` bits of the X-register operand when XLEN is at
-least that width, ignoring any higher X-register bits.  When the scalar
-datatype is wider than XLEN, the X-register bit pattern is zero-extended to
-that width.  The resulting bit pattern is interpreted using
-`amestype`, converted to the tensor source datatype, and then used by
-the ordinary same-datatype element operation.  A
-failed scalar conversion is an unsupported datatype tuple.  Control scalars,
-including indices, offsets, shift amounts, strides, and packed-slot selectors,
-are unsigned or signed integer quantities defined by their instruction; they
-do not use `amestype`.
-
-A legal implementation may support either zero standard datatypes or zero custom datatypes (i.e.,
-all custom or all standard).
-
-[NOTE]
---
-Profiles will likely mandate a minimal set of supported datatypes.
---
-
-`M` register datatypes are set using the <<ame:doc:inst:msettyp,msettyp>> instruction and
-read using the <<ame:doc:inst:mgettyp,mgettyp>> instruction. `Acc` register datatypes are
-set using <<ame:doc:inst:asettyp,asettyp>> and read using
-<<ame:doc:inst:agettyp,agettyp>>. Setting an `Acc` datatype with `asettyp` also clears the
-corresponding accumulator tile.
-
-The clear performed by `asettyp` and `msettyp` writes all-zero physical storage
-bits; it does not produce the datatype's semantic zero.  `msettyp` derives the
-group size from the newly requested datatype, validates the base alignment and
-complete span, and clears every physical M register in that group.  Unsupported
-datatype requests set `amestatus.UN` and leave both descriptor and data state
-unchanged.
+include::datatypes.adoc[]
 
 === Data movement
 
-Data movement between AME register files, the integer (X) register file, the floating point (F)
-register file, and memory are restricted in order to facilitate a detached AME execution unit.
+AME defines only the data-movement paths described in this section.
 
 There are no AME data movement instructions between memory and the `Acc` registers;
 rather, `Acc` registers can only be moved in to or out of the `M` registers.
@@ -625,15 +268,13 @@ A scalar from the X register file can be sent to an `M` register.
 
 AME does not define data movement operations between AME register files and the vector (V)
 register file.
-Performance-sensitive AME code should use AME 1D operations on matrix data rather than RISC-V Vector.
 
 [[ame-common-memory]]
 === Memory
 
-This section is the common contract for the ten load and store instructions
-enumerated in <<Load and store>>.  It defines their memory layouts, their
-base-address alignment requirement, their exception behavior, and the ordering of
-AME memory transfers with respect to the other memory accesses of the hart.
+This section is the common contract for AME load and store instructions.  It
+defines their memory layouts, base-address alignment, exception behavior, and
+ordering with respect to the hart's other memory accesses.
 
 AME uses the same address space as the host hart.
 In systems with virtual memory, AME loads and stores go through (H)S-mode translation and,
@@ -647,11 +288,10 @@ For every memory instruction, let `E` be the element size in bits, `P = pack_fac
 and `N = sqrt(AME_NELEM)`, so that `AME_NELEM = N * N`.  For an interoperability or
 strided instruction `E = sizeof(dtype)`, the size of the programmed datatype.  For
 `mls.1r` and `mss.1r`, `E = AME_UNIT_DATATYPE_SIZE` and `P = 1`: those instructions fix
-the element size instead of reading it from a datatype register.  These three abbreviations are local to this section; the
-instruction pages spell the same quantities out as `sizeof(Md[md])`,
-`pack_factor`, and `sqrt(AME_NELEM)`.  Sizes written as `sizeof(...)`, as `E`,
-or as an `AME_*_SIZE` parameter are counts of bits, while every quantity whose
-name ends in `_bytes` is a count of bytes.  Elements are packed
+the element size instead of reading it from a datatype register.  These three
+abbreviations are local to this section.  Sizes written as `sizeof(...)`, as
+`E`, or as an `AME_*_SIZE` parameter are counts of bits, while every quantity
+whose name ends in `_bytes` is a count of bytes.  Elements are packed
 back-to-back as E-bit fields; no byte padding is inserted between elements.
 The first field occupies the low E bits of the transfer bit string, and the
 byte at the lowest address contains bits 7:0 of that string.  When the final
@@ -704,32 +344,6 @@ No other alignment is architecturally required.  In particular the transfer
 size, the segment size, and the value of `stride` place no constraint on the
 base address, and a transfer may begin and end at any offset within a page.
 
-[NOTE]
---
-`element_bytes` is one byte for every datatype of eight bits or fewer, so those
-datatypes carry no alignment requirement at all; for every other supported
-datatype it is a power of two, because every supported datatype size is a power
-of two (see <<Squares>>).
-
-Element alignment is the weakest requirement under which every element of an
-interoperability transfer is itself naturally aligned, because elements are
-packed at a fixed `E`-bit pitch measured from the base address.  A buffer
-written by `mss.rm` or `mss.cm` can therefore be consumed element-wise by
-ordinary base-ISA loads without depending on misaligned scalar access support.
-A naturally aligned power-of-two element cannot cross a larger power-of-two
-boundary, so no element straddles a page boundary, nor a cache block boundary in
-an implementation whose cache blocks are at least as large as one element.  A strided
-transfer extends the same property to every segment when `stride` is also a
-multiple of `element_bytes`; software that intends scalar consumption of a
-strided region should choose such a stride.
-
-An implementation may complete more strongly aligned transfers faster, and a
-profile or ABI may mandate stronger alignment.  The architecture does not:
-software that wants block-aligned or page-aligned buffers can always align them
-itself, whereas a stronger architectural requirement could not be relaxed by
-software.
---
-
 ==== Square memory access
 
 AME provides memory storage variants that operate on one of three memory layouts:
@@ -759,11 +373,9 @@ one register's worth of elements because
 `AME_MATRIX_REGISTER_SIZE = AME_NELEM * AME_UNIT_DATATYPE_SIZE`.  They behave as
 `mls.rm` and `mss.rm` do for a unit datatype, except that the element size is fixed by
 the instruction rather than taken from a datatype register.
-They therefore neither read nor require a supported datatype, which is what register
-spilling, context switching, and calling conventions need: the register is saved and
-restored whatever its programmed datatype happens to be, including an uninitialized or
-unsupported one.  A wide logical square that occupies multiple M registers requires one
-instruction for each register in the group.
+They therefore neither read nor require a supported datatype, including when the
+programmed datatype is uninitialized or unsupported.  A wide logical square that
+occupies multiple M registers requires one instruction for each register in the group.
 
 ==== Strided memory access
 
@@ -790,13 +402,14 @@ image::packed-strided-instructions.png[Packed strided load/store illustration]
 An interoperability or strided load or store that names an `M` register whose
 programmed datatype is unsupported sets `amestatus.UN` and makes no other
 architectural state change — neither the `M` register group nor memory is modified.
-This is an unsupported-operation report as described in <<datatypes>> and not a
-synchronous exception, but it is defined here because it precedes both exception
-classes below in the check order.
+This is an unsupported-operation report under
+<<norm:ame_op_supported_contract,the unsupported-datatype-tuple contract>> and
+not a synchronous exception, but it is defined here because it precedes both
+exception classes below in the check order.
 `mls.1r` and `mss.1r` do not read `Md` and are therefore not subject to it.
 
 In addition to the illegal-instruction exceptions covered by
-<<Operand validation and exception priority>>, AME load and store instructions raise
+<<ame-common-operand-validation,the common operand-validation rules>>, AME load and store instructions raise
 two classes of precise exception:
 
 * **Address misaligned:** A typed load or store whose base address is not
@@ -854,1024 +467,3 @@ completed; it is not an order in which the instruction's memory operations becom
 visible.  The no-partial-completion rule in <<Memory exceptions>> likewise constrains
 what a faulting instruction commits, not what another hart may observe while an
 instruction that does not fault is executing.
-
-[NOTE]
---
-Ztso only imposes RVTSO at the instruction level; intra-instruction ordering follows
-RVWMO regardless of whether Ztso is implemented.
-
-Ordering an AME memory instruction with respect to a non-AME memory instruction needs
-nothing AME-specific: the standard `fence` instruction applies, AME loads counting as
-memory reads and AME stores as memory writes, and RVWMO already orders accesses to
-overlapping addresses without a fence.
-
-A separate consequence of following RVWMO at the instruction level is that element
-atomicity is not guaranteed.  An AME transfer may be decomposed into component memory
-operations of any granularity, exactly as a misaligned scalar access may be, so a
-concurrent observer may see part of an element transferred and the remainder not.
---
-
-=== Operators
-
-AME supports several broad classes of operations:
-
-*  Backend management
-*  2D Matrix multiply
-*  1D Element-wise/vector
-*  Intra-tensor (reduction/expansion/permutation)
-*  Register move / data conversion
-*  Scalar ingress and data scalar operands
-*  Load/store
-
-AME does not support general masking/predication on computational instructions, though a future extension may add support.
-
-[[ame-backend-management-operators]]
-==== Backend management
-
-===== `ame.acquire`
-
-`ame.acquire rd, rs1` atomically requests the entire backend. Every applicable
-`MS` field must be non-Off; otherwise, the instruction raises an
-illegal-instruction exception.
-
-`rs1` contains the acquisition descriptor:
-
-[cols="1,1,3",options="header"]
-|===
-|Field |Location |Description
-
-|WAIT_MODE
-|`1:0`
-|Waiting policy
-
-|TIMEOUT_CLASS
-|`5:2`
-|Bounded-wait class
-
-|RESERVED
-|`XLEN-1:6`
-|Must be zero
-|===
-
-`WAIT_MODE=0b00` is TRY and does not wait. `WAIT_MODE=0b01` is BOUNDED_WAIT
-and waits for a finite, implementation-defined interval. Other encodings are
-reserved. For BOUNDED_WAIT, `TIMEOUT_CLASS` values `0x0` through `0x3` select
-SHORT, MEDIUM, LONG, and VERY_LONG; `0xF` is implementation-defined and all
-other values are reserved. TRY ignores `TIMEOUT_CLASS`.
-
-`rd` receives:
-
-[cols="1,1,3",options="header"]
-|===
-|Field |Location |Description
-
-|SUCCESS
-|`0`
-|One on success; zero on failure
-
-|STATUS
-|`7:1`
-|Acquisition status
-
-|RESERVED
-|`XLEN-1:8`
-|Zero
-|===
-
-[cols="1,2,1,4",options="header",%unbreakable]
-|===
-|STATUS |Name |SUCCESS |Description
-
-|`0x00`
-|GRANTED
-|1
-|Granted or already owned
-
-|`0x01`
-|BUSY
-|0
-|Backend unavailable
-
-|`0x02`
-|UNSUPPORTED
-|0
-|No accessible AME backend
-
-|`0x03`
-|DISABLED
-|0
-|Disabled by implementation or platform configuration
-
-|`0x04`
-|BAD_DESC
-|0
-|Invalid descriptor
-
-|`0x05`
-|TIMEOUT
-|0
-|Bounded wait expired
-
-|`0x06`
-|INTERRUPTED
-|0
-|Wait interrupted
-
-|`0x07`
-|DENIED
-|0
-|Denied by platform policy
-
-|`0x08-0x7E`
-|RESERVED
-|-
-|Reserved
-
-|`0x7F`
-|IMPL_DEFINED
-|Impl.
-|Implementation-defined result
-|===
-
-An invalid descriptor returns BAD_DESC, and disabled configuration returns
-DISABLED. A request from the current owner returns GRANTED without changing
-the bound state or `MS`. A new grant atomically binds architectural initial
-state, sets `ameown.OWNED` to one, and sets each applicable `MS` field to
-Initial. Initial state has zero-valued `M` and `Acc` registers, zero-valued
-`Md` and `Ad` descriptors, and reset-valued writable AME CSRs. Failure changes
-neither backend binding, `ameown`, nor `MS`.
-
-===== `ame.release`
-
-`ame.release` requires every applicable `MS` field to be non-Off. If the
-current context owns the backend, it stops accepting new operations, drains
-retired operations and earlier state-save stores, unbinds the state, and
-atomically releases ownership.
-
-After release, `ameown.OWNED` is zero and each applicable `MS` field is
-Initial. If the current context is not the owner, the instruction is a no-op
-that preserves `MS`.
-
-
-
-[[ame-common-matmul]]
-==== 2-dimensional matrix multiply operations
-
-AME matrix multiplication instructions calculate the matrix product `C = A x B`.
-Supported source and accumulator datatype combinations are constrained by
-<<ame-common-operand-classes>>.
-
-For *non-packed datatypes* (`pack_factor = 1`), each logical square is `N x N`.
-When operand formation produces `N_sq > 1`, the operation pairs logical squares
-`A_s` and `B_s` by their zero-based square index.  The accumulator output C is
-always `N x N`, and each output element sums `N_sq * N` scalar products.
-
-The untransposed form computes `sum(A[s] x B[s], s = 0 .. N_sq-1)`.  This is
-equivalently the product of an `N x (N_sq * N)` A matrix formed by laying the
-`A[s]` squares side by side and an `(N_sq * N) x N` B matrix formed by stacking
-the `B[s]` squares.  The transpose-A form computes
-`sum(transpose(A[s]) x B[s], s = 0 .. N_sq-1)`, and the transpose-B form
-computes `sum(A[s] x transpose(B[s]), s = 0 .. N_sq-1)`.  The transposes therefore apply within each logical
-square and remain dimensionally valid for every `N_sq`.
-
-The accumulation order for additions inside each dot product is implementation-defined.
-That order is fixed within a given implementation, so repeated runs on the same implementation
-produce the same result.
-
-Each dot product accumulates numeric products interpreted according to the
-source and accumulator datatypes.  The implementation uses its fixed
-permutation of the `K` terms and applies the documented overflow, saturation,
-floating-point, rounding, and optional fused-product behavior.  Encoded
-register bits are never accumulated as untyped bit-vector integers.
-Every matrix multiply accumulates: each dot product is seeded with the
-pre-instruction accumulator element, and the product is then added to or
-subtracted from it.  Software that wants a product alone clears the accumulator
-first with `mzero.2d.acc`, which writes the accumulator datatype's semantic
-additive zero rather than an all-zero raw bit pattern.
-Until a tighter matrix-precision profile is defined, these finite-precision
-choices are implementation-defined.  An implementation shall document the
-selected behavior, and that behavior shall be deterministic for a given
-operation/datatype tuple.
-
-[NOTE]
-Different implementations may use different accumulation orders, and therefore may produce
-different results (especially for floating-point data).
-
-Formally:
-
-.AME matrix multiplication
-[source]
---
-def perm(range): implementation-defined permutation over range
-
-# mode is ordinary, transpose-A, or transpose-B
-# sign is +1 for an accumulating form, -1 for a negated accumulating form
-terms = perm((s,q) for s in 0..N_sq-1, q in 0..N-1)
-
-product(i,j,s,q) = ordinary:    A_s[i,q] * B_s[q,j]
-                   transpose-A: A_s[q,i] * B_s[q,j]
-                   transpose-B: A_s[i,q] * B_s[j,q]
-
-for i in 0..N-1:
-  for j in 0..N-1:
-    # The pre-instruction accumulator element seeds the fold, and each product is
-    # folded into it in turn.  The products are not reduced among themselves first:
-    # at finite precision the two differ, so this is not an equivalent rewriting.
-    acc = C[i,j]
-    for (s,q) in terms:
-      acc = acc + sign * product(i,j,s,q)
-    C[i,j] = acc
---
-
-Matrix multiplication is not commutative (`A*B != B*A` in general),
-so operand order must be preserved by software using AME primitives.
-
-AME defines the matrix-multiply instruction variants listed below.
-The destination of matrix multiply operations is always an accumulator register.
-The operations differ in
-whether or not they transpose an input before multiplying,
-and whether the product is added to or subtracted from the accumulator.
-
-[cols="1,2,3",options="header"]
-|===
-| Instruction   | Operation  | Description
-| <<ame:doc:inst:mmulacc_2d,mmulacc.2d>>
-| `C = C + A × B`
-| Matrix multiply accumulate
-| <<ame:doc:inst:mmulaccneg_2d,mmulaccneg.2d>>
-| `C = C - A × B`
-| Negated matrix multiply accumulate
-| <<ame:doc:inst:mmulatacc_2d,mmulatacc.2d>>
-| `C = C + sum(transpose(A[s]) × B[s], s = 0 .. N_sq-1)`
-| Matrix multiply with transposed A, accumulate
-| <<ame:doc:inst:mmulataccneg_2d,mmulataccneg.2d>>
-| `C = C - sum(transpose(A[s]) × B[s], s = 0 .. N_sq-1)`
-| Matrix multiply with transposed A, negated accumulate
-| <<ame:doc:inst:mmulbtacc_2d,mmulbtacc.2d>>
-| `C = C + sum(A[s] × transpose(B[s]), s = 0 .. N_sq-1)`
-| Matrix multiply with transposed B, accumulate
-| <<ame:doc:inst:mmulbtaccneg_2d,mmulbtaccneg.2d>>
-| `C = C - sum(A[s] × transpose(B[s]), s = 0 .. N_sq-1)`
-| Matrix multiply with transposed B, negated accumulate
-|===
-
-[[ame-common-arithmetic]]
-==== 1-dimensional elementwise operations
-
-AME defines 1-dimensional (elementwise/vector) operations that use the `M` registers.
-Their datatype combinations are constrained by <<ame-common-operand-classes>>.
-
-Element-wise operations apply the same operator independently at each coordinate of the input squares.
-For every position `(i,j)`, the instruction reads `A[i,j]` and `B[i,j]`, computes the result, and
-writes it to `C[i,j]`.
-
-There are four classes of elementwise operations: Arithmetic, Bitwise, Comparison, and Nonlinear.
-
-Arithmetic::
-[cols="1,2,3",options="header"]
-|===
-| Instruction | Operation |  Description
-| <<ame:doc:inst:mabs_ew,mabs.ew>>
-| `D[i] = \|A[i]\|`
-| Elementwise absolute value
-| <<ame:doc:inst:mabsdiff_ew,mabsdiff.ew>>
-| `D[i] = \|A[i] - B[i]\|`
-| Elementwise absolute difference
-| <<ame:doc:inst:mabsdiff_ew_x,mabsdiff.ew.x>>
-| `D[i] = \|c - B[i]\|`
-| Elementwise scalar absolute difference
-| <<ame:doc:inst:madd_ew,madd.ew>>
-| `D[i] = A[i] + B[i]`
-| Elementwise addition
-| <<ame:doc:inst:madd_ew_x,madd.ew.x>>
-| `D[i] = c + B[i]`
-| Elementwise scalar addition
-| <<ame:doc:inst:mhdiff_ew,mhdiff.ew>>
-| `D[i] = (B[i] - A[i]) / 2`
-| Elementwise half-difference
-| <<ame:doc:inst:mhdiff_ew_x,mhdiff.ew.x>>
-| `D[i] = (c - B[i]) / 2`
-| Elementwise scalar half-difference
-| <<ame:doc:inst:mmax_ew,mmax.ew>>
-| `D[i] = max(A[i], B[i])`
-| Elementwise maximum
-| <<ame:doc:inst:mmax_ew_x,mmax.ew.x>>
-| `D[i] = max(c, B[i])`
-| Elementwise scalar maximum
-| <<ame:doc:inst:mmean_ew,mmean.ew>>
-| `D[i] = (A[i] + B[i]) / 2`
-| Elementwise arithmetic mean (half-add)
-| <<ame:doc:inst:mmean_ew_x,mmean.ew.x>>
-| `D[i] = (c + B[i]) / 2`
-| Elementwise scalar mean
-| <<ame:doc:inst:mmin_ew,mmin.ew>>
-| `D[i] = min(A[i], B[i])`
-| Elementwise minimum
-| <<ame:doc:inst:mmin_ew_x,mmin.ew.x>>
-| `D[i] = min(c, B[i])`
-| Elementwise scalar minimum
-| <<ame:doc:inst:mmul_ew,mmul.ew>>
-| `D[i] = A[i] × B[i]`
-| Elementwise multiplication
-| <<ame:doc:inst:mmul_ew_x,mmul.ew.x>>
-| `D[i] = c × B[i]`
-| Elementwise scalar multiplication
-| <<ame:doc:inst:mmulacc_ew,mmulacc.ew>>
-| `D[i] = D[i] + A[i] × B[i]`
-| Elementwise multiply-accumulate
-| <<ame:doc:inst:mmulacc_ew_x,mmulacc.ew.x>>
-| `D[i] = D[i] + c × B[i]`
-| Elementwise scalar multiply-accumulate
-| <<ame:doc:inst:mmulaccneg_ew,mmulaccneg.ew>>
-| `D[i] = D[i] - A[i] × B[i]`
-| Elementwise negative multiply-accumulate
-| <<ame:doc:inst:mmulaccneg_ew_x,mmulaccneg.ew.x>>
-| `D[i] = D[i] - c × B[i]`
-| Elementwise scalar negative multiply-accumulate
-| <<ame:doc:inst:mmuladd_ew,mmuladd.ew>>
-| `D[i] = A[i] + B[i] × D[i]`
-| Elementwise fused multiply-add
-| <<ame:doc:inst:mmuladd_ew_x,mmuladd.ew.x>>
-| `D[i] = c + B[i] × D[i]`
-| Elementwise scalar fused multiply-add
-| <<ame:doc:inst:mmulneg_ew,mmulneg.ew>>
-| `D[i] = -(A[i] × B[i])`
-| Elementwise negate-multiply
-| <<ame:doc:inst:mmulneg_ew_x,mmulneg.ew.x>>
-| `D[i] = -(c × B[i])`
-| Elementwise scalar negate-multiply
-| <<ame:doc:inst:mmulsub_ew,mmulsub.ew>>
-| `D[i] = A[i] - B[i] × D[i]`
-| Elementwise fused multiply-subtract
-| <<ame:doc:inst:mmulsub_ew_x,mmulsub.ew.x>>
-| `D[i] = c - B[i] × D[i]`
-| Elementwise scalar fused multiply-subtract
-| <<ame:doc:inst:msub_ew,msub.ew>>
-| `D[i] = B[i] - A[i]`
-| Elementwise subtraction
-| <<ame:doc:inst:msub_ew_x,msub.ew.x>>
-| `D[i] = c - B[i]`
-| Elementwise scalar subtraction
-|===
-
-Bitwise::
-[cols="1,2,3",options="header"]
-|===
-| Instruction | Operation | Description
-| <<ame:doc:inst:mand_ew,mand.ew>>
-| `D[i] = A[i] & B[i]`
-| Elementwise bitwise AND
-| <<ame:doc:inst:mand_ew_x,mand.ew.x>>
-| `D[i] = c & B[i]`
-| Elementwise scalar bitwise AND
-| <<ame:doc:inst:mandnot_ew,mandnot.ew>>
-| `D[i] = A[i] & ~B[i]`
-| Elementwise bitwise AND-NOT
-| <<ame:doc:inst:mandnot_ew_x,mandnot.ew.x>>
-| `D[i] = c & ~B[i]`
-| Elementwise scalar bitwise AND-NOT
-| <<ame:doc:inst:mor_ew,mor.ew>>
-| `D[i] = A[i] \| B[i]`
-| Elementwise bitwise OR
-| <<ame:doc:inst:mor_ew_x,mor.ew.x>>
-| `D[i] = c \| B[i]`
-| Elementwise scalar bitwise OR
-| <<ame:doc:inst:mornot_ew,mornot.ew>>
-| `D[i] = A[i] \| ~B[i]`
-| Elementwise bitwise OR-NOT
-| <<ame:doc:inst:mornot_ew_x,mornot.ew.x>>
-| `D[i] = c \| ~B[i]`
-| Elementwise scalar bitwise OR-NOT
-| <<ame:doc:inst:mxor_ew,mxor.ew>>
-| `D[i] = A[i] ^ B[i]`
-| Elementwise bitwise XOR
-| <<ame:doc:inst:mxor_ew_x,mxor.ew.x>>
-| `D[i] = c ^ B[i]`
-| Elementwise scalar bitwise XOR
-| <<ame:doc:inst:msll_ew,msll.ew>>
-| `D[i] = A[i] << (B[i] mod EW)`
-| Elementwise logical left shift
-| <<ame:doc:inst:msll_ew_x,msll.ew.x>>
-| `D[i] = B[i] << (c mod EW)`
-| Elementwise scalar logical left shift
-| <<ame:doc:inst:msra_ew,msra.ew>>
-| `D[i] = A[i] >>s (B[i] mod EW)`
-| Elementwise arithmetic right shift
-| <<ame:doc:inst:msra_ew_x,msra.ew.x>>
-| `D[i] = B[i] >>s (c mod EW)`
-| Elementwise scalar arithmetic right shift
-| <<ame:doc:inst:msrl_ew,msrl.ew>>
-| `D[i] = A[i] >>u (B[i] mod EW)`
-| Elementwise logical right shift
-| <<ame:doc:inst:msrl_ew_x,msrl.ew.x>>
-| `D[i] = B[i] >>u (c mod EW)`
-| Elementwise scalar logical right shift
-|===
-
-Comparison::
-[cols="1,2,3",options="header"]
-|===
-| Instruction | Operation | Description
-| <<ame:doc:inst:mcmovge_ew,mcmovge.ew>>
-| `D[i] = (A[i] >= 0) ? B[i] : D[i]`
-| Elementwise two-way conditional move (non-negative)
-| <<ame:doc:inst:mcmovlt_ew,mcmovlt.ew>>
-| `D[i] = (A[i] < 0) ? B[i] : D[i]`
-| Elementwise two-way conditional move (negative)
-| <<ame:doc:inst:mcmpge_ew,mcmpge.ew>>
-| `D[i] = (A[i] >= B[i]) ? -1 : 0`
-| Elementwise greater-or-equal compare
-| <<ame:doc:inst:mcmpge_ew_x,mcmpge.ew.x>>
-| `D[i] = (c >= B[i]) ? -1 : 0`
-| Elementwise scalar compare greater-or-equal
-| <<ame:doc:inst:mcmplt_ew,mcmplt.ew>>
-| `D[i] = (A[i] < B[i]) ? -1 : 0`
-| Elementwise less-than compare
-| <<ame:doc:inst:mcmplt_ew_x,mcmplt.ew.x>>
-| `D[i] = (c < B[i]) ? -1 : 0`
-| Elementwise scalar compare less-than
-| <<ame:doc:inst:mselge_ew,mselge.ew>>
-| `D[i] = (A[i] >= 0) ? B[i] : 0`
-| Elementwise predicated select (non-negative)
-| <<ame:doc:inst:msellt_ew,msellt.ew>>
-| `D[i] = (A[i] < 0) ? B[i] : 0`
-| Elementwise predicated select (negative)
-|===
-
-Nonlinear::
-[cols="1,2,3",options="header"]
-|===
-| Instruction | Operation | Description
-| <<ame:doc:inst:mexp2_ew,mexp2.ew>>
-| `D[i] = pow2(A[i])`
-| Elementwise base-2 exponentiation
-| <<ame:doc:inst:mldexp_ew,mldexp.ew>>
-| `D[i] = A[i] × pow2(B[i])`
-| Elementwise left-shift scale (ldexp)
-| <<ame:doc:inst:mldexp_ew_x,mldexp.ew.x>>
-| `D[i] = B[i] × pow2(c)`
-| Elementwise scalar left-shift scale (ldexp)
-| <<ame:doc:inst:mldexpacc_ew,mldexpacc.ew>>
-| `D[i] = D[i] + A[i] × pow2(B[i])`
-| Elementwise left-shift scale accumulate
-| <<ame:doc:inst:mldexpacc_ew_x,mldexpacc.ew.x>>
-| `D[i] = D[i] + B[i] × pow2(c)`
-| Elementwise scalar left-shift scale accumulate
-| <<ame:doc:inst:mlog2_ew,mlog2.ew>>
-| `D[i] = log2(A[i])`
-| Elementwise base-2 logarithm
-| <<ame:doc:inst:mlog2sub_ew,mlog2sub.ew>>
-| `D[i] = log2(abs(A[i])) - B[i]`
-| Elementwise log2 minus bias
-| <<ame:doc:inst:mlog2sub_ew_x,mlog2sub.ew.x>>
-| `D[i] = log2(abs(B[i])) - c`
-| Elementwise log2 minus scalar bias
-| <<ame:doc:inst:mrdexp_ew,mrdexp.ew>>
-| `D[i] = A[i] × pow2(-B[i])`
-| Elementwise right-shift scale
-| <<ame:doc:inst:mrdexpacc_ew,mrdexpacc.ew>>
-| `D[i] = D[i] + A[i] × pow2(-B[i])`
-| Elementwise right-shift scale accumulate
-| <<ame:doc:inst:msublog2_ew,msublog2.ew>>
-| `D[i] = B[i] - log2(abs(A[i]))`
-| Elementwise bias minus log2
-| <<ame:doc:inst:msublog2_ew_x,msublog2.ew.x>>
-| `D[i] = c - log2(abs(B[i]))`
-| Elementwise scalar bias minus log2
-| <<ame:doc:inst:mcos_ew,mcos.ew>>
-| `D[i] = cos(A[i])`
-| Elementwise cosine
-| <<ame:doc:inst:msin_ew,msin.ew>>
-| `D[i] = sin(A[i])`
-| Elementwise sine
-| <<ame:doc:inst:mtanh_ew,mtanh.ew>>
-| `D[i] = tanh(A[i])`
-| Elementwise hyperbolic tangent
-| <<ame:doc:inst:mrec_ew,mrec.ew>>
-| `D[i] = 1 / A[i]`
-| Elementwise reciprocal
-| <<ame:doc:inst:mrsqrt_ew,mrsqrt.ew>>
-| `D[i] = 1 / sqrt(A[i])`
-| Elementwise reciprocal square root
-| <<ame:doc:inst:msqrt_ew,msqrt.ew>>
-| `D[i] = sqrt(A[i])`
-| Elementwise square root
-| <<ame:doc:inst:mfrintm_ew,mfrintm.ew>>
-| `D[i] = floor(A[i])`
-| Round floating-point elements toward minus infinity
-| <<ame:doc:inst:mfrintn_ew,mfrintn.ew>>
-| `D[i] = roundTiesToEven(A[i])`
-| Round floating-point elements to nearest, ties to even
-| <<ame:doc:inst:mfrintp_ew,mfrintp.ew>>
-| `D[i] = ceil(A[i])`
-| Round floating-point elements toward plus infinity
-| <<ame:doc:inst:mfrintz_ew,mfrintz.ew>>
-| `D[i] = trunc(A[i])`
-| Round floating-point elements toward zero
-|===
-
-The floating-point special-value and accuracy behavior of these operations is
-defined in <<norm:ame_fp_special_values>>.
-
-For standard integer arithmetic, the mathematical expression is evaluated
-without intermediate truncation and converted once to the destination integer
-datatype.  A saturating destination clamps an out-of-range result and sets
-`amexsat.SAT`; a non-saturating destination retains the low destination-width
-bits.  `mhdiff.ew`, `mhdiff.ew.x`, `mmean.ew`, and `mmean.ew.x` round fraction
-bits below the destination LSB using the destination datatype's rounding mode
-before that conversion.  Custom
-datatype tuples may define different conversion rules.
-
-Standard floating-point operations accrue their IEEE exception flags in
-`amefflags`; they do not modify `fflags`.  Updates to `amefflags` and `amexsat`
-are accumulated locally for the whole instruction and OR-ed into the
-architectural CSRs only when destination writes commit.  An instruction that
-raises a synchronous exception commits neither destination writes nor status
-flag updates.
-
-The `mcmpge.ew` and `mcmplt.ew` families perform ordered comparisons.  For
-floating-point sources, a NaN operand makes the comparison false and `-0`
-compares equal to `+0`.  A true comparison produces all one bits in the
-destination integer element, and a false comparison produces all zero bits.
-
-The `mselge.ew`, `msellt.ew`, `mcmovge.ew`, and `mcmovlt.ew` families do not
-perform a numeric or floating-point comparison.  They test the most
-significant bit of the raw predicate-element encoding: the `ge` condition is
-true when that bit is clear and the `lt` condition is true when that bit is
-set.  Consequently, floating-point NaN and zero encodings are treated only by
-their sign bit.  An unselected `mselge.ew` or `msellt.ew` element becomes the
-destination datatype's semantic zero, including its canonical zero sign.
-Shift amounts are reduced modulo the data-source element width.  `mzero.2d.m`
-and `mzero.2d.acc` produce the destination datatype's semantic zero; its
-encoding need not be all zero bits.
-`mrowid.ew` and `mcolid.ew` represent the zero-based coordinate exactly in the
-destination datatype.
-
-For `mcmovge.ew` and `mcmovlt.ew`, an unselected destination element is
-preserved bit-for-bit.  For `mldexp.ew.x` and `mldexpacc.ew.x`, `X[rs1]` is
-zero-extended or low-bit truncated to the width of
-<<ame:doc:param:AME_MAX_INT_DTYPE,AME_MAX_INT_DTYPE>> as defined by that
-parameter, then interpreted using that integer datatype.  For `mldexpacc.ew`,
-`mldexpacc.ew.x`, `mrdexpacc.ew`,
-`mmulacc.ew`, `mmulacc.ew.x`, `mmulaccneg.ew`, `mmulaccneg.ew.x`,
-`mmuladd.ew`, `mmuladd.ew.x`, `mmulsub.ew`, and `mmulsub.ew.x`, the complete
-expression shown by the instruction is evaluated without an intermediate destination
-conversion and is converted to the destination datatype once.  In particular,
-the multiply-add and multiply-subtract forms have fused semantics.  For a
-floating-point tuple, any NaN input, zero multiplied by infinity, or addition
-of opposite-signed infinities produces the destination datatype's canonical
-quiet NaN; other infinities follow the mathematical expression.  A finite
-result is rounded once using the destination datatype's rounding mode and
-accrues `amefflags` as described above.
-
-[#norm:ame_fp_special_values]
-.Floating-point special values and accuracy
-[cols="2,4,4",options="header"]
-|===
-| Instruction family | Required special-value result | Finite-result accuracy
-
-| `mmin.ew`, `mmin.ew.x`, `mreducemin.*`
-| A NaN operand produces the destination datatype's canonical quiet NaN.
-Otherwise numerical ordering is used, with `-0` selected for a tie between
-`-0` and `+0`.
-| Exact selection of one operand.  Reductions apply the binary operation in
-ascending source-element order.
-
-| `mmax.ew`, `mmax.ew.x`, `mprefixmax.*`, `mreducemax.*`
-| A NaN operand produces the destination datatype's canonical quiet NaN.
-Otherwise numerical ordering is used, with `+0` selected for a tie between
-`-0` and `+0`.
-| Exact selection of one operand.  Prefix and reduction instructions apply the
-binary operation in ascending source-element order.
-
-| `mcolscatmax.ew`, `mrowscatmax.ew`
-| A NaN operand produces the destination datatype's canonical quiet NaN.
-Operands are compared numerically after each is interpreted in its own
-datatype; a `-0`/`+0` tie produces `+0`.
-| Each selected destination is updated in ascending source-element order.
-
-| `madd.ew`, `madd.ew.x`
-| A NaN operand or the addition of opposite-signed infinities produces the
-destination datatype's canonical quiet NaN.  An infinity plus a finite value,
-or two same-signed infinities, produces that infinity.
-| Correctly rounded once using the destination datatype's rounding mode.
-
-| `msub.ew`, `msub.ew.x`
-| A NaN operand or subtraction of same-signed infinities produces the
-destination datatype's canonical quiet NaN.  Other infinite differences
-produce the mathematically signed infinity.
-| Correctly rounded once using the destination datatype's rounding mode.
-
-| `mabs.ew`
-| A NaN produces the destination datatype's canonical quiet NaN.  Either signed
-zero produces `+0`; either infinity produces `+infinity`.
-| Exact for every representable finite result.
-
-| `mabsdiff.ew`, `mabsdiff.ew.x`
-| A NaN operand or subtraction of same-signed infinities produces the
-destination datatype's canonical quiet NaN.  Any other infinite difference
-produces `+infinity`.
-| Correctly rounded once using the destination datatype's rounding mode.
-
-| `mmul.ew`, `mmul.ew.x`, `mmulneg.ew`, `mmulneg.ew.x`
-| A NaN operand or multiplication of zero by infinity produces the destination
-datatype's canonical quiet NaN.  Other infinite products have the mathematical
-sign; `mmulneg.ew` then negates that sign.
-| Correctly rounded once using the destination datatype's rounding mode.
-
-| `mprefixadd.*`, `mreduceadd.*`
-| NaN and infinity behavior is the same as for `madd.ew`.
-| These are unordered reduction additions.  Each binary addition is correctly
-rounded, but association order is implementation-defined and results may vary
-between implementations.
-
-| `mcolscatadd.ew`, `mrowscatadd.ew`
-| NaN and infinity behavior is the same as for `madd.ew`.
-| Each contribution is rounded to the destination datatype before the next
-contribution to the same destination; updates occur in ascending source order.
-
-| `msin.ew`, `mcos.ew`
-| A NaN or infinity produces the destination datatype's canonical quiet NaN.
-`sin(±0)` preserves the signed zero; `cos(±0)` produces `+1`.
-| Implementation-defined.  The implementation shall document its maximum
-error in ulp for every supported operation/datatype tuple.
-
-| `mtanh.ew`
-| A NaN produces the destination datatype's canonical quiet NaN.  `tanh(±0)`
-preserves the signed zero and `tanh(±infinity)` produces `±1`.
-| Implementation-defined, with the same documented maximum-error requirement.
-
-| `mexp2.ew`
-| A NaN produces the destination datatype's canonical quiet NaN.
-`exp2(+infinity)` produces `+infinity`, `exp2(-infinity)` produces `+0`, and
-`exp2(±0)` produces `+1`.
-| Implementation-defined, with the same documented maximum-error requirement.
-
-| `mlog2.ew`
-| A NaN, a negative finite value, or `-infinity` produces the destination
-datatype's canonical quiet NaN.  `log2(±0)` produces `-infinity`,
-`log2(+infinity)` produces `+infinity`, and `log2(1)` produces `+0`.
-| Implementation-defined, with the same documented maximum-error requirement.
-
-| `mldexp.ew`, `mldexp.ew.x`, `mrdexp.ew`
-| A NaN data operand produces the destination datatype's canonical quiet NaN.
-A signed zero or signed infinity preserves its sign.  Destination conversion
-handles scaling overflow and underflow.
-| The exact power-of-two-scaled result is rounded once using the destination
-datatype's rounding mode.
-
-| `mlog2sub.ew`, `mlog2sub.ew.x`, `msublog2.ew`, `msublog2.ew.x`
-| NaN inputs and invalid infinity combinations produce the destination
-datatype's canonical quiet NaN.  The logarithm term follows the `mlog2.ew`
-rules above.
-| Implementation-defined.  The implementation shall document the maximum
-error and whether the compound expression uses an intermediate rounding.
-
-| `mrec.ew`
-| A NaN produces the destination datatype's canonical quiet NaN.  `1/(±0)`
-produces the correspondingly signed infinity; `1/(±infinity)` produces the
-correspondingly signed zero.
-| Implementation-defined, with the same documented maximum-error requirement.
-
-| `mrsqrt.ew`
-| A NaN, `-infinity`, or a negative finite value other than `-0` produces the
-destination datatype's canonical quiet NaN.  `rsqrt(+0)` produces `+infinity`,
-`rsqrt(-0)` produces `-infinity`, and `rsqrt(+infinity)` produces `+0`.
-| Implementation-defined, with the same documented maximum-error requirement.
-
-| `msqrt.ew`
-| A NaN, `-infinity`, or a negative finite value other than `-0` produces the
-destination datatype's canonical quiet NaN.  `sqrt(±0)` preserves the signed
-zero and `sqrt(+infinity)` produces `+infinity`.
-| Correctly rounded using the destination datatype's rounding mode.
-
-| `mfrintm.ew`, `mfrintn.ew`, `mfrintp.ew`, `mfrintz.ew`
-| A NaN produces the destination datatype's canonical quiet NaN.  An infinity
-is unchanged and a zero preserves its sign.
-| Exact when the integral value is representable.  The instruction-specific
-rounding direction overrides the destination datatype's rounding-mode field.
-|===
-
-A signaling NaN is treated as a NaN and the result is quieted.  If a required
-mathematical infinity is not representable by the destination datatype, the
-result saturates to the signed minimum or maximum, as appropriate.  A tuple
-that cannot represent a required NaN result is unsupported.
-
-Floating-point exceptional conditions are ordinary data results after the
-datatype tuple has been accepted: they do not raise an exception or set
-`amestatus.UN`.  For standard floating-point datatypes, `amefflags` uses the
-same five accrued exception classes as RISC-V `fflags`, with tininess detected
-after rounding:
-
-* `NV` is set for a signaling NaN or an invalid operation, including an
-  infinity-minus-itself form, zero multiplied by infinity, a finite negative
-  square root, or an invalid floating-point-to-integer conversion.  Propagating
-  a quiet NaN alone does not set `NV`.
-* `DZ` is set when an exact infinite result arises from finite inputs because
-  of a pole at zero, including reciprocal or reciprocal-square-root of zero
-  and `log2(±0)`.
-* `OF` is set when the rounded result's magnitude exceeds the destination's
-  finite range.  Such a result also sets `NX`.
-* `UF` is set when the result is tiny after rounding and inexact.  Such a
-  result also sets `NX`.
-* `NX` is set whenever the delivered finite result differs from the exact
-  mathematical result because of rounding, including an implementation-defined
-  approximation that is not exact.
-
-Exact operations and exact conversions set none of these flags.  A custom
-floating-point datatype definition must specify equivalent flag conditions
-for every supported tuple that can update `amefflags`; otherwise that tuple is
-unsupported.
-
-[[ame-common-structural]]
-==== Reduction operations
-
-AME reduction operations reduce values across a row of a square.
-Reduction and permutation datatype combinations are constrained by
-<<ame-common-operand-classes>>.
-
-[cols="1,2,3",options="header"]
-|===
-| Instruction | Operation | Description
-| <<ame:doc:inst:mprefixadd_col,mprefixadd.col>>
-| `D[i,j] = sum(A[k,j], k = 0 .. i)`
-| Elementwise column prefix-sum (inclusive scan)
-| <<ame:doc:inst:mprefixadd_row,mprefixadd.row>>
-| `D[i,j] = sum(A[i,k], k = 0 .. j)`
-| Elementwise row prefix-sum (inclusive scan)
-| <<ame:doc:inst:mprefixmax_col,mprefixmax.col>>
-| `D[i,j] = max(A[k,j], k = 0 .. i)`
-| Elementwise column prefix-max (running maximum scan)
-| <<ame:doc:inst:mprefixmax_row,mprefixmax.row>>
-| `D[i,j] = max(A[i,k], k = 0 .. j)`
-| Elementwise row prefix-max (running maximum scan)
-| <<ame:doc:inst:mreduceadd_col,mreduceadd.col>>
-| `D[:,j] = sum(A[k,j], k = 0 .. N-1)`
-| Elementwise column reduce (add)
-| <<ame:doc:inst:mreduceadd_row,mreduceadd.row>>
-| `D[i,:] = sum(A[i,k], k = 0 .. N-1)`
-| Elementwise row reduce (add)
-| <<ame:doc:inst:mreducemax_col,mreducemax.col>>
-| `D[:,j] = max(A[k,j], k = 0 .. N-1)`
-| Elementwise column reduce (max)
-| <<ame:doc:inst:mreducemax_row,mreducemax.row>>
-| `D[i,:] = max(A[i,k], k = 0 .. N-1)`
-| Elementwise row reduce (max)
-| <<ame:doc:inst:mreducemin_col,mreducemin.col>>
-| `D[:,j] = min(A[k,j], k = 0 .. N-1)`
-| Elementwise column reduce (min)
-| <<ame:doc:inst:mreducemin_row,mreducemin.row>>
-| `D[i,:] = min(A[i,k], k = 0 .. N-1)`
-| Elementwise row reduce (min)
-|===
-
-A prefix or reduction fold is seeded from the first source element in its row
-or column; it is not seeded from the destination datatype's semantic zero.
-For integer and custom datatype additions, and for all minimum and maximum
-folds, each remaining source element is consumed in ascending index order.
-Each binary step is converted to the destination datatype—including rounding,
-saturation, and staged status flags—before that result is used by the next
-step.  Floating-point prefix and reduction additions are the explicit
-exception: they use an implementation-defined association tree, but do not
-introduce an additional zero term, and every binary addition is rounded to the
-destination datatype as specified in <<norm:ame_fp_special_values>>.  Minimum
-and maximum NaN and signed-zero behavior is also defined there.
-
-==== Permutation operations
-
-AME permutation operations swizzle data within logical squares.  The
-row/column broadcast, gather, scatter, and shift forms transform one square
-at a time, while the zip/unzip forms perform one two-square transformation.
-
-[cols="1,2,3",options="header"]
-|===
-| Instruction | Operation | Description
-| <<ame:doc:inst:mcolbcast_ew_x,mcolbcast.ew.x>>
-| `D[i,j] = A[i,c]`
-| Broadcast one selected column to all columns
-| <<ame:doc:inst:mrowbcast_ew_x,mrowbcast.ew.x>>
-| `D[i,j] = A[c,j]`
-| Broadcast one selected row to all rows
-| <<ame:doc:inst:mcolgather_ew,mcolgather.ew>>
-| `D[i,j] = A[i, B[i,j]]`
-| Elementwise column gather (take)
-| <<ame:doc:inst:mrowgather_ew,mrowgather.ew>>
-| `D[i,j] = A[B[i,j],j]`
-| Elementwise row gather (take)
-| <<ame:doc:inst:mcolscatadd_ew,mcolscatadd.ew>>
-| `D[i, B[i,j]] += A[i,j]`
-| Elementwise column scatter-add
-| <<ame:doc:inst:mrowscatadd_ew,mrowscatadd.ew>>
-| `D[B[i,j], j] += A[i,j]`
-| Elementwise row scatter-add
-| <<ame:doc:inst:mcolscatmax_ew,mcolscatmax.ew>>
-| `D[i, B[i,j]] = max(D[i,B[i,j]], A[i,j])`
-| Elementwise column scatter-max
-| <<ame:doc:inst:mrowscatmax_ew,mrowscatmax.ew>>
-| `D[B[i,j], j] = max(D[B[i,j],j], A[i,j])`
-| Elementwise row scatter-max
-| <<ame:doc:inst:mcolshift_ew_x,mcolshift.ew.x>>
-| `D[i,j] = A[i, j+c]`, with `zero(Md[md])` fill
-| Elementwise column shift by scalar offset
-| <<ame:doc:inst:mrowshift_ew_x,mrowshift.ew.x>>
-| `D[i,j] = A[i+c,j]`, with `zero(Md[md])` fill
-| Elementwise row shift by scalar offset
-| <<ame:doc:inst:mcolunzip_ew,mcolunzip.ew>>
-| `ms1[i,j] = A[i,2j] +
- ms1[i, N/2+j] = B[i,2j] +
- ms2[i,j] = A[i,2j+1] +
- ms2[i, N/2+j] = B[i,2j+1]`
-| Column unzip (de-interleave columns from two inputs)
-| <<ame:doc:inst:mrowunzip_ew,mrowunzip.ew>>
-| `ms1[i,:] = A[2i,:] +
- ms1[i+N/2,:] = B[2i,:] +
- ms2[i,:] = A[2i+1,:] +
- ms2[i+N/2,:] = B[2i+1,:]`
-| Row unzip (de-interleave rows from two inputs)
-| <<ame:doc:inst:mcolzip_ew,mcolzip.ew>>
-| `ms1[i,2j] = A[i,j] +
- ms1[i,2j+1] = B[i,j] +
- ms2[i,2j] = A[i, N/2+j] +
- ms2[i,2j+1] = B[i, N/2+j]`
-| Column zip (interleave columns from two inputs)
-| <<ame:doc:inst:mrowzip_ew,mrowzip.ew>>
-| `ms1[2i,:] = A[i,:] +
- ms1[2i+1,:] = B[i,:] +
- ms2[2i,:] = A[i+N/2,:] +
- ms2[2i+1,:] = B[i+N/2,:]`
-| Row zip (interleave rows from two inputs)
-|===
-
-Scatter source elements are processed in ascending logical row-major order.
-The first contribution to a destination coordinate reads that coordinate's
-pre-instruction value.  A later contribution to the same coordinate reads the
-staged result produced by the preceding contribution, then stages its own
-result.  Thus a scatter formula's RHS `D` denotes the evolving staged value
-for a collision, while all other source operands retain the common
-pre-instruction snapshot behavior.
-
-==== Register move / data conversion
-
-`<<ame:doc:inst:mmov_m_m,mmov.m.m>>` copies all elements from one `M` register to another.
-Datatype combinations for these operations are constrained by
-<<ame-common-operand-classes>>.
-`<<ame:doc:inst:mmov_m_a,mmov.m.a>>` copies all elements from an `Acc` register to an `M` register.
-`<<ame:doc:inst:mmov_a_m,mmov.a.m>>` copies all elements from an `M` register to an `Acc` register.
-In all three cases, the source and destination datatypes must match; if they differ, `amestatus.UN` is set and the destination is left unchanged.
-
-`<<ame:doc:inst:mzero_2d_acc,mzero.2d.acc>>` writes zero to every element of an `Acc` register,
-typically used to initialize an accumulator before a matrix multiply sequence.
-`<<ame:doc:inst:mzero_2d_m,mzero.2d.m>>` writes zero in the configured datatype to every logical
-element of an `M` register group, including packed element positions.
-`<<ame:doc:inst:mrowid_ew,mrowid.ew>>` and `<<ame:doc:inst:mcolid_ew,mcolid.ew>>` form the index
-group of the 1-dimensional elementwise instructions: they write the zero-based row or column
-index, represented in the configured datatype, to every logical element of an `M` register group.
-
-[cols="1,2,3",options="header"]
-|===
-| Instruction | Operation | Description
-| <<ame:doc:inst:mmov_a_m,mmov.a.m>>
-| `acc[i] = A[i]`
-| Elementwise unconditional move from M register to accumulator
-| <<ame:doc:inst:mmov_m_a,mmov.m.a>>
-| `D[i] = acc[i]`
-| Elementwise unconditional move from accumulator to M register
-| <<ame:doc:inst:mmov_m_m,mmov.m.m>>
-| `D[i] = A[i]`
-| Elementwise unconditional move between M registers
-| <<ame:doc:inst:mzero_2d_acc,mzero.2d.acc>>
-| `C[i] = zero(Ad[acc])`
-| Clear every logical element of an accumulator tile
-| <<ame:doc:inst:mzero_2d_m,mzero.2d.m>>
-| `D[i] = zero(Md[md])`
-| Clear every logical element of an M register group
-| <<ame:doc:inst:mrowid_ew,mrowid.ew>>
-| `D[i,j] = i`
-| Write the zero-based row index to every element
-| <<ame:doc:inst:mcolid_ew,mcolid.ew>>
-| `D[i,j] = j`
-| Write the zero-based column index to every element
-| <<ame:doc:inst:mconv_ew,mconv.ew>>
-| `D[i] = convert(A[i])`
-| Convert element data between supported datatypes
-| <<ame:doc:inst:mpack_ew_x,mpack.ew.x>>
-| `D[k] = convert(A)`; preserve all `D[n]` for `n != k`
-| Convert and insert one non-packed square into packed slot `k = X[rs1]`
-| <<ame:doc:inst:munpack_ew_x,munpack.ew.x>>
-| `D = convert(A[k])`
-| Extract and convert packed slot `k = X[rs1]` into one non-packed square
-|===
-
-`<<ame:doc:inst:mconv_ew,mconv.ew>>` converts element data from one datatype to another.
-The source and destination datatypes may each be packed or non-packed, and both operands
-are formed by the common operand-formation rules with `N_sq = max(pack_factor)`.
-A packed-to-non-packed conversion expands one packed `M` register into `pack_factor` consecutive
-non-packed `M` registers; a non-packed-to-packed conversion does the reverse.
-The indexed <<ame:doc:inst:mpack_ew_x,mpack.ew.x>> and
-<<ame:doc:inst:munpack_ew_x,munpack.ew.x>> forms convert one selected square at a time,
-reducing register pressure when a full expand or compress is not required.
-
-==== Scalars
-
-AME provides an explicit typed scalar ingress instruction and data-scalar
-elementwise forms.  Software can therefore use a converted scalar repeatedly
-through an M register, or use a data scalar directly without allocating an M
-register for it.
-
-===== Scalar ingress and data scalar operands
-
-`mbcast.m.x` is the explicit scalar ingress instruction. It interprets an X-register
-bit pattern using a datatype encoding supplied in another X register, converts the
-value to the destination `Md` datatype using the common conversion rules, and broadcasts the converted
-value to every logical element of the destination M operand.
-
-Data scalar `.ew.x` instructions use `CSR[amestype]` for the source scalar
-type. The scalar is converted to the tensor operand datatype before the ordinary
-same-datatype operation is evaluated. This keeps the operation support table
-polymorphic without requiring a separate mixed-type tuple for every instruction.
-
-Shift amounts, indices, offsets, and other control scalar operands are fixed-type
-integer values defined by their instruction. They do not read
-`CSR[amestype]` and do not undergo AME datatype conversion.
-
-[cols="1,2,3",options="header"]
-|===
-| Instruction | Operation | Description
-| <<ame:doc:inst:mbcast_m_x,mbcast.m.x>>
-| `D[i] = convert(X[rs1], source datatype X[rs2], destination datatype Md[md])`
-| Convert one X scalar and broadcast it to an M operand
-|===
-
-===== Debug scalar element moves
-
-The `mmove` family provides single-element moves between an X register and a
-fixed position inside one M register, intended for debugging.  Each
-instruction defines its own element size (8, 16, 32, or 64 bits) and accesses
-the register through the row-major layout transformation, viewed as `N` rows
-of `row_elements` elements of that size; it uses neither
-`CSR[amestype]` nor the register datatype in `Md`.
-
-[cols="1,2,3",options="header"]
-|===
-| Instruction | Operation | Description
-| <<ame:doc:inst:mmove8_m_x,mmove8.m.x>> /
-  <<ame:doc:inst:mmove16_m_x,mmove16.m.x>> /
-  <<ame:doc:inst:mmove32_m_x,mmove32.m.x>> /
-  <<ame:doc:inst:mmove64_m_x,mmove64.m.x>>
-| `D.rm[pos] = X[rs2]`
-| Move one 8/16/32/64-bit scalar into an M register position
-| <<ame:doc:inst:mmove8_x_m,mmove8.x.m>> /
-  <<ame:doc:inst:mmove16_x_m,mmove16.x.m>> /
-  <<ame:doc:inst:mmove32_x_m,mmove32.x.m>> /
-  <<ame:doc:inst:mmove64_x_m,mmove64.x.m>>
-| `X[rd] = zext(A.rm[pos])`
-| Move one 8/16/32/64-bit element from an M register position to an X register
-|===
-
-==== Load and store
-
-AME load and store instructions transfer squares between `M` registers and memory.
-Square variants (`mls.rm`, `mls.cm`, `mss.rm`, `mss.cm`) access contiguous memory,
-while strided variants (`mls.st`, `mls.tst`, `mss.st`, `mss.tst`) access
-non-contiguous memory through a programmable byte stride supplied in an integer register.
-The whole-register instructions (`mls.1r`, `mss.1r`) transfer one physical M register in
-row-major order at a fixed element size of `AME_UNIT_DATATYPE_SIZE`, without reading a
-datatype register.  The interoperability and strided instructions determine the
-element datatype from the programmed datatype of the destination or source register.
-The memory layouts, the base-address alignment requirement, and the exception behavior of
-these instructions are defined in <<ame-common-memory>>.
-
-[cols="1,2,3",options="header"]
-|===
-| Instruction | Operation | Description
-| <<ame:doc:inst:mls_1r,mls.1r>>
-| `M[md] = mem[X[rs1]]` (row-major, `E = AME_UNIT_DATATYPE_SIZE`)
-| Load one whole M register
-| <<ame:doc:inst:mls_cm,mls.cm>>
-| `D = mem[X[rs1]]` (column-major)
-| Load square from column-major format
-| <<ame:doc:inst:mls_rm,mls.rm>>
-| `D = mem[X[rs1]]` (row-major)
-| Load square from row-major format
-| <<ame:doc:inst:mls_st,mls.st>>
-| `D = mem[X[rs1], stride=X[rs2]]`
-| Load square from strided memory format
-| <<ame:doc:inst:mls_tst,mls.tst>>
-| `D = mem[X[rs1], stride=X[rs2]]` (transposed)
-| Load square from transposed strided memory format
-| <<ame:doc:inst:mss_1r,mss.1r>>
-| `mem[X[rs1]] = M[ms1]` (row-major, `E = AME_UNIT_DATATYPE_SIZE`)
-| Store one whole M register
-| <<ame:doc:inst:mss_cm,mss.cm>>
-| `mem[X[rs1]] = A` (column-major)
-| Store square to column-major format
-| <<ame:doc:inst:mss_rm,mss.rm>>
-| `mem[X[rs1]] = A` (row-major)
-| Store square to row-major format
-| <<ame:doc:inst:mss_st,mss.st>>
-| `mem[X[rs1], stride=X[rs2]] = A`
-| Store square to strided memory format
-| <<ame:doc:inst:mss_tst,mss.tst>>
-| `mem[X[rs1], stride=X[rs2]] = A` (transposed)
-| Store square to transposed strided memory format
-|===

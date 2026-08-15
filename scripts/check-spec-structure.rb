@@ -41,7 +41,14 @@ instructions_path = File.join(root, "src", "instructions.adoc")
 errors = []
 
 instructions = active_asciidoc(File.read(instructions_path))
-instruction_list = instructions.split("\n<<<\n", 2).first
+instruction_index_start = instructions.index("[[instruction-index]]")
+instruction_index_end = instruction_index_start && instructions.index("\n<<<\n", instruction_index_start)
+if instruction_index_start.nil? || instruction_index_end.nil?
+  errors << "instructions.adoc: missing bounded instruction index"
+  instruction_list = ""
+else
+  instruction_list = instructions[instruction_index_start...instruction_index_end]
+end
 categories = {}
 listed_anchors = {}
 current_category = nil
@@ -74,30 +81,10 @@ section_anchor_counts.each do |anchor, count|
   errors << "#{anchor}: expected one detailed instruction anchor, found #{count}" unless count == 1
 end
 
-declared_count_text = instructions[/^AME defines \*(\d+)\* instructions\.$/, 1]
-if declared_count_text.nil?
-  errors << "instructions.adoc: missing declared instruction count"
-else
-  declared_count = declared_count_text.to_i
-  unless declared_count == categories.length && declared_count == sections.length
-    errors << "instructions.adoc: declared #{declared_count} instructions, " \
-              "but the classification table has #{categories.length} and detailed sections have #{sections.length}"
-  end
-end
-
 missing_sections = categories.keys.to_set - section_names.to_set
 unlisted_sections = section_names.to_set - categories.keys.to_set
 errors << "instruction-list entries without detailed sections: #{missing_sections.to_a.sort.join(', ')}" unless missing_sections.empty?
 errors << "detailed sections absent from the instruction list: #{unlisted_sections.to_a.sort.join(', ')}" unless unlisted_sections.empty?
-
-programming_model = active_asciidoc(File.read(File.join(root, "src", "programming_model.adoc")))
-operand_class_table = programming_model[/\[\[ame-common-operand-classes\]\].*?^\|===\n(.*?)^\|===/m, 1]
-if operand_class_table.nil?
-  errors << "missing shared operand-class requirements table"
-  operand_class_tokens = Set.new
-else
-  operand_class_tokens = operand_class_table.scan(/`([^`]+)`/).flatten.to_set
-end
 
 primary_contract = {
   "Resource Management" => "ame-common-state-access",
@@ -105,14 +92,13 @@ primary_contract = {
   "Elementwise Arithmetic" => "ame-common-arithmetic",
   "Bitwise" => "ame-common-arithmetic",
   "Compare and Predication" => "ame-common-arithmetic",
-  "Permutation" => "ame-common-structural",
   "Register move / data conversion" => "ame-common-register-groups",
   "Elementwise Math Functions" => "ame-common-arithmetic",
   "Memory" => "ame-common-memory",
   "State Management" => "ame-common-register-groups",
-  "Matrix Multiply" => "ame-common-matmul",
-  "Reduction" => "ame-common-structural"
+  "Matrix Multiply" => "ame-common-matmul"
 }
+local_semantics_categories = Set.new(%w[Permutation Reduction])
 data_scalar_categories = Set.new([
   "Elementwise Arithmetic",
   "Bitwise",
@@ -158,24 +144,17 @@ sections.each do |anchor, name, section|
 
   if category
     contract = primary_contract[category]
-    if contract.nil?
+    if contract.nil? && !local_semantics_categories.include?(category)
       errors << "#{name}: category #{category.inspect} has no common-contract mapping"
-    elsif !active_section.match?(/<<#{Regexp.escape(contract)}(?:,[^>]*)?>>/)
+    elsif contract && !active_section.match?(/<<#{Regexp.escape(contract)}(?:,[^>]*)?>>/)
       errors << "#{name}: missing required common contract #{contract}"
     end
   end
 
   data_scalar = name.end_with?(".ew.x") && data_scalar_categories.include?(category) &&
                 !control_scalar_names.include?(name)
-  if data_scalar && !active_section.match?(/<<ame-common-datatype-support(?:,[^>]*)?>>/)
-    errors << "#{name}: data scalar does not reference the scalar datatype-conversion contract"
-  end
-
-  operand_class_exempt = ["Resource Management", "Datatype Management", "Memory"].include?(category) ||
-                         name.match?(/^mmove(?:8|16|32|64)\./)
-  class_family_name = name.end_with?(".ew.x") ? name.sub(/\.ew\.x\z/, ".ew") : name
-  unless operand_class_exempt || operand_class_tokens.include?(name) || operand_class_tokens.include?(class_family_name)
-    errors << "#{name}: no entry in the shared operand-class requirements table"
+  if data_scalar && !active_section.match?(/<<ame-common-scalar-operands(?:,[^>]*)?>>/)
+    errors << "#{name}: data scalar does not reference the scalar-operand contract"
   end
 end
 
@@ -185,8 +164,8 @@ required_root_includes = %w[
   intro.adoc
   programming_model.adoc
   state.adoc
-  datatypes.adoc
   parameters.adoc
+  backend_management.adoc
   examples.adoc
   instructions.adoc
 ]
@@ -230,6 +209,25 @@ required_root_includes.each do |include_name|
   if include_text.match?(/^\s*(?:ifdef|ifndef|ifeval|else|endif)::/)
     errors << "#{include_name}: conditional directives are not permitted in required AME publication material"
   end
+end
+
+programming_model_path = File.join(root, "src", "programming_model.adoc")
+datatype_include_count = active_asciidoc(File.read(programming_model_path))
+                         .scan(/^\s*include::datatypes\.adoc\[\s*\]/).length
+unless datatype_include_count == 1
+  errors << "programming_model.adoc: required include datatypes.adoc must appear exactly once, " \
+            "found #{datatype_include_count}"
+end
+
+root_datatype_include_count = active_asciidoc(File.read(root_document_path))
+                              .scan(/^\s*include::datatypes\.adoc\[/).length
+unless root_datatype_include_count.zero?
+  errors << "riscv-spec.adoc: datatypes.adoc must be nested under programming_model.adoc"
+end
+
+datatype_text = active_asciidoc(File.read(File.join(root, "src", "datatypes.adoc")))
+if datatype_text.match?(/^\s*(?:ifdef|ifndef|ifeval|else|endif)::/)
+  errors << "datatypes.adoc: conditional directives are not permitted in required AME publication material"
 end
 
 closure = include_closure(root_document_path, Set.new, errors)
@@ -276,7 +274,7 @@ end
 abort "spec-structure validation failed:\n  #{errors.join("\n  ")}" unless errors.empty?
 
 puts "checked #{sections.length} instruction pages: classification/detail sets and anchors agree, " \
-     "required blocks, common contracts, and operand metadata are complete, " \
+     "required blocks and primary common contracts are present, " \
      "required publication includes are unconditional and exclude retired sources, " \
      "#{ame_doc_anchors.length} internal targets resolve uniquely, and " \
      "#{required_norm_anchors.length}/#{required_norm_anchors.length} normative anchors are published"

@@ -86,26 +86,19 @@ include::state.adoc[]
 
 <<<
 
-include::datatypes.adoc[]
-
-<<<
-
 include::parameters.adoc[]
 
 <<<
 
-include::examples.adoc[]
+include::backend_management.adoc[]
 
 <<<
 
-== Instruction-set description
-
-The instruction descriptions use the conventional RISC-V specification style:
-an assembly mnemonic and encoding diagram, normative prose, a compact
-architectural operation, and shared programming-model rules.  The published
-prose in this document is the architectural definition.
-
 include::instructions.adoc[]
+
+<<<
+
+include::examples.adoc[]
 
 // The index must precede the bibliography
 // include::index.adoc[]

@@ -1,0 +1,187 @@
+[[shared-ame-backend]]
+== AME Backend Ownership and Context Management
+
+=== Backend model
+
+An AME backend contains the execution resources and architectural context
+state. It may be shared by multiple harts. Base AME exposes the entire backend
+as one indivisible ownership unit, held by at most one software execution
+context. Implementations may instead provide a dedicated backend to a hart.
+
+[#ame-common-state-access]
+=== State enablement and ownership access rules
+
+[[ame-backend-ownership]]
+Every applicable `MS` field must be non-Off before the current context can
+access an AME backend; <<ame-state-enablement>> defines the applicable fields
+and their encodings.
+
+[[ame-backend-ms]]
+A non-Off `MS` value enables AME state but does not grant ownership. The
+read-only `ameown.OWNED` field reports whether the current context owns the
+backend. `ame.acquire` requests ownership and `ame.release` relinquishes it;
+<<ame-backend-management-operators>> defines their semantics.
+
+If any applicable `MS` field is Off:
+
+* Every AME instruction raises an illegal-instruction exception, including
+  `ame.acquire` and `ame.release`.
+* Every read or write of every AME CSR raises an illegal-instruction exception,
+  including a read of `ameown`.
+
+If every applicable `MS` field is non-Off but `ameown.OWNED=0`:
+
+* Every AME instruction other than `ame.acquire` and `ame.release` raises an
+  illegal-instruction exception.
+* Every access to a writable AME context CSR raises an illegal-instruction
+  exception.
+* Read-only capability CSRs and `ameown` may be read.
+
+These exceptions precede all other AME validation and change no AME state.
+
+If `ameown.OWNED=1`, a CSR instruction that attempts to set any applicable
+`MS` field to Off raises an illegal-instruction exception and changes no state.
+No implicit release occurs; software must execute `ame.release` first.
+
+[[ame-backend-management-operators]]
+=== Backend management instructions
+
+==== `ame.acquire`
+
+`ame.acquire rd, rs1` atomically requests the entire backend. Every applicable
+`MS` field must be non-Off; otherwise, the instruction raises an
+illegal-instruction exception.
+
+<<<
+
+`rs1` contains the acquisition descriptor:
+
+[cols="1,1,3",options="header,unbreakable"]
+|===
+|Field |Location |Description
+
+|WAIT_MODE
+|`1:0`
+|Waiting policy
+
+|TIMEOUT_CLASS
+|`5:2`
+|Bounded-wait class
+
+|RESERVED
+|`XLEN-1:6`
+|Must be zero
+|===
+
+`WAIT_MODE=0b00` is TRY and does not wait. `WAIT_MODE=0b01` is BOUNDED_WAIT
+and waits for a finite, implementation-defined interval. Other encodings are
+reserved. For BOUNDED_WAIT, `TIMEOUT_CLASS` values `0x0` through `0x3` select
+SHORT, MEDIUM, LONG, and VERY_LONG; `0xF` is implementation-defined and all
+other values are reserved. TRY ignores `TIMEOUT_CLASS`.
+
+`rd` receives:
+
+[cols="1,1,3",options="header"]
+|===
+|Field |Location |Description
+
+|SUCCESS
+|`0`
+|One on success; zero on failure
+
+|STATUS
+|`7:1`
+|Acquisition status
+
+|RESERVED
+|`XLEN-1:8`
+|Zero
+|===
+
+[cols="1,2,1,4",options="header",%unbreakable]
+|===
+|STATUS |Name |SUCCESS |Description
+
+|`0x00`
+|GRANTED
+|1
+|Granted or already owned
+
+|`0x01`
+|BUSY
+|0
+|Backend unavailable
+
+|`0x02`
+|UNSUPPORTED
+|0
+|No accessible AME backend
+
+|`0x03`
+|DISABLED
+|0
+|Disabled by implementation or platform configuration
+
+|`0x04`
+|BAD_DESC
+|0
+|Invalid descriptor
+
+|`0x05`
+|TIMEOUT
+|0
+|Bounded wait expired
+
+|`0x06`
+|INTERRUPTED
+|0
+|Wait interrupted
+
+|`0x07`
+|DENIED
+|0
+|Denied by platform policy
+
+|`0x08-0x7E`
+|RESERVED
+|-
+|Reserved
+
+|`0x7F`
+|IMPL_DEFINED
+|Impl.
+|Implementation-defined result
+|===
+
+An invalid descriptor returns BAD_DESC, and disabled configuration returns
+DISABLED. A request from the current owner returns GRANTED without changing
+the bound state or `MS`. A new grant atomically binds architectural initial
+state, sets `ameown.OWNED` to one, and sets each applicable `MS` field to
+Initial. Initial state has zero-valued `M` and `Acc` registers, zero-valued
+`Md` and `Ad` descriptors, and reset-valued writable AME CSRs. Failure changes
+neither backend binding, `ameown`, nor `MS`.
+
+==== `ame.release`
+
+`ame.release` requires every applicable `MS` field to be non-Off. If the
+current context owns the backend, it stops accepting new operations, drains
+retired operations and earlier state-save stores, unbinds the state, and
+atomically releases ownership.
+
+After release, `ameown.OWNED` is zero and each applicable `MS` field is
+Initial. If the current context is not the owner, the instruction is a no-op
+that preserves `MS`.
+
+<<<
+
+[[ame-backend-context-switch]]
+=== OS context switch
+
+Software saves `ameown.OWNED` with the execution context. Before switching out
+an owner, it saves required AME state and releases the backend.
+
+To restore a saved owner, software enables `MS`, executes `ame.acquire`, and
+waits for success. It then restores any saved AME state and sets `MS` to Clean,
+or retains the initial state and Initial status established by acquisition.
+AME execution resumes only after acquisition succeeds and any required restore
+completes.

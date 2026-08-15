@@ -2,6 +2,56 @@
 == Examples
 :imagesdir: ../images
 
+[[datatype-discovery-examples]]
+=== Datatype and operation discovery
+
+These probe sequences assume that `MS` is enabled and the current context owns
+the AME backend. See <<datatype-discovery,the datatype and operation discovery
+rules>> for the normative contract.
+
+.Testing for datatype support in an `M` register
+[source,bash]
+----
+  csrwi amestatus, 0
+  li t0, 0x40000004    # Int4
+  msettyp m0, t0
+  csrr t1, amestatus
+  andi t1, t1, 1
+  beqz t1, int4_m_supported
+----
+
+.Testing for datatype support in an `Acc` register
+[source,bash]
+----
+  csrwi amestatus, 0
+
+  li t0, 0x40000020    # Int32
+  asettyp acc0, t0
+
+  csrr t1, amestatus
+  andi t1, t1, 1
+  beqz t1, int32_acc_supported
+----
+
+.Testing for int8 -> int32 widening accumulation
+[source,bash]
+----
+  # assume that Int8 is supported in M and Int32 is supported in Acc
+
+  li t0, 0x40000008    # Int8
+  msettyp m0, t0
+  li t1, 0x40000020    # Int32
+  asettyp acc0, t1
+
+  csrwi amestatus, 0   # clear amestatus.UN
+
+  mmulacc.2d acc0, m0, m0
+
+  csrr t1, amestatus
+  andi t1, t1, 1
+  beqz t1, widening_8_32_matmul_supported
+----
+
 [[gemm_examples]]
 === GEMM
 
@@ -10,7 +60,7 @@ AME partitions each matrix into N×N squares, where `N = sqrt(AME_NELEM)`.
 
 The examples assume that the caller has enabled `MS` and successfully acquired
 the backend. The caller releases the backend after the AME state is no longer
-needed.
+needed; see <<ame-common-state-access>>.
 
 For a given unit or wide datatype with element size `dtype_bits`,
 `group_size = dtype_bits / AME_UNIT_DATATYPE_SIZE` consecutive M registers hold one square.
