@@ -267,18 +267,18 @@ The overall datatypes supported can also be tested by checking
 
 .Testing for datatype support in an `M` register
 [source,bash]
-====
+----
   csrwi amestatus, 0
   li t0, 0x40000004    # Int4
   msettyp m0, t0
   csrr t1, amestatus
   andi t1, t1, 1
   beqz t1, int4_m_supported
-====
+----
 
 .Testing for datatype support in an `Acc` register
 [source,bash]
-====
+----
   csrwi amestatus, 0
 
   li t0, 0x40000020    # Int32
@@ -287,13 +287,13 @@ The overall datatypes supported can also be tested by checking
   csrr t1, amestatus
   andi t1, t1, 1
   beqz t1, int32_acc_supported
-====
+----
 
 A specific operation can also be tested by trying it and checking <<ame:doc:csr_field:amestatus:UN,amestatus.UN>>.
 
 .Testing for int8 -> int32 widening accumulation
 [source,bash]
-====
+----
   # assume that Int8 is supported in M and Int32 is supported in Acc
 
   li t0, 0x40000008    # Int8
@@ -308,4 +308,4 @@ A specific operation can also be tested by trying it and checking <<ame:doc:csr_
   csrr t1, amestatus
   andi t1, t1, 1
   beqz t1, widening_8_32_matmul_supported
-====
+----

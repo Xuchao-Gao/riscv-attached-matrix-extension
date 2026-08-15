@@ -2659,10 +2659,10 @@ For packed datatypes
 register `md`.  If `pack_factor` exceeds
 <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>>, `amestatus.UN` is set and
 `md` is left unchanged.  Otherwise, every derived accumulator index in
-`acc .. acc + pack_factor - 1` is checked according to
-<<ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR,AME_UNIMPL_ACC_BEHAVIOR>> before any
-accumulator data is read or `md` is written; a failing check cannot cause a
-partial transfer.
+`acc .. acc + pack_factor - 1` is checked before any accumulator data is read
+or `md` is written; an index greater than or equal to `AME_NUM_ACC_REGS` raises
+an `Illegal Instruction` exception, and a failing check cannot cause a partial
+transfer.
 +
 The destination `md` must satisfy the alignment constraint for its datatype:
 `md` must be a multiple of the number of M registers consumed by one element.
@@ -2721,10 +2721,10 @@ a consecutive accumulator starting at `acc`, so the instruction writes the
 `pack_factor` accumulators `acc`, `acc+1`, ..., `acc + pack_factor - 1`.  If
 `pack_factor` exceeds <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>>,
 `amestatus.UN` is set and no accumulator is written.  Otherwise, every
-derived index in that complete accumulator span is checked according to
-<<ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR,AME_UNIMPL_ACC_BEHAVIOR>> before any
-source data is read or accumulator is written; a failing check cannot cause a
-partial transfer.
+derived index in that complete accumulator span is checked before any source
+data is read or accumulator is written; an index greater than or equal to
+`AME_NUM_ACC_REGS` raises an `Illegal Instruction` exception, and a failing
+check cannot cause a partial transfer.
 +
 The operand datatypes are taken only from the base registers `Md[ms]` and
 `Ad[acc]`.  As with any register group, the `Md` and `Ad` values of the

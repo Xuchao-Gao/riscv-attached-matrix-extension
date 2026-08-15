@@ -13,7 +13,6 @@ h| <<ame:doc:param:AME_NELEM,AME_NELEM>> | Number of elements in an AME square
 h| <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> | Number of implemented AME accumulator registers
 h| <<ame:doc:param:AME_NUM_M_REGS,AME_NUM_M_REGS>> | Number of AME M and Md registers
 h| <<ame:doc:param:AME_MAX_INT_DTYPE,AME_MAX_INT_DTYPE>> | Datatype used to interpret fixed-type scalar exponents
-h| <<ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR,AME_UNIMPL_ACC_BEHAVIOR>> | Behavior of instructions that reference unimplemented accumulator registers
 h| <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> | The datatype size, in bits, at which exactly one square fits in an M register
 |===
 
@@ -80,11 +79,9 @@ available.
 
 Instructions encode `Acc` and `Ad` specifiers in the standard 5-bit destination
 or source register slots, so indices 0–31 are encodable regardless of
-`AME_NUM_ACC_REGS`.  An index greater than or equal to `AME_NUM_ACC_REGS` names
-an unimplemented accumulator register, and the behavior of such an instruction is
-determined by `AME_UNIMPL_ACC_BEHAVIOR`.  Indices 16–31 are reserved by this
-version of AME and are never implemented, so they take that behavior on every
-implementation.
+`AME_NUM_ACC_REGS`.  Any instruction that specifies an `Acc` or `Ad` register
+whose index is greater than or equal to `AME_NUM_ACC_REGS` raises an
+`Illegal Instruction` exception.
 
 --
 
@@ -159,30 +156,6 @@ Type::
 optional; when present, one supported integer datatype having the greatest supported integer element width
 
 
-
-<<<
-
-[#ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR]
-=== AME_UNIMPL_ACC_BEHAVIOR
-
-Behavior of instructions that reference unimplemented accumulator registers
-
-Description::
-+
---
-The behavior of instructions that specify an unimplemented accumulator register. Options are:
-
-|===
-| Value | Meaning
-
-h| exception | Instruction raises a precise `Illegal Instruction` exception
-h| undefined | The behavior is undefined
-|===
-
---
-
-Type::
-one of: [exception, undefined]
 
 <<<
 

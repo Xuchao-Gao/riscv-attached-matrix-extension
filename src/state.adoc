@@ -86,8 +86,9 @@ The number is determined by <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> 
 Software written for <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> greater than an implementation
 implements will not run on that implementation.
 
-The behavior of encodings corresponding to unimplemented `Acc` registers is implementation-defined,
-and is determined by the <<ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR,AME_UNIMPL_ACC_BEHAVIOR>>.
+Any instruction that specifies an unimplemented `Acc` or `Ad` register
+(index greater than or equal to `AME_NUM_ACC_REGS`) raises an
+`Illegal Instruction` exception.
 
 The architectural register file may contain fewer than 32 accumulators, but
 instruction encodings use standard 5-bit register slots for `Acc` and `Ad`

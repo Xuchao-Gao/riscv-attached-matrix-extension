@@ -271,7 +271,7 @@ For 1D instructions, each operand processes `N_sq` squares element-wise — a pa
 operand's `pack_factor` squares are stored contiguously in a single register, while a
 non-packed operand's `N_sq` squares span `N_sq` registers.
 For 2D matrix multiply instructions, the inner product dimension extends to
-`N_sq * N` elements; see <<_2_dimensional_matrix_multiply_operations>>.
+`N_sq * N` elements; see <<ame-common-matmul>>.
 
 `mpack.ew.x` and `munpack.ew.x` are explicit exceptions to this general
 multi-operand rule.  They transfer one selected logical square and preserve or
@@ -344,8 +344,8 @@ exception.
 
 Every encoded `Acc` or `Ad` register specifier is likewise checked immediately
 after decode and before any `Ad`, `Acc`, or datatype-dependent `M` state is
-read.  An index greater than or equal to `AME_NUM_ACC_REGS` is handled according
-to <<ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR,AME_UNIMPL_ACC_BEHAVIOR>>.  All
+read.  An index greater than or equal to `AME_NUM_ACC_REGS` raises an
+`Illegal Instruction` exception.  All
 encoded M/Md and Acc/Ad base-index checks therefore precede datatype-support
 checks and any `amestatus.UN` report.  A derived accumulator span, such as the
 packed span used by `mmov.m.a` or `mmov.a.m`, is checked after the operation
