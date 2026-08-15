@@ -25,7 +25,7 @@ The examples assume that the caller has enabled `MS` and successfully acquired
 the backend. The caller releases the backend after the AME state is no longer
 needed.
 
-For a given compute datatype with element size `dtype_bits`,
+For a given unit or wide datatype with element size `dtype_bits`,
 `group_size = dtype_bits / AME_UNIT_DATATYPE_SIZE` consecutive M registers hold one square.
 The A-square group starts at `m0`; the B-square group starts at `m{group_size}`.
 All examples are restricted to `M 0–15` and `Acc0`, so group_size is at most 8.
@@ -516,7 +516,7 @@ Code::
 [source,bash]
 ----
 # Portable GEMM: C[M×P] += A[M×K] * B[K×P]
-# Any supported non-packed compute datatype, block-tiled row-major layout
+# Any supported non-packed datatype, block-tiled row-major layout
 #
 # Arguments:   a0=*C  a1=M  a2=*A  a3=K  a4=*B  a5=P  a6=dtype
 # Callee-saved: s0–s4 strides, s5–s7 loop-invariant ptrs/counter

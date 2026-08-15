@@ -33,7 +33,7 @@ repos:
         name: check-instruction-descriptions
         entry: ruby scripts/check-instruction-descriptions.rb
         language: system
-        files: ^(docs/migration/ame-prose-migration-audit\.md|formal/legacy-udb/.*|ref/ame-instruction-baseline\.json|scripts/check-instruction-descriptions\.rb|src/.*\.adoc)$
+        files: ^(formal/legacy-udb/.*|ref/ame-instruction-baseline\.json|scripts/check-instruction-descriptions\.rb|src/.*\.adoc)$
         pass_filenames: false
         always_run: true
 

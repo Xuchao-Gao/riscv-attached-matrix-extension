@@ -22,5 +22,6 @@ and migration review; buildable normative content lives under `src/`.
 | `functions-idl.adoc` | `140e50c2d5bb24f5de88fec1a71ac15c29cc2b6f8084d084cfd7024c3d8c1b07` |
 | `instruction-encoding-allocations.adoc` | `9a3748a14613d05e44c7a70810f0b1747df2c75125e46e98ed0725fada929f30` |
 
-Semantic conflicts and their prose dispositions are recorded in
-`docs/migration/ame-prose-migration-audit.md`.
+The Git history records the prose-cutover review and subsequent semantic
+changes. This snapshot remains frozen and is not a maintenance copy of the
+published specification.

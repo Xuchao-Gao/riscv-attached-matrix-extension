@@ -23,10 +23,9 @@ archive_dir = ["legacy", %w[u db].join].join("-")
 instructions_path = File.join(root, "src", "instructions.adoc")
 allocations_path = File.join(root, "src", "instruction-encoding-allocations.adoc")
 baseline_path = File.join(root, "ref", "ame-instruction-baseline.json")
-audit_path = File.join(root, "docs", "migration", "ame-prose-migration-audit.md")
 errors = []
 
-expected_baseline_hash = "7166004f45b00ca663a4427baaaab2e3d71ed534d75ff6f1ebe14728ef9ca68e"
+expected_baseline_hash = "4f9de61ce8bc85046465d9452c14759efbf999ce5fb4e9e254940d97ba1492c5"
 actual_baseline_hash = Digest::SHA256.file(baseline_path).hexdigest
 unless actual_baseline_hash == expected_baseline_hash
   errors << "baseline snapshot hash is #{actual_baseline_hash}, expected #{expected_baseline_hash}"
@@ -40,7 +39,6 @@ unless baseline_document["baseline_commit"] == expected_commit
   errors << "baseline snapshot identifies #{baseline_document['baseline_commit']}, expected #{expected_commit}"
 end
 baseline = baseline_document.fetch("instructions")
-expected_audit_operations = baseline_document.fetch("audit_operations", {})
 
 attributes = {}
 File.foreach(allocations_path) do |line|
@@ -440,110 +438,10 @@ readme_requirements.each do |fragment|
   errors << "historical archive README lost provenance fragment #{fragment.inspect}" unless archive_readme.include?(fragment)
 end
 
-audit = File.read(audit_path)
-errors << "migration audit does not record 141/141 instructions" unless audit.include?("Instruction coverage (141/141)")
-errors << "migration audit does not record 90/90 helpers" unless audit.include?("Helper coverage (90/90)")
-errors << "migration audit does not record 12/12 published normative anchors" unless audit.include?("Published normative-anchor coverage (12/12)")
-instruction_audit = audit[/## Instruction coverage.*?(?=^## Helper coverage)/m].to_s
-helper_audit = audit[/## Helper coverage.*?(?=^## Published normative-anchor coverage)/m].to_s
-norm_audit = audit[/## Published normative-anchor coverage.*?(?=^## Corrections)/m].to_s
-instruction_row_pattern = /^\| `(?<name>[^`]+)` \| (?<legacy_line>\d+) \| `(?<anchor>[^`]+)` \| (?<category>[^|]+?) \| `(?<mnemonic>[^`]+)` \| `(?<operation>[^`]*)` \| `(?<contract>[^`]+)` \| (?<correction>[^|]+?) \| (?<status>[^|]+?) \|\s*$/
-audited_instruction_rows = {}
-instruction_audit.each_line do |line|
-  next unless line.start_with?("| `")
-
-  match = line.match(instruction_row_pattern)
-  unless match
-    errors << "migration audit has a malformed instruction row: #{line.strip}"
-    next
-  end
-  name = match[:name]
-  errors << "migration audit has duplicate instruction row #{name}" if audited_instruction_rows.key?(name)
-  audited_instruction_rows[name] = match.named_captures
-end
-audited_instruction_names = audited_instruction_rows.keys
-audited_helper_names = helper_audit.scan(/^\| `([^`]+)` \|/).flatten
-audited_norm_anchors = norm_audit.scan(/^\| `(norm:[^`]+)` \|/).flatten
-expected_instruction_names = baseline.map { |entry| entry.fetch("name") }
-unless expected_audit_operations.keys == expected_instruction_names
-  errors << "baseline audit-operation rows do not exactly match the 141-entry instruction baseline"
-end
-archive_functions = File.read(File.join(root, "formal", archive_dir, "functions-idl.adoc"))
-expected_helper_names = archive_functions.scan(/^=== `([^`]+)`/).flatten
-expected_legacy_norm_anchors = archive_functions.scan(/^\[#(norm:[^\]]+)\]/).flatten
-expected_published_norm_anchors = required_norm_anchors
-errors << "migration audit instruction rows do not exactly match the 141-entry baseline" unless audited_instruction_names == expected_instruction_names
-errors << "migration audit helper rows do not exactly match the 90-entry archive" unless audited_helper_names == expected_helper_names
-errors << "migration audit normative-anchor rows do not exactly match the 12 published anchors" unless audited_norm_anchors == expected_published_norm_anchors
-unless expected_legacy_norm_anchors.all? { |anchor| audited_norm_anchors.include?(anchor) }
-  errors << "migration audit omits a normative anchor from the legacy helper archive"
-end
-correction_expectations = expected_instruction_names.to_h { |name| [name, "-"] }
-correction_expectations.merge!(
-  "madd.ew" => "AME-MIG-001",
-  "mls" => "AME-MIG-002, AME-MIG-007",
-  "mls.cm" => "AME-MIG-002",
-  "mls.rm" => "AME-MIG-002",
-  "mls.st" => "AME-MIG-002",
-  "mls.tst" => "AME-MIG-002",
-  "mss" => "AME-MIG-002, AME-MIG-007",
-  "mss.cm" => "AME-MIG-002",
-  "mss.rm" => "AME-MIG-002",
-  "mss.st" => "AME-MIG-002",
-  "mss.tst" => "AME-MIG-002",
-  "mldexp.ew.x" => "AME-MIG-006",
-  "mldexpacc.ew.x" => "AME-MIG-006",
-  "mmul.2d" => "AME-MIG-003",
-  "mmulat.2d" => "AME-MIG-003, AME-MIG-005",
-  "mmulatacc.2d" => "AME-MIG-005",
-  "mmulbt.2d" => "AME-MIG-003, AME-MIG-005",
-  "mmulbtacc.2d" => "AME-MIG-005",
-  "mmulneg.2d" => "AME-MIG-003",
-  "mrowunzip.ew" => "AME-MIG-004",
-  "mrowzip.ew" => "AME-MIG-004"
-)
-legacy_instruction_lines = {}
-legacy_instructions_path = File.join(root, "formal", archive_dir, "instructions-idl.adoc")
-File.foreach(legacy_instructions_path).with_index(1) do |line, line_number|
-  match = line.match(/^\[#(ame:doc:inst:[^\]]+)\]$/)
-  legacy_instruction_lines[match[1]] = line_number.to_s if match
-end
-# Prose anchors renamed after the archive freeze keep their provenance through
-# the frozen legacy anchor.
-renamed_legacy_anchors = {
-  "ame:doc:inst:mcolscatadd_ew" => "ame:doc:inst:mscatadd_row",
-  "ame:doc:inst:mrowscatadd_ew" => "ame:doc:inst:mscatadd_col",
-  "ame:doc:inst:mcolscatmax_ew" => "ame:doc:inst:mscatmax_row",
-  "ame:doc:inst:mrowscatmax_ew" => "ame:doc:inst:mscatmax_col"
-}
-correction_expectations.each do |name, correction|
-  row = audited_instruction_rows[name]
-  baseline_entry = baseline.find { |entry| entry.fetch("name") == name }
-  next unless row && baseline_entry
-
-  expected_contract = name == "fence.ame" ? "ame-common-ordering" : primary_contract[baseline_entry.fetch("category")]
-  {
-    "legacy_line" => legacy_instruction_lines[renamed_legacy_anchors.fetch(baseline_entry.fetch("anchor"), baseline_entry.fetch("anchor"))],
-    "anchor" => baseline_entry.fetch("anchor"),
-    "category" => baseline_entry.fetch("category"),
-    "mnemonic" => baseline_entry.fetch("mnemonic"),
-    "operation" => expected_audit_operations[name],
-    "contract" => expected_contract,
-    "correction" => correction,
-    "status" => "Ready"
-  }.each do |field, expected|
-    actual = row[field]
-    errors << "migration audit row #{name} #{field} is #{actual.inspect}, expected #{expected.inspect}" unless actual == expected
-  end
-end
-%w[AME-MIG-001 AME-MIG-002 AME-MIG-003 AME-MIG-004 AME-MIG-005 AME-MIG-006 AME-MIG-007].each do |correction|
-  errors << "migration audit does not record correction #{correction}" unless audit.include?("### #{correction}:")
-end
-
 abort "instruction-description validation failed:\n  #{errors.join("\n  ")}" unless errors.empty?
 
 puts "checked 141/141 prose instruction pages against baseline #{expected_commit[0, 12]}: " \
      "stable anchors/order/categories/synopses/mnemonics/encodings, complete common contracts and operand classes, " \
-     "description/operation semantics, fully cross-checked migration audit, unconditional root publication, " \
+     "description/operation semantics, unconditional root publication, " \
      "12/12 published normative anchors, " \
      "frozen archive, and no IDL/NumPy markers in the include closure"

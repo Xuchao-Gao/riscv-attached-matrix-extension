@@ -137,12 +137,13 @@ The *pack_factor* of a datatype is the number of squares contained in a single M
 * **Packed** (`sizeof(dtype) < AME_UNIT_DATATYPE_SIZE`): `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(dtype)`
 * **Unit or Wide** (`sizeof(dtype) >= AME_UNIT_DATATYPE_SIZE`): `pack_factor = 1`
 
-A supported datatype must have an integral storage ratio with
-`AME_UNIT_DATATYPE_SIZE`: a packed datatype size must divide the unit size, and
-a wide datatype size must be an integer multiple of the unit size.  A datatype
-that does not satisfy this rule is reported as unsupported through
-`amestatus.UN`.  Consequently the `ceil` in the general group-size formula is
-equal to exact division for every supported wide datatype.
+Every supported datatype size is a power of two.  Equivalently, since
+`AME_UNIT_DATATYPE_SIZE` is itself a power of two: a packed datatype size must
+divide the unit size, and a wide datatype size must be a power-of-two multiple
+of it.  A datatype that does not satisfy this rule is reported as unsupported
+through `amestatus.UN`.  Consequently the `ceil` in the general group-size
+formula is equal to exact division for every supported wide datatype, and every
+M-register group spans a power-of-two number of registers.
 
 When the programmed datatype is a *packed datatype*
 (size < `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`),
@@ -618,7 +619,8 @@ register file, and memory are restricted in order to facilitate a detached AME e
 There are no AME data movement instructions between memory and the `Acc` registers;
 rather, `Acc` registers can only be moved in to or out of the `M` registers.
 
-`M` register data can be loaded and stored from/to memory.
+`M` register data can be loaded and stored from/to memory; <<ame-common-memory>>
+specifies those transfers.
 
 A scalar from the X register file can be sent to an `M` register.
 
@@ -629,6 +631,11 @@ Performance-sensitive AME code should use AME 1D operations on matrix data rathe
 [[ame-common-memory]]
 === Memory
 
+This section is the common contract for the ten load and store instructions
+enumerated in <<Load and store>>.  It defines their memory layouts, their
+base-address alignment requirement, their exception behavior, and the ordering of
+AME memory transfers with respect to the other memory accesses of the hart.
+
 AME uses the same address space as the host hart.
 In systems with virtual memory, AME loads and stores go through (H)S-mode translation and,
 if applicable, G-stage translation when run within a hypervisor.
@@ -638,7 +645,12 @@ each element, increasing byte addresses correspond to successively more
 significant groups of eight bits; the lowest-addressed byte contains bits 7:0.
 
 For the typed memory instructions, let `E = sizeof(dtype)` be the element size
-in bits, `P = pack_factor`, and `N = sqrt(AME_NELEM)`.  Elements are packed
+in bits, `P = pack_factor`, and `N = sqrt(AME_NELEM)`, so that
+`AME_NELEM = N * N`.  These three abbreviations are local to this section; the
+instruction pages spell the same quantities out as `sizeof(Md[md])`,
+`pack_factor`, and `sqrt(AME_NELEM)`.  Sizes written as `sizeof(...)`, as `E`,
+or as an `AME_*_SIZE` parameter are counts of bits, while every quantity whose
+name ends in `_bytes` is a count of bytes.  Elements are packed
 back-to-back as E-bit fields; no byte padding is inserted between elements.
 The first field occupies the low E bits of the transfer bit string, and the
 byte at the lowest address contains bits 7:0 of that string.  When the final
@@ -649,11 +661,9 @@ For a row-major or column-major interoperability transfer, the complete bit
 string contains `P * AME_NELEM * E` bits and
 `total_bytes = ceil(P * AME_NELEM * E / 8)`.  Packed squares occur in ascending
 slot order; within each square, elements occur in the instruction's stated
-row-major or column-major order.  The base-address alignment is
-`min(total_bytes, 4096)` bytes.
+row-major or column-major order.
 
-For a strided transfer, `element_bytes = ceil(E / 8)` is used only for the
-base-address alignment, which is `min(element_bytes, 4096)` bytes.  `base` is
+For a strided transfer, the segment addresses are derived as follows.  `base` is
 the unsigned XLEN-bit value `X[rs1]`, and `stride` is the unsigned XLEN-bit
 value `X[rs2]`.  Each segment begins at
 `(base + seg * stride) modulo 2^XLEN`; the resulting XLEN-bit address is then
@@ -676,11 +686,56 @@ permit partial completion: if any access faults, none of the staged bytes are
 written.
 
 The opaque `mls` and `mss` transfer exactly
-`AME_MATRIX_REGISTER_SIZE / 8` bytes and use
-`min(AME_MATRIX_REGISTER_SIZE / 8, 4096)`-byte base alignment.  Their transfer
+`AME_MATRIX_REGISTER_SIZE / 8` bytes.  Their transfer
 bit string is the physical M-register raw bit pattern: the lowest-addressed
 byte transfers physical bits 7:0, and subsequent byte addresses transfer
 successively more-significant groups of eight physical bits.
+
+Every typed memory instruction, interoperability and strided alike, requires
+its base address to be naturally aligned to `element_bytes = ceil(E / 8)`, the
+byte size of one element of the programmed datatype.  A base address that is not
+so aligned raises an address-misaligned exception, as specified in
+<<Memory exceptions>>.
+
+The opaque `mls` and `mss` do not interpret `Md` and impose no alignment
+requirement at all: their base address may be any byte address, and they never
+raise an address-misaligned exception.
+
+No other alignment is architecturally required.  In particular the transfer
+size, the segment size, and the value of `stride` place no constraint on the
+base address, and a transfer may begin and end at any offset within a page.
+
+[NOTE]
+--
+`element_bytes` is one byte for every datatype of eight bits or fewer, so those
+datatypes carry no alignment requirement at all; for every other supported
+datatype it is a power of two, because every supported datatype size is a power
+of two (see <<Squares>>).
+
+Element alignment is the weakest requirement under which every element of an
+interoperability transfer is itself naturally aligned, because elements are
+packed at a fixed `E`-bit pitch measured from the base address.  A buffer
+written by `mss.rm` or `mss.cm` can therefore be consumed element-wise by
+ordinary base-ISA loads without depending on misaligned scalar access support.
+A naturally aligned power-of-two element cannot cross a larger power-of-two
+boundary, so no element straddles a page boundary, nor a cache block boundary in
+an implementation whose cache blocks are at least as large as one element.  A strided
+transfer extends the same property to every segment when `stride` is also a
+multiple of `element_bytes`; software that intends scalar consumption of a
+strided region should choose such a stride.
+
+A byte-aligned opaque transfer requires no capability an implementation does not
+already need.  A datatype of eight bits or fewer gives an `element_bytes` of one
+byte and a `total_bytes` of at least `AME_MATRIX_REGISTER_SIZE / 8`, so `mls.rm`
+and `mss.rm` already transfer at least a whole physical register's worth of bytes
+starting at an arbitrary byte address.
+
+An implementation may complete more strongly aligned transfers faster, and a
+profile or ABI may mandate stronger alignment.  The architecture does not:
+software that wants block-aligned or page-aligned buffers can always align them
+itself, whereas a stronger architectural requirement could not be relaxed by
+software.
+--
 
 ==== Square memory access
 
@@ -691,8 +746,25 @@ AME provides memory storage variants that operate on one of three memory layouts
 *  Opaque, implementation-defined (`mls` / `mss`)
 
 The row-major and column-major variants are called the _interoperability_ storage instructions.
-They transfer data as a contiguous block — no striding or partial-tile predication is supported.
+They transfer data as a contiguous block — no striding, partial-tile, or predicated variants
+exist.  A non-packed datatype transfers one square between memory and one M register, or a
+group of them for a wide datatype, while a packed datatype transfers `pack_factor` squares in
+a single instruction.
 
+.square memory access example for packed datatypes
+image::packed-square-instructions.png[Packed square load/store illustration]
+
+* **Load:** `pack_factor` squares are loaded from contiguous memory and packed into a
+  single M register.
+
+* **Store:** The single packed M register is unpacked and `pack_factor` squares are written
+  to contiguous memory using the same layout.
+
+The opaque-format instructions (`mls`, `mss`) transfer exactly one physical M
+register without interpreting its datatype. They are per-register raw
+save/restore operations: a wide logical square that occupies multiple M
+registers requires one opaque instruction for each physical register. Packed
+sub-squares resident in the selected register are transferred together.
 Behavior is only well-defined when loading an opaque tensor layout that was previously stored
 opaquely on the same implementation.
 Generally, software should assume that loads / stores using the opaque format will be more
@@ -710,6 +782,54 @@ The strided variants access memory as a sequence of equally spaced segments, one
 row of the square, with consecutive segments separated by a programmable byte stride.
 The transposed strided variants apply the same access pattern to the transpose of the square:
 rows of the square in the `M` register map to columns of the memory region.
+Both support non-packed and packed datatypes; for a packed datatype the `.st` forms place the
+sub-squares side by side within each row, while the `.tst` forms stack them vertically.
+Segment counts, segment sizes, and within-segment bit offsets are given by the rules above,
+which also establish that sub-byte elements are never assigned separate byte addresses.
+
+.strided memory access example for packed datatypes
+image::packed-strided-instructions.png[Packed strided load/store illustration]
+
+==== Memory exceptions
+
+In addition to the illegal-instruction exceptions covered by
+<<Operand validation and exception priority>>, AME load and store instructions report
+three further classes of exception:
+
+* **Unsupported datatype (unsupported-operation report):** An interoperability or strided
+  load or store that names an `M` register whose programmed datatype is unsupported sets
+  `amestatus.UN` and makes no
+  other architectural state change — neither the `M` register group nor memory is modified.
+  This is not a synchronous exception; it is an unsupported-operation report as described
+  in <<datatypes>>.  The opaque `mls` and `mss` instructions do not inspect `Md` and are
+  therefore not subject to this report.
+
+* **Address misaligned (precise):** A typed load or store whose base address is not
+  naturally aligned to `element_bytes` raises an address-misaligned exception — `Load address
+  misaligned` for a load and `Store/AMO address misaligned` for a store.  The exception is
+  raised before any memory access is attempted and changes no architectural state.  The
+  opaque `mls` and `mss` have no alignment requirement and never raise it.
+
+* **Memory fault (precise):** When a load or store encounters a page fault, access fault,
+  protection failure, or PMA violation, the precise exception is reported through the
+  standard RISC-V trap mechanism.  If the applicable `xTVAL` CSR is written with a nonzero
+  value, it contains the virtual address of the portion of the access that caused the fault.
+  For a strided transfer that address lies within the faulting segment and need not lie in
+  the same page as the base address.
+  No partial completion is permitted: the faulting instruction does not modify any memory or
+  register locations.  Because no architectural state has changed, a trap handler that
+  can identify and resolve the fault may re-execute the instruction, which then repeats the
+  whole transfer from the beginning.
+
+Checks occur in the following architectural order.  All forms first validate
+the encoded M-register index.  An interoperability or strided form then
+checks datatype support, reporting `amestatus.UN` and stopping when the tuple
+is unsupported; if supported, it validates the complete register-group span
+and then checks the base-address alignment before attempting any memory
+access.  The opaque `mls` and `mss` forms skip the datatype, group, and
+alignment checks and proceed from the encoded index directly to the memory
+access.  A memory fault can be reported only after these preceding checks have
+passed.
 
 [[ame-consistency-model]]
 ==== Consistency model
@@ -744,6 +864,32 @@ As a consequence, ordering between AME and non-AME memory accesses requires expl
 which may be expensive. Performance-sensitive code should therefore avoid frequent data interaction
 between AME state and non-AME state (X, F, or V registers via memory) in hot loops.
 --
+
+[[ame-common-ordering]]
+==== Memory ordering
+
+AME provides the `<<ame:doc:inst:fence_ame,fence.ame>>` instruction to enforce ordering
+between AME and non-AME memory transfers. Its predecessor set consists of AME memory
+transfers and its successor set consists of non-AME memory transfers. Four encoding bits
+independently select which transfer classes participate in the ordering constraint:
+
+* `pr` (bit 10) — when set, AME loads (reads from memory into `M` registers) are
+  included in the predecessor set.
+* `pw` (bit 9) — when set, AME stores (writes from `M` registers to memory) are
+  included in the predecessor set.
+* `sr` (bit 8) — when set, non-AME loads (reads into X, F, or V register files) are
+  included in the successor set.
+* `sw` (bit 7) — when set, non-AME stores (writes from X, F, or V register files) are
+  included in the successor set.
+
+All AME memory transfers in the predecessor set are guaranteed to be globally visible
+before any non-AME memory transfer in the successor set is initiated.
+At least one of `pr`/`pw` must be set, and at least one of `sr`/`sw` must be set;
+otherwise the instruction executes as a NOP with no ordering effect.
+
+`fence.ame` does *not* order non-AME transfers before AME transfers.
+For that direction, software must use the standard RISC-V `fence` instruction with
+appropriate predecessor and successor sets.
 
 === Operators
 
@@ -1708,152 +1854,41 @@ while strided variants (`mls.st`, `mls.tst`, `mss.st`, `mss.tst`) access
 non-contiguous memory through a programmable byte stride supplied in an integer register.
 The opaque-format instructions (`mls`, `mss`) transfer one physical M register without
 interpreting its datatype.  The interoperability and strided instructions determine the
-element datatype from the programmed datatype of the destination or source register. For packed datatypes
-(size < `AME_UNIT_DATATYPE_SIZE`), `pack_factor` sub-squares are transferred in a
-single instruction.
+element datatype from the programmed datatype of the destination or source register.
+The memory layouts, the base-address alignment requirement, and the exception behavior of
+these instructions are defined in <<ame-common-memory>>.
 
 [cols="1,2,3",options="header"]
 |===
 | Instruction | Operation | Description
 | <<ame:doc:inst:mls,mls>>
-| `md <= mem[rs1]`
+| `raw_bits(M[md]) = mem[X[rs1]]`
 | Load raw M register from implementation-defined format
 | <<ame:doc:inst:mls_cm,mls.cm>>
-| `md <= mem[rs1]` (column-major)
+| `M[md] = mem[X[rs1]]` (column-major)
 | Load square from column-major format
 | <<ame:doc:inst:mls_rm,mls.rm>>
-| `md <= mem[rs1]` (row-major)
+| `M[md] = mem[X[rs1]]` (row-major)
 | Load square from row-major format
 | <<ame:doc:inst:mls_st,mls.st>>
-| `md <= mem[rs1, stride=rs2]`
+| `M[md] = mem[X[rs1], stride=X[rs2]]`
 | Load square from strided memory format
 | <<ame:doc:inst:mls_tst,mls.tst>>
-| `md <= mem[rs1, stride=rs2]` (transposed)
+| `M[md] = mem[X[rs1], stride=X[rs2]]` (transposed)
 | Load square from transposed strided memory format
 | <<ame:doc:inst:mss,mss>>
-| `mem[rs1] <= ms1`
+| `mem[X[rs1]] = raw_bits(M[ms1])`
 | Store raw M register in implementation-defined format
 | <<ame:doc:inst:mss_cm,mss.cm>>
-| `mem[rs1] <= ms1` (column-major)
+| `mem[X[rs1]] = M[ms1]` (column-major)
 | Store square to column-major format
 | <<ame:doc:inst:mss_rm,mss.rm>>
-| `mem[rs1] <= ms1` (row-major)
+| `mem[X[rs1]] = M[ms1]` (row-major)
 | Store square to row-major format
 | <<ame:doc:inst:mss_st,mss.st>>
-| `mem[rs1, stride=rs2] <= ms1`
+| `mem[X[rs1], stride=X[rs2]] = M[ms1]`
 | Store square to strided memory format
 | <<ame:doc:inst:mss_tst,mss.tst>>
-| `mem[rs1, stride=rs2] <= ms1` (transposed)
+| `mem[X[rs1], stride=X[rs2]] = M[ms1]` (transposed)
 | Store square to transposed strided memory format
 |===
-
-===== Square Instructions
-
-The row-major and column-major interoperability instructions (`mls.rm`, `mls.cm`, `mss.rm`, `mss.cm`)
-support both non-packed and packed datatypes. Data is always transferred as a single
-contiguous block — no striding, partial-tile, or predicated variants exist.
-
-For *non-packed datatypes* (size >= `AME_UNIT_DATATYPE_SIZE`), one square is transferred
-between memory and one (or more, for wide types) M registers.
-
-For *packed datatypes* (size < `AME_UNIT_DATATYPE_SIZE`), `pack_factor` squares are
-transferred in a single instruction, each sub-square occupies `sqrt(AME_NELEM)` rows and
-`sqrt(AME_NELEM)` columns in M register.
-
-.square memory access example for packed datatypes
-image::packed-square-instructions.png[Packed square load/store illustration]
-
-* **Load:** `pack_factor` squares are loaded from contiguous memory and packed into a
-  single M register.
-
-* **Store:** The single packed M register is unpacked and `pack_factor` squares are written
-  to contiguous memory using the same layout.
-
-The opaque-format instructions (`mls`, `mss`) transfer exactly one physical M
-register without interpreting its datatype. They are per-register raw
-save/restore operations: a wide logical square that occupies multiple M
-registers requires one opaque instruction for each physical register. Packed
-sub-squares resident in the selected register are transferred together.
-
-===== Strided Instructions
-
-The strided storage instructions (`mls.st`, `mls.tst`, `mss.st`, `mss.tst`) transfer
-one or more squares between an `M` register and a non-contiguous region of memory.
-They support both non-packed and packed datatypes.
-
-A strided access reads or writes one row of the square per stride segment, each segment
-containing `sqrt(AME_NELEM)` contiguous elements. The byte stride separating consecutive
-segments is supplied in an integer (`X`) register operand.
-
-For `mls.st` and `mss.st`, segment `i` holds row `i`, with packed squares
-placed side by side in ascending slot order.  For `mls.tst` and `mss.tst`,
-segment `sq * N + j` holds column `j` of packed square `sq`.  The exact bit
-offsets, byte rounding, and segment addresses are defined above; in
-particular, sub-byte elements are not assigned separate byte addresses.
-
-For *packed datatypes*, `pack_factor` squares are transferred per instruction.
-For `.st` instructions, each stride segment contains `pack_factor * sqrt(AME_NELEM)`
-contiguous elements — `pack_factor` sub-squares placed side by side horizontally within
-each row — and the number of segments remains `sqrt(AME_NELEM)`.
-For `.tst` instructions, each segment contains `sqrt(AME_NELEM)` elements, and the
-number of segments is `pack_factor * sqrt(AME_NELEM)` — one column per sub-square,
-stacked vertically.
-
-.strided memory access example for packed datatypes
-image::packed-strided-instructions.png[Packed strided load/store illustration]
-
-===== Exception
-
-In addition to the Illegal Instruction exceptions covered by
-<<Operand validation and exception priority>>, AME load and store instructions report
-two further classes of exception:
-
-* **Unsupported datatype (unsupported-operation report):** An interoperability or strided
-  load or store that names an `M` register whose programmed datatype is unsupported sets
-  `amestatus.UN` and makes no
-  other architectural state change — neither the `M` register group nor memory is modified.
-  This is not a synchronous exception; it is an unsupported-operation report as described
-  in <<datatypes>>.  The opaque `mls` and `mss` instructions do not inspect `Md` and are
-  therefore not subject to this report.
-
-* **Memory fault (precise):** When a load or store encounters a page fault, access fault,
-  protection failure, or PMA violation, the precise exception is reported in the standard
-  RISC-V trap CSRs.
-  No partial completion is permitted: the faulting instruction does not modify any memory or
-  register locations, and the reported fault address is the base address of the instruction
-  (the value in the integer register operand), not the address of a specific segment.
-
-Checks occur in the following architectural order.  All forms first validate
-the encoded M-register index.  An interoperability or strided form then
-checks datatype support, reporting `amestatus.UN` and stopping when the tuple
-is unsupported; if supported, it validates the complete register-group span
-and then checks the base-address alignment before attempting any memory
-access.  The opaque `mls` and `mss` forms skip the datatype and group checks
-and check base-address alignment immediately after the encoded index.  A
-memory fault can be reported only after these preceding checks have passed.
-
-[[ame-common-ordering]]
-==== Memory ordering
-
-AME provides the `<<ame:doc:inst:fence_ame,fence.ame>>` instruction to enforce ordering
-between AME and non-AME memory transfers. Its predecessor set consists of AME memory
-transfers and its successor set consists of non-AME memory transfers. Four encoding bits
-independently select which transfer classes participate in the ordering constraint:
-
-* `pr` (bit 10) — when set, AME loads (reads from memory into `M` registers) are
-  included in the predecessor set.
-* `pw` (bit 9) — when set, AME stores (writes from `M` registers to memory) are
-  included in the predecessor set.
-* `sr` (bit 8) — when set, non-AME loads (reads into X, F, or V register files) are
-  included in the successor set.
-* `sw` (bit 7) — when set, non-AME stores (writes from X, F, or V register files) are
-  included in the successor set.
-
-All AME memory transfers in the predecessor set are guaranteed to be globally visible
-before any non-AME memory transfer in the successor set is initiated.
-At least one of `pr`/`pw` must be set, and at least one of `sr`/`sw` must be set;
-otherwise the instruction executes as a NOP with no ordering effect.
-
-`fence.ame` does *not* order non-AME transfers before AME transfers.
-For that direction, software must use the standard RISC-V `fence` instruction with
-appropriate predecessor and successor sets.

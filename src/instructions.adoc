@@ -2191,15 +2191,15 @@ one `mls` for each physical M register in its group.
 For portable interoperability with other implementations, use
 <<ame:doc:inst:mls_rm,mls.rm>> or <<ame:doc:inst:mls_cm,mls.cm>>.
 +
-The transfer size is `AME_MATRIX_REGISTER_SIZE / 8` bytes.  The address must
-be aligned to that size or 4KB, whichever is smaller. Otherwise, `mls` raises
-a `Load Misaligned` exception.
+The transfer size is `AME_MATRIX_REGISTER_SIZE / 8` bytes.  Because this form
+does not interpret `Md[md]`, it imposes no alignment requirement: the address
+may be any byte address, and `mls` never raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-md <= mem[rs1]
+raw_bits(M[md]) = mem[X[rs1]]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -2228,24 +2228,24 @@ This encoding is provisional and is not a final RISC-V allocation.
 Description::
 Loads a square from memory in column-major format into matrix register `md`.
 +
-The datatype is determined from `Md[md]`. For compute datatypes
-(size >= `AME_UNIT_DATATYPE_SIZE`), one square is loaded. For packed datatypes
-(size < `AME_UNIT_DATATYPE_SIZE`), `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[md])`
-squares are loaded and packed into a single M register.
+The datatype is determined from `Md[md]`. One square is loaded for a unit or
+wide datatype; for a packed datatype, `pack_factor` squares are loaded and packed
+into a single M register (see <<Squares>>).
 +
 The data in memory is stored contiguously in column-major order: within each sub-square,
 column `j` immediately follows column `j-1` with no padding. All elements are loaded
 unconditionally.
 +
-Let `total_bytes = ceil(pack_factor * AME_NELEM * sizeof(Md[md]) / 8)`.
-The address must be aligned to `total_bytes` or 4KB, whichever is smaller.
-Otherwise, `mls.cm` raises a `Load Misaligned` exception.
+Let `total_bytes = ceil(pack_factor * AME_NELEM * sizeof(Md[md]) / 8)` be the
+transfer size and `element_bytes = ceil(sizeof(Md[md]) / 8)` the size of one
+element.  The address must be aligned to `element_bytes`.
+Otherwise, `mls.cm` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-md <= mem[rs1]
+M[md] = mem[X[rs1]]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -2274,24 +2274,24 @@ This encoding is provisional and is not a final RISC-V allocation.
 Description::
 Loads a square from memory in row-major format into matrix register `md`.
 +
-The datatype is determined from `Md[md]`. For compute datatypes
-(size >= `AME_UNIT_DATATYPE_SIZE`), one square is loaded. For packed datatypes
-(size < `AME_UNIT_DATATYPE_SIZE`), `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[md])`
-squares are loaded and packed into a single M register.
+The datatype is determined from `Md[md]`. One square is loaded for a unit or
+wide datatype; for a packed datatype, `pack_factor` squares are loaded and packed
+into a single M register (see <<Squares>>).
 +
 The data in memory is stored contiguously in row-major order: within each sub-square,
 row `i` immediately follows row `i-1` with no padding. All elements are loaded
 unconditionally.
 +
-Let `total_bytes = ceil(pack_factor * AME_NELEM * sizeof(Md[md]) / 8)`.
-The address must be aligned to `total_bytes` or 4KB, whichever is smaller.
-Otherwise, `mls.rm` raises a `Load Misaligned` exception.
+Let `total_bytes = ceil(pack_factor * AME_NELEM * sizeof(Md[md]) / 8)` be the
+transfer size and `element_bytes = ceil(sizeof(Md[md]) / 8)` the size of one
+element.  The address must be aligned to `element_bytes`.
+Otherwise, `mls.rm` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-md <= mem[rs1]
+M[md] = mem[X[rs1]]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -2320,29 +2320,25 @@ This encoding is provisional and is not a final RISC-V allocation.
 Description::
 Loads a square from memory in strided format into matrix register `md`.
 +
-The datatype is determined from `Md[md]`. For compute datatypes
-(size >= `AME_UNIT_DATATYPE_SIZE`), one square is loaded. For packed datatypes
-(size < `AME_UNIT_DATATYPE_SIZE`), `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[md])`
-squares are loaded and packed into a single M register.
+The datatype is determined from `Md[md]`. One square is loaded for a unit or
+wide datatype; for a packed datatype, `pack_factor` squares are loaded and packed
+into a single M register (see <<Squares>>).
 +
-The strided load accesses memory as a sequence of equally spaced segments.
-For non-packed datatypes, there are `sqrt(AME_NELEM)` segments, one per row, each
-containing `sqrt(AME_NELEM)` contiguous elements.
-For packed datatypes, there are still `sqrt(AME_NELEM)` segments, but each segment
-contains `pack_factor * sqrt(AME_NELEM)` contiguous elements — `pack_factor` sub-squares
-placed side by side horizontally within each row.
-Consecutive segments are separated by a byte stride supplied in integer register `rs2`.
+The strided load accesses memory as a sequence of `sqrt(AME_NELEM)` equally spaced
+segments, one per row of the square, separated by the byte stride supplied in
+integer register `rs2`.  For a packed datatype the sub-squares are placed side by
+side within each row, so segment `i` holds row `i` of every sub-square.  Segment
+sizes, segment addresses, byte rounding, and sub-byte packing follow the common
+memory rules.
 +
 Let `element_bytes = ceil(sizeof(Md[md]) / 8)`.  The address must be aligned
-to `element_bytes` or 4KB, whichever is smaller. Otherwise, `mls.st` raises a
-`Load Misaligned` exception.  Segment byte counts and sub-byte packing follow
-the common memory rules.
+to `element_bytes`. Otherwise, `mls.st` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-md <= mem[rs1, stride=rs2]
+M[md] = mem[X[rs1], stride=X[rs2]]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -2371,28 +2367,25 @@ This encoding is provisional and is not a final RISC-V allocation.
 Description::
 Loads a square from memory in transposed strided format into matrix register `md`.
 +
-The datatype is determined from `Md[md]`. For compute datatypes
-(size >= `AME_UNIT_DATATYPE_SIZE`), one square is loaded. For packed datatypes
-(size < `AME_UNIT_DATATYPE_SIZE`), `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[md])`
-squares are loaded and packed into a single M register.
+The datatype is determined from `Md[md]`. One square is loaded for a unit or
+wide datatype; for a packed datatype, `pack_factor` squares are loaded and packed
+into a single M register (see <<Squares>>).
 +
-The transposed strided load accesses memory as a sequence of equally spaced segments,
-one segment per column of the square. Each segment contains `sqrt(AME_NELEM)` contiguous
-elements, and consecutive segments are separated by a byte stride supplied in integer
-register `rs2`. For packed datatypes, the total number of segments is
-`pack_factor * sqrt(AME_NELEM)` — one column per sub-square, stacked vertically.
-The segment addresses and within-segment bit offsets are defined by the common
-memory rules; this arrangement transposes each square during the transfer.
+The transposed strided load accesses memory as a sequence of equally spaced
+segments, one per column of the square, separated by the byte stride supplied in
+integer register `rs2`; this transposes each square during the transfer.  For a
+packed datatype the sub-squares are stacked vertically, giving one segment per
+column of each sub-square.  Segment counts, segment sizes, segment addresses,
+byte rounding, and sub-byte packing follow the common memory rules.
 +
 Let `element_bytes = ceil(sizeof(Md[md]) / 8)`.  The address must be aligned
-to `element_bytes` or 4KB, whichever is smaller. Otherwise, `mls.tst` raises a
-`Load Misaligned` exception.
+to `element_bytes`. Otherwise, `mls.tst` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-md <= mem[rs1, stride=rs2]
+M[md] = mem[X[rs1], stride=X[rs2]]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5780,15 +5773,16 @@ the datatype in `Md[ms1]` is not interpreted.  Packed sub-squares resident in
 For portable interoperability with other implementations, use
 <<ame:doc:inst:mss_rm,mss.rm>> or <<ame:doc:inst:mss_cm,mss.cm>>.
 +
-The transfer size is `AME_MATRIX_REGISTER_SIZE / 8` bytes.  The address must
-be aligned to that size or 4KB, whichever is smaller. Otherwise, `mss` raises
-a `Store/AMO Misaligned` exception.
+The transfer size is `AME_MATRIX_REGISTER_SIZE / 8` bytes.  Because this form
+does not interpret `Md[ms1]`, it imposes no alignment requirement: the address
+may be any byte address, and `mss` never raises an address-misaligned
+exception.
 
 Operation::
 +
 [source]
 ----
-mem[rs1] <= ms1
+mem[X[rs1]] = raw_bits(M[ms1])
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5817,24 +5811,24 @@ This encoding is provisional and is not a final RISC-V allocation.
 Description::
 Stores a square from matrix register `ms1` into memory in column-major format.
 +
-The datatype is determined from `Md[ms1]`. For compute datatypes
-(size >= `AME_UNIT_DATATYPE_SIZE`), one square is stored. For packed datatypes
-(size < `AME_UNIT_DATATYPE_SIZE`), `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[ms1])`
-squares are unpacked from the single M register and stored.
+The datatype is determined from `Md[ms1]`. One square is stored for a unit or
+wide datatype; for a packed datatype, `pack_factor` squares are unpacked from the
+single M register and stored (see <<Squares>>).
 +
 The data is written contiguously in column-major order: within each sub-square,
 column `j` immediately follows column `j-1` with no padding. All elements are stored
 unconditionally.
 +
-Let `total_bytes = ceil(pack_factor * AME_NELEM * sizeof(Md[ms1]) / 8)`.
-The address must be aligned to `total_bytes` or 4KB, whichever is smaller.
-Otherwise, `mss.cm` raises a `Store/AMO Misaligned` exception.
+Let `total_bytes = ceil(pack_factor * AME_NELEM * sizeof(Md[ms1]) / 8)` be the
+transfer size and `element_bytes = ceil(sizeof(Md[ms1]) / 8)` the size of one
+element.  The address must be aligned to `element_bytes`.
+Otherwise, `mss.cm` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-mem[rs1] <= ms1
+mem[X[rs1]] = M[ms1]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5863,24 +5857,24 @@ This encoding is provisional and is not a final RISC-V allocation.
 Description::
 Stores a square from matrix register `ms1` into memory in row-major format.
 +
-The datatype is determined from `Md[ms1]`. For compute datatypes
-(size >= `AME_UNIT_DATATYPE_SIZE`), one square is stored. For packed datatypes
-(size < `AME_UNIT_DATATYPE_SIZE`), `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[ms1])`
-squares are unpacked from the single M register and stored.
+The datatype is determined from `Md[ms1]`. One square is stored for a unit or
+wide datatype; for a packed datatype, `pack_factor` squares are unpacked from the
+single M register and stored (see <<Squares>>).
 +
 The data is written contiguously in row-major order: within each sub-square,
 row `i` immediately follows row `i-1` with no padding. All elements are stored
 unconditionally.
 +
-Let `total_bytes = ceil(pack_factor * AME_NELEM * sizeof(Md[ms1]) / 8)`.
-The address must be aligned to `total_bytes` or 4KB, whichever is smaller.
-Otherwise, `mss.rm` raises a `Store/AMO Misaligned` exception.
+Let `total_bytes = ceil(pack_factor * AME_NELEM * sizeof(Md[ms1]) / 8)` be the
+transfer size and `element_bytes = ceil(sizeof(Md[ms1]) / 8)` the size of one
+element.  The address must be aligned to `element_bytes`.
+Otherwise, `mss.rm` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-mem[rs1] <= ms1
+mem[X[rs1]] = M[ms1]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5909,29 +5903,25 @@ This encoding is provisional and is not a final RISC-V allocation.
 Description::
 Stores a square from matrix register `ms1` into memory in strided format.
 +
-The datatype is determined from `Md[ms1]`. For compute datatypes
-(size >= `AME_UNIT_DATATYPE_SIZE`), one square is stored. For packed datatypes
-(size < `AME_UNIT_DATATYPE_SIZE`), `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[ms1])`
-squares are unpacked from the single M register and stored.
+The datatype is determined from `Md[ms1]`. One square is stored for a unit or
+wide datatype; for a packed datatype, `pack_factor` squares are unpacked from the
+single M register and stored (see <<Squares>>).
 +
-The strided store writes memory as a sequence of equally spaced segments.
-For non-packed datatypes, there are `sqrt(AME_NELEM)` segments, one per row, each
-containing `sqrt(AME_NELEM)` contiguous elements.
-For packed datatypes, there are still `sqrt(AME_NELEM)` segments, but each segment
-contains `pack_factor * sqrt(AME_NELEM)` contiguous elements — `pack_factor` sub-squares
-placed side by side horizontally within each row.
-Consecutive segments are separated by a byte stride supplied in integer register `rs2`.
+The strided store writes memory as a sequence of `sqrt(AME_NELEM)` equally spaced
+segments, one per row of the square, separated by the byte stride supplied in
+integer register `rs2`.  For a packed datatype the sub-squares are placed side by
+side within each row, so segment `i` holds row `i` of every sub-square.  Segment
+sizes, segment addresses, byte rounding, and sub-byte packing follow the common
+memory rules.
 +
 Let `element_bytes = ceil(sizeof(Md[ms1]) / 8)`.  The address must be aligned
-to `element_bytes` or 4KB, whichever is smaller. Otherwise, `mss.st` raises a
-`Store/AMO Misaligned` exception.  Segment byte counts and sub-byte packing
-follow the common memory rules.
+to `element_bytes`. Otherwise, `mss.st` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-mem[rs1, stride=rs2] <= ms1
+mem[X[rs1], stride=X[rs2]] = M[ms1]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
@@ -5960,28 +5950,25 @@ This encoding is provisional and is not a final RISC-V allocation.
 Description::
 Stores a square from matrix register `ms1` into memory in transposed strided format.
 +
-The datatype is determined from `Md[ms1]`. For compute datatypes
-(size >= `AME_UNIT_DATATYPE_SIZE`), one square is stored. For packed datatypes
-(size < `AME_UNIT_DATATYPE_SIZE`), `pack_factor = AME_UNIT_DATATYPE_SIZE / sizeof(Md[ms1])`
-squares are unpacked from the single M register and stored.
+The datatype is determined from `Md[ms1]`. One square is stored for a unit or
+wide datatype; for a packed datatype, `pack_factor` squares are unpacked from the
+single M register and stored (see <<Squares>>).
 +
-The transposed strided store writes memory as a sequence of equally spaced segments,
-one segment per column of the square. Each segment contains `sqrt(AME_NELEM)` contiguous
-elements, and consecutive segments are separated by a byte stride supplied in integer
-register `rs2`. For packed datatypes, the total number of segments is
-`pack_factor * sqrt(AME_NELEM)` — one column per sub-square, stacked vertically.
-The segment addresses and within-segment bit offsets are defined by the common
-memory rules; this arrangement transposes each square during the transfer.
+The transposed strided store writes memory as a sequence of equally spaced
+segments, one per column of the square, separated by the byte stride supplied in
+integer register `rs2`; this transposes each square during the transfer.  For a
+packed datatype the sub-squares are stacked vertically, giving one segment per
+column of each sub-square.  Segment counts, segment sizes, segment addresses,
+byte rounding, and sub-byte packing follow the common memory rules.
 +
 Let `element_bytes = ceil(sizeof(Md[ms1]) / 8)`.  The address must be aligned
-to `element_bytes` or 4KB, whichever is smaller. Otherwise, `mss.tst` raises a
-`Store/AMO Misaligned` exception.
+to `element_bytes`. Otherwise, `mss.tst` raises an address-misaligned exception.
 
 Operation::
 +
 [source]
 ----
-mem[rs1, stride=rs2] <= ms1
+mem[X[rs1], stride=X[rs2]] = M[ms1]
 ----
 +
 This operation uses the common rules in <<ame-common-memory>>.
