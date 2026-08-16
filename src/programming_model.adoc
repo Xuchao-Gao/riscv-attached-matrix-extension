@@ -61,7 +61,7 @@ When the current software execution context owns a backend, that state is bound
 to the context as defined in <<shared-ame-backend>>. AME instructions access
 the bound state and control data transfer between AME registers and memory.
 
-.Register state and data movement paths for AME. The F/D and V extensions are _optional_ with AME. The only architectural datapath between vector (if present) and AME is through memory. The scalar datapath(s) is/are one-way. AME accumulator state can only be moved to/from the AME matrix registers.
+.Register state and data-movement paths for AME. AME defines bidirectional paths between memory and M, X and M, and M and Acc. The F/D and V extensions are _optional_; their register files have no direct AME datapath.
 image::ame_state.svg[AME state and architectural datapaths]
 
 The `Acc` registers are used to accumulate the output of partial matrix multiplies.
@@ -71,8 +71,6 @@ the input operands of 1D (element-wise/vector) operations, and the output operan
 
 A single `M` register may hold multiple, one, or part of a square,
 depending on implementation-defined parameters and programmed datatype.
-Generally, the number of squares that will fit in an `M` register is inversely proportional
-to the datatype size (because larger datatypes require more storage).
 
 In contrast, an `Acc` register always holds exactly one square.
 
@@ -248,26 +246,23 @@ placing all `A_s` side by side and stacking all `B_s` expresses this as an
 transposes each `N x N` logical square before summing its product; it does not
 transpose either aggregate rectangular matrix.
 
-=== Polymorphic instructions
-
-AME instructions do not encode operand datatypes; instead, datatypes are determined by dedicated datatype registers.
-
 include::datatypes.adoc[]
 
 === Data movement
 
-AME defines only the data-movement paths described in this section.
+Between architectural storage domains, AME defines only these direct
+data-movement paths:
 
-There are no AME data movement instructions between memory and the `Acc` registers;
-rather, `Acc` registers can only be moved in to or out of the `M` registers.
+* Memory to and from the `M` register file, as specified by
+  <<ame-common-memory,the common memory contract>>.
+* The X register file to and from the `M` register file, using scalar broadcast
+  and element-move instructions.
+* The `M` register file to and from the `Acc` register file, using
+  <<ame:doc:inst:mmov_a_m,mmov.a.m>> and
+  <<ame:doc:inst:mmov_m_a,mmov.m.a>>.
 
-`M` register data can be loaded and stored from/to memory; <<ame-common-memory>>
-specifies those transfers.
-
-A scalar from the X register file can be sent to an `M` register.
-
-AME does not define data movement operations between AME register files and the vector (V)
-register file.
+AME defines no direct data-movement path between memory and `Acc`, between X
+and `Acc`, or between either AME register file and the F or V register file.
 
 [[ame-common-memory]]
 === Memory

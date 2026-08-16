@@ -196,7 +196,7 @@ sets `amestatus.UN` and leaves the destination unchanged. Software may write
 any 32-bit encoding; unsupported encodings are retained in the CSR and are
 rejected when a data-scalar instruction uses them.
 
-This CSR does not apply to fixed-type control operands.  Shift amounts,
+This CSR does not apply to fixed-type control scalars.  Shift amounts,
 indices, offsets, and other instruction-defined control values retain their
 fixed integer semantics and do not read this CSR.
 

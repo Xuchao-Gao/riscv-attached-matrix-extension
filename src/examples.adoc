@@ -489,8 +489,6 @@ Summary::
 This example is a generic non-packed GEMM kernel that is portable across AME implementations regardless of
 <<ame:doc:param:AME_NELEM,AME_NELEM>>, <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>,
 <<ame:doc:param:AME_NUM_M_REGS,AME_NUM_M_REGS>>, or <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>>.
-It shows the versatility of AME but is *not* how tuned AME would likely work; tuned code would
-likely expect square formatting to occur first, so would look more like <<square_gemm>>.
 
 Assumptions::
 +

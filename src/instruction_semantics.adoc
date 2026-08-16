@@ -189,8 +189,6 @@ capabilities.  Custom tuples may define these operations under
 Standard floating-point operations additionally follow
 <<ame-common-floating-point,the standard floating-point operation semantics>>.
 
-===== Integer evaluation and destination conversion
-
 For standard integer arithmetic, the mathematical expression is evaluated
 without intermediate truncation and converted once to the destination integer
 datatype.  A saturating destination clamps an out-of-range result and sets
@@ -208,7 +206,7 @@ This subsection supplies the default result, rounding, and flag behavior for
 accepted standard floating-point tuples of the 1-dimensional elementwise
 operations in <<ame-common-arithmetic>> and of the prefix, reduction, and
 scatter instructions whose detailed definitions add floating-point rules.  It
-does not apply to raw-bit or raw-sign behavior and does not override the
+does not apply to raw-bit behavior and does not override the
 implementation-defined product and accumulation behavior of
 <<ame-common-matmul>>.
 
@@ -224,8 +222,9 @@ this subsection follows its exact mathematical expression and rounds a finite
 result once using the destination datatype's rounding mode.  Any NaN input or
 invalid operation produces the destination datatype's canonical quiet NaN; a
 signaling NaN is quieted.  Invalid operations include indeterminate infinity
-addition or subtraction and zero multiplied by infinity.  Ordered comparisons
-and raw-sign predication instead follow their detailed instruction definitions.
+addition or subtraction and zero multiplied by infinity.  Ordered comparisons,
+including those used as numeric predicates, instead follow their detailed
+instruction definitions.
 
 Floating-point exceptional conditions are data results after tuple acceptance:
 they neither trap nor set `amestatus.UN`.  If the destination cannot represent a
@@ -255,11 +254,8 @@ floating-point datatype definition must specify equivalent flag conditions
 for every supported tuple that can update `amefflags`; otherwise that tuple is
 unsupported.
 
-
-==== Scalars
-
 [[ame-common-scalar-operands]]
-===== Scalar ingress and data scalar operands
+==== Scalars
 
 For a data-scalar `.ew.x` instruction, let
 `scalar_dtype = CSR[amestype]`.  The required tuple includes `Md[md]`,

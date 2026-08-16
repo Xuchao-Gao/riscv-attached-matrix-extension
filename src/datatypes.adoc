@@ -1,6 +1,9 @@
 [[datatypes]]
 === Datatypes
 
+AME instructions do not encode operand datatypes; instead, datatypes are
+determined by dedicated datatype registers.
+
 AME supports up to `2^32 - 1` unique datatypes, half of which are reserved for
 custom use.  The value zero is reserved to mean uninitialized.  Here,
 "uninitialized" describes the datatype descriptor, not whether the
@@ -19,11 +22,6 @@ physical state to represent those datatypes plus uninitialized.
 Implementations may choose which standard and custom datatypes they support.
 A legal implementation may support no standard datatypes or no custom
 datatypes.
-
-[NOTE]
---
-Profiles will likely mandate a minimum supported set.
---
 
 `M` register datatype descriptors are written with
 <<ame:doc:inst:msettyp,msettyp>> and read with
@@ -49,16 +47,9 @@ AME uses a 32-bit datatype specifier encoded as follows:
 Standard datatype encodings will never begin with '1'.
 Conforming implementations must encode custom datatypes with a leading '1'.
 
-By convention, the lowest bits after the datatype size are used to specify the datatype family
-(e.g., integer, floating-point) and the upper bits are used first to distinguish types within the
-family. This allows the number of families to grow over time if needed without needing to know
-a-priori how many families will need to be supported over time.
-
-AME follows an encoding convention, and the datatypes defined in AME v1.0 follow that convention.
-However, each datatype encoding should still be treated as an enumeration value, not as a format
-that software should decode by assumption.
-RISC-V may introduce future data types that do not follow the current convention.
-
+Each complete datatype encoding is an enumeration value; the class-field
+conventions below define only the encodings specified here and do not assign
+meaning to otherwise unknown encodings.
 
 ==== Integer datatype class
 
@@ -145,8 +136,8 @@ The operation-level meaning of these modes is defined by
 The IEEE floating-point class holds data types that either are IEEE 754 floating point or
 behave similarly to it with small modifications.
 
-We classify datatype in the class by whether or not it is signed, exponent size, presence of NaN,
-presence of infinity, and rounding mode. The mantissa width is implicit:
+The class distinguishes datatypes by signedness, exponent size, NaN support,
+infinity support, and rounding mode. The mantissa width is implicit:
 `mantissa_bits = element_size - exp_width - 1` (one bit for the sign).
 
 .IEEE floating-point class encoding convention

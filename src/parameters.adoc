@@ -176,9 +176,8 @@ When the datatype size of an M register is:
 
 [IMPORTANT]
 Implementations with different AME_UNIT_DATATYPE_SIZE values are not binary compatible.
-Thus, ecosystems requiring portable binaries (e.g., profiles),
+Thus, for ecosystems requiring portable binaries (e.g., profiles),
 AME_UNIT_DATATYPE_SIZE must be the same across implementations.
-This parameter enables AME as a standard to scale a wide range of markets.
 
 --
 

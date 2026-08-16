@@ -4,4 +4,6 @@
 .vscode
 /build/*
 /images/*
+/output/
+/tmp/
 src/images/diag-wavedrom-md5-*.svg

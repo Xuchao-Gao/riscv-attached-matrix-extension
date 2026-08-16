@@ -88,7 +88,6 @@ errors << "detailed sections absent from the instruction list: #{unlisted_sectio
 
 primary_contract = {
   "Resource Management" => "ame-common-state-access",
-  "Datatype Management" => "ame-common-datatype-support",
   "Elementwise Arithmetic" => "ame-common-arithmetic",
   "Bitwise" => "ame-common-arithmetic",
   "Compare and Predication" => "ame-common-arithmetic",
@@ -98,7 +97,11 @@ primary_contract = {
   "State Management" => "ame-common-register-groups",
   "Matrix Multiply" => "ame-common-matmul"
 }
-local_semantics_categories = Set.new(%w[Permutation Reduction])
+categories_without_primary_contract = Set.new([
+  "Datatype Management",
+  "Permutation",
+  "Reduction"
+])
 data_scalar_categories = Set.new([
   "Elementwise Arithmetic",
   "Bitwise",
@@ -144,7 +147,7 @@ sections.each do |anchor, name, section|
 
   if category
     contract = primary_contract[category]
-    if contract.nil? && !local_semantics_categories.include?(category)
+    if contract.nil? && !categories_without_primary_contract.include?(category)
       errors << "#{name}: category #{category.inspect} has no common-contract mapping"
     elsif contract && !active_section.match?(/<<#{Regexp.escape(contract)}(?:,[^>]*)?>>/)
       errors << "#{name}: missing required common contract #{contract}"
