@@ -1,5 +1,5 @@
 = Attached Matrix Extension (Ztt)
-Authors: Derek Hower, Luca Maroncelli, Eric Mahurin, Siqi Zhao, Qiu Jing, Xiang Xiaoyan, Xuchao Gao, Ruiqi Xie, Lei Kang, Peng Wu, Zhong Su
+Authors: Derek Hower, Luca Maroncelli, Eric Mahurin, Siqi Zhao, Jing Qiu, Xiaoyan Xiang, Xuchao Gao, Ruiqi Xie, Lei Kang, Peng Wu, Nikos Vasilikopoulos, Philipp Tomsich, Zhi Zhuang, Zhong Su
 include::../docs-resources/global-config.adoc[]
 :docgroup: AME TG
 :description: Attached Matrix Extension (Ztt)
