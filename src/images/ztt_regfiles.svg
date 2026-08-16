@@ -143,7 +143,7 @@
 
   <!-- Acc / Ad group count (rotated, left of Acc) -->
   <text transform="translate(570, 204) rotate(-90)" text-anchor="middle"
-        font-size="13" fill="#1e1e1e">N = AME_NUM_ACC_REGS (1, 2, or 4)</text>
+        font-size="13" fill="#1e1e1e">N = AME_NUM_ACC_REGS (1, 2, 4, 8, or 16)</text>
   <line x1="584" y1="90" x2="584" y2="317" stroke="#1e1e1e" stroke-width="1.5"
         marker-start="url(#arr-l)" marker-end="url(#arr-r)"/>
 

@@ -2,18 +2,55 @@
 == Examples
 :imagesdir: ../images
 
-=== Datatype setting
+[[datatype-discovery-examples]]
+=== Datatype and operation discovery
 
-// not really bash, but gives us # comment highlighting
+These probe sequences assume that `MS` is enabled and the current context owns
+the AME backend. See <<datatype-discovery,the datatype and operation discovery
+rules>> for the normative contract.
+
+.Testing for datatype support in an `M` register
 [source,bash]
 ----
-
-.equ INT4_DATATYPE, 0x40000004
-
-
+  csrwi amestatus, 0
+  li t0, 0x40000004    # Int4
+  msettyp m0, t0
+  csrr t1, amestatus
+  andi t1, t1, 1
+  beqz t1, int4_m_supported
 ----
 
-<<<
+.Testing for datatype support in an `Acc` register
+[source,bash]
+----
+  csrwi amestatus, 0
+
+  li t0, 0x40000020    # Int32
+  asettyp acc0, t0
+
+  csrr t1, amestatus
+  andi t1, t1, 1
+  beqz t1, int32_acc_supported
+----
+
+.Testing for int8 -> int32 widening accumulation
+[source,bash]
+----
+  # assume that Int8 is supported in M and Int32 is supported in Acc
+
+  li t0, 0x40000008    # Int8
+  msettyp m0, t0
+  li t1, 0x40000020    # Int32
+  asettyp acc0, t1
+
+  csrwi amestatus, 0   # clear amestatus.UN
+
+  mmulacc.2d acc0, m0, m0
+
+  csrr t1, amestatus
+  andi t1, t1, 1
+  beqz t1, widening_8_32_matmul_supported
+----
 
 [[gemm_examples]]
 === GEMM
@@ -23,9 +60,9 @@ AME partitions each matrix into N×N squares, where `N = sqrt(AME_NELEM)`.
 
 The examples assume that the caller has enabled `MS` and successfully acquired
 the backend. The caller releases the backend after the AME state is no longer
-needed.
+needed; see <<ame-common-state-access>>.
 
-For a given compute datatype with element size `dtype_bits`,
+For a given unit or wide datatype with element size `dtype_bits`,
 `group_size = dtype_bits / AME_UNIT_DATATYPE_SIZE` consecutive M registers hold one square.
 The A-square group starts at `m0`; the B-square group starts at `m{group_size}`.
 All examples are restricted to `M 0–15` and `Acc0`, so group_size is at most 8.
@@ -41,7 +78,7 @@ image::gemm-portable.svg[AME GEMM tiling diagram]
 Each example uses the same triple-loop structure: the i and j loops iterate over
 N×N squares of C; for each (i, j) pair the k loop loads A and B squares and
 accumulates with `mmulacc.2d`, then `mmov.m.a` moves the result to M registers and
-`mss`/`mss.rm` stores the C square.
+`mss.rm` stores the C square.
 Boundary squares are not shown; all examples handle only interior squares.
 
 <<<
@@ -60,7 +97,8 @@ Assumptions::
 * `<<ame:doc:param:AME_NELEM,AME_NELEM>> = 16384`
 * `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> = 8`
 * `dtype_bits = AME_UNIT_DATATYPE_SIZE` (group_size = 1; one M register per square)
-* Squares are already formatted in the implementation-defined layout
+* Squares are contiguous and row-major, matching `mls.rm` and `mss.rm`; `elem_bytes = 1`
+  makes their base-address alignment requirement admit any pointer
 
 
 Details::
@@ -99,15 +137,15 @@ for (int i = 0; i < M; i += N) {     // s7
         B_sq = B_col_base;            // t5
 
         for (int k = 0; k < K; k += N) { // t6
-            m0 = load_square(A_sq);   // mls: A[i,k] square
-            m1 = load_square(B_sq);   // mls: B[k,j] square
+            m0 = load_square(A_sq);   // mls.rm: A[i,k] square
+            m1 = load_square(B_sq);   // mls.rm: B[k,j] square
             acc0 += m0 * m1;          // mmulacc.2d
 
             A_sq += square_bytes;     // advance one k-square right
             B_sq += CB_row_stride;    // advance one k-square down
         }
 
-        store_square(acc0, C_sq);     // mmov.m.a + mss: store result square
+        store_square(acc0, C_sq);     // mmov.m.a + mss.rm: store result square
         C_sq       += square_bytes;   // advance one j-square right
         B_col_base += square_bytes;   // advance one j-square right
     }
@@ -178,8 +216,8 @@ gemm_unit_dtype:
     sub    ra, a3, t6
     blez   ra, .k_done
 
-    mls     m0, t4                 # load A[i,k] square
-    mls     m1, t5                 # load B[k,j] square
+    mls.rm  m0, t4                 # load A[i,k] square
+    mls.rm  m1, t5                 # load B[k,j] square
     mmulacc.2d  acc0, m0, m1        # acc0 += A_square × B_square
 
     add    t4, t4, s4             # A ptr: advance one k-square right
@@ -189,7 +227,7 @@ gemm_unit_dtype:
 
 .k_done:
     mmov.m.a m0, acc0
-    mss     m0, a6                 # store result square to C
+    mss.rm  m0, a6                 # store result square to C
 
     add    a6, a6, s4             # C ptr: advance one j-square right
     add    a7, a7, s4             # B col-base: advance one j-square right
@@ -220,7 +258,12 @@ Assumptions::
 +
 * `<<ame:doc:param:AME_NELEM,AME_NELEM>> = 16384`
 * `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> = 8`
-* The datatype is non-packed
+* The datatype is non-packed and at most 64 bits wide, so
+  `group_size = dtype_bits / 8` is one of 1, 2, 4, or 8 and both square groups fit
+  in `M0`–`M15`
+* The implementation supports the datatype with `msettyp`, `asettyp`, `mzero`,
+  `mls.rm`, `mss.rm`, `mmulacc.2d`, and `mmov.m.a`
+* The `A`, `B`, and `C` base pointers are aligned to `elem_bytes = dtype_bits / 8`
 * Tiles use the block-tiled row-major layout described above
 
 Details::
@@ -235,6 +278,18 @@ Memory strides use `square_bytes = AME_NELEM × elem_bytes = 16384 × elem_bytes
 `dtype` varies at runtime but must be non-packed:
 `group_size = dtype_bits >> 3` (since `U = 8`).
 The triple loop is instantiated once per supported group_size via a macro.
++
+`U = 8` makes every non-packed datatype byte-integral, so `elem_bytes` is at least
+one without a further restriction.  The 64-bit upper bound is what keeps
+`group_size` within the four instantiated dispatch targets.  Datatype support does
+not imply support for every operation tuple the kernel issues, which is why the
+tuples are listed as assumptions rather than inferred.
++
+Every address derived from `A`, `B`, and `C` adds a multiple of `elem_bytes`, since
+`square_bytes`, `A_row_stride`, and `CB_row_stride` are all products containing
+`elem_bytes`.  The base-address alignment that <<ame-common-memory>> requires of
+`mls.rm` and `mss.rm` therefore holds throughout if it holds for the three entry
+pointers.
 
 Algorithm::
 +
@@ -247,8 +302,9 @@ int N          = 128;                    // t0: sqrt(16384)
 int dtype_bits = dtype & 0xFF;           // t2: element size in bits
 int elem_bytes = dtype_bits / 8;         // t3
 
-assert(dtype_bits >= 8 && (dtype_bits % 8) == 0);
+assert(dtype_bits >= 8 && dtype_bits <= 64 && (dtype_bits % 8) == 0);
 int group_size = dtype_bits / 8;         // t2: repurposed (U = 8 hardcoded)
+assert(group_size <= 8);                 // both groups must fit in m0…m15
 // A-sq group: m0…m[group_size-1]
 // B-sq group: m[group_size]…m[2*group_size-1]
 
@@ -433,12 +489,15 @@ Summary::
 This example is a generic non-packed GEMM kernel that is portable across AME implementations regardless of
 <<ame:doc:param:AME_NELEM,AME_NELEM>>, <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>,
 <<ame:doc:param:AME_NUM_M_REGS,AME_NUM_M_REGS>>, or <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>>.
-It shows the versatility of AME but is *not* how tuned AME would likely work; tuned code would
-likely expect square formatting to occur first, so would look more like <<square_gemm>>.
 
 Assumptions::
 +
-* The datatype is non-packed
+* The datatype is non-packed and at least eight bits wide
+* `dtype_bits / U` is one of 1, 2, 4, or 8, so the computed `group_size` reaches a
+  dispatch target and both square groups fit in `M0`–`M15`
+* The implementation supports the datatype with `msettyp`, `asettyp`, `mzero`,
+  `mls.rm`, `mss.rm`, `mmulacc.2d`, and `mmov.m.a`
+* The `A`, `B`, and `C` base pointers are aligned to `elem_bytes = dtype_bits / 8`
 * Matrices use a block-tiled row-major layout: each `N x N` tile is
   contiguous and row-major internally, and the tile grid is row-major
 
@@ -455,7 +514,24 @@ implementation-defined register format.  The tile-grid strides are
 `K * N * elem_bytes` for A and `P * N * elem_bytes` for B/C.
 +
 `group_size = dtype_bits / U` is computed at runtime via `divu` (both are powers of 2)
-and dispatched to one of four loop instances (group_size 1, 2, 4, 8).
+and dispatched to one of four loop instances (group_size 1, 2, 4, 8).  A `group_size`
+outside that set falls through to `.done` without computing, which is why the
+assumptions bound it rather than leaving it to the dispatch.
++
+The eight-bit lower bound on the datatype is required by this kernel, not by the
+architecture.  `elem_bytes` is computed as `srli t3, t2, 3`, which yields zero for a
+sub-byte datatype, and every stride derived from it would then be zero.  A sub-byte
+datatype can be non-packed: `<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>`
+is any positive power of two, so with `U = 4` a four-bit datatype is a unit datatype.
+"Non-packed" therefore does not imply byte-integral elements, and this kernel does
+not handle the sub-byte case.  Datatype support likewise does not imply support for
+every operation tuple the kernel issues, which is why the tuples are listed as
+assumptions rather than inferred from datatype support alone.
++
+Every address derived from `A`, `B`, and `C` adds a multiple of `elem_bytes`, since
+all four strides are products containing `elem_bytes`.  The base-address alignment
+that <<ame-common-memory>> requires of `mls.rm` and `mss.rm` therefore holds
+throughout if it holds for the three entry pointers.
 
 Algorithm::
 +
@@ -469,8 +545,10 @@ int U          = read_csr(ameudsz);    // t1: AME_UNIT_DATATYPE_SIZE in bits
 int dtype_bits = dtype & 0xFF;         // t2: element size in bits
 int elem_bytes = dtype_bits / 8;       // t3
 
+assert(dtype_bits >= 8);                // elem_bytes must not be zero
 assert(dtype_bits >= U && (dtype_bits % U) == 0);
 int group_size = dtype_bits / U;       // t2: repurposed
+assert(group_size <= 8);                // both groups must fit in m0…m15
 // A-tile group: m0…m[group_size-1]
 // B-tile group: m[group_size]…m[2*group_size-1]
 
@@ -516,7 +594,7 @@ Code::
 [source,bash]
 ----
 # Portable GEMM: C[M×P] += A[M×K] * B[K×P]
-# Any supported non-packed compute datatype, block-tiled row-major layout
+# Non-packed datatype, dtype_bits >= 8 and dtype_bits/U in {1,2,4,8}; block-tiled row-major
 #
 # Arguments:   a0=*C  a1=M  a2=*A  a3=K  a4=*B  a5=P  a6=dtype
 # Callee-saved: s0–s4 strides, s5–s7 loop-invariant ptrs/counter

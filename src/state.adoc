@@ -44,14 +44,23 @@ is not compatible with an implementation that chooses <<ame:doc:param:AME_NUM_M_
 
 The width of `M` register is implementation-defined, and is equal to
 <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> * <<ame:doc:param:AME_NELEM,AME_NELEM>>.
-The layout of data in an `M` register is also implementation-defined;
-the only portable way to access data in an `M` register is through interoperability load/store
-instructions that convert to a standard layout (
+The layout of data in an `M` register is also implementation-defined.  Two portable
+routes exist with distinct semantics.
+
+To access the register's data as *logical elements of its programmed datatype*, use the
+interoperability load and store instructions, which convert to a standard layout (
   <<ame:doc:inst:mls_rm,mls.rm>>,
   <<ame:doc:inst:mls_cm,mls.cm>>,
   <<ame:doc:inst:mss_rm,mss.rm>>,
   and/or <<ame:doc:inst:mss_cm,mss.cm>>
 ).
+
+To move a register's *image* without regard to its programmed datatype — for register
+spilling, context switching, and calling conventions — use
+<<ame:doc:inst:mls_1r,mls.1r>> and <<ame:doc:inst:mss_1r,mss.1r>>.  Their transfer is
+row-major at a fixed element size of
+<<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>>, so it does not depend on
+the internal layout either, and it neither reads nor requires a supported datatype.
 
 ==== Matrix datatype registers (`Md0-Md15` or `Md0-Md31`)
 
@@ -68,19 +77,21 @@ The value of an `Md` is sticky, even if it is otherwise unused due to register g
 For example, if registers 0 and 1 are grouped, a value written (via <<ame:doc:inst:msettyp,msettyp>>)
 into `Md[1]` will be retained even though it has no effect on the group.
 
-The encoding format of `Md` datatypes is specified in <<datatypes>>.
+The encoding format of `Md` datatypes is specified in
+<<datatype-descriptor-encoding,the datatype descriptor encoding>>.
 
-==== Accumulator registers (`Acc0`. `Acc0-Acc1`, or `Acc0-Acc3`)
+==== Accumulator registers (`Acc0` through `Acc[AME_NUM_ACC_REGS-1]`)
 
 AME adds an implementation-defined number of matrix accumulator registers.
-The number is determined by <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> and may be either 1, 2, or 4.
+The number is determined by <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> and may be 1, 2, 4, 8, or 16.
 Software written for <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> greater than an implementation
 implements will not run on that implementation.
 
-The behavior of encodings corresponding to unimplemented `Acc` registers is implementation-defined,
-and is determined by the <<ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR,AME_UNIMPL_ACC_BEHAVIOR>>.
+Any instruction that specifies an unimplemented `Acc` or `Ad` register
+(index greater than or equal to `AME_NUM_ACC_REGS`) raises an
+`Illegal Instruction` exception.
 
-The architectural register file may contain only 1, 2, or 4 accumulators, but
+The architectural register file may contain fewer than 32 accumulators, but
 instruction encodings use standard 5-bit register slots for `Acc` and `Ad`
 specifiers.  This keeps the instruction formats uniform with M and integer
 register operands; it does not require 32 physical accumulator registers.
@@ -91,16 +102,18 @@ Note, this is unlike the `M` registers, which may be grouped to hold a single sq
 `Acc` registers are the destination of all AME matrix multiply instructions.
 `Acc` registers can also be source or destination of AME move instructions.
 
-==== Accumulator datatype registers (`Ad0`. `Ad0-Ad1`, or `Ad0-Ad3`)
+==== Accumulator datatype registers (`Ad0` through `Ad[AME_NUM_ACC_REGS-1]`)
 
 AME adds an implementation-defined number of 32-bit accumulator datatype registers.
-The number is determined by <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> and may be either 1, 2, or 4 (same as the `Acc` registers).
+The number is determined by <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> and may be 1, 2, 4, 8, or 16 (same as the `Acc` registers).
 
 `Ad` registers can only be read or written with the <<ame:doc:inst:agettyp,agettyp>> and <<ame:doc:inst:asettyp,asettyp>> instructions.
 
 Each `Ad` register specifies the element datatype for the `Acc` register with the same index.
 
-The encoding format of `Ad` datatypes is identical to the format for `Md`, and is specified in <<datatypes>>.
+The encoding format of `Ad` datatypes is identical to the format for `Md` and
+is specified in
+<<datatype-descriptor-encoding,the datatype descriptor encoding>>.
 
 === Control and status registers (CSRs)
 
@@ -169,9 +182,8 @@ to write `ameown` raises an illegal-instruction exception.
 
 `ameown.OWNED` is set when `ame.acquire` newly grants ownership and cleared by
 `ame.release`. A failed acquire does not change it. It resets to zero.
-Software saves `ameown.OWNED` with the execution context. To restore a saved
-value of one, software executes `ame.acquire`; a successful acquisition
-restores `ameown.OWNED` to one.
+The save-and-restore protocol for this field is defined in
+<<ame-backend-context-switch>>.
 
 [#ame:doc:csr:amestype]
 ==== amestype
@@ -184,7 +196,7 @@ sets `amestatus.UN` and leaves the destination unchanged. Software may write
 any 32-bit encoding; unsupported encodings are retained in the CSR and are
 rejected when a data-scalar instruction uses them.
 
-This CSR does not apply to fixed-type control operands.  Shift amounts,
+This CSR does not apply to fixed-type control scalars.  Shift amounts,
 indices, offsets, and other instruction-defined control values retain their
 fixed integer semantics and do not read this CSR.
 
@@ -325,9 +337,9 @@ clamps its output to the destination datatype's range.
 |===
 
 [#ame:doc:csr:amestatus]
-[#ame:doc:csr_field:amestatus:UN]
 ==== amestatus
 
+[#ame:doc:csr_field:amestatus:UN]
 `amestatus` is backend context state and reports sticky AME execution status.
 It resets to zero. Software
 clears a reported condition by writing zero to the corresponding bit; writing

@@ -21,49 +21,19 @@ repos:
         # Disallow other asciidoc extensions except .adoc
         files: .*\.(asciidoc|asc)$
 
-      - id: check-instruction-encodings
-        name: check-instruction-encodings
+      - id: check-instruction-model
+        name: check-instruction-model
         entry: ruby scripts/check-instruction-encodings.rb
         language: system
-        files: ^(scripts/check-instruction-encodings\.rb|src/(instruction-encoding-allocations|instructions)\.adoc)$
         pass_filenames: false
         always_run: true
 
-      - id: check-instruction-descriptions
-        name: check-instruction-descriptions
-        entry: ruby scripts/check-instruction-descriptions.rb
+      - id: check-spec-structure
+        name: check-spec-structure
+        entry: ruby scripts/check-spec-structure.rb
         language: system
-        files: ^(docs/migration/ame-prose-migration-audit\.md|formal/legacy-udb/.*|ref/ame-instruction-baseline\.json|scripts/check-instruction-descriptions\.rb|src/.*\.adoc)$
         pass_filenames: false
         always_run: true
-
-      - id: check-instruction-encoding-table
-        name: check-instruction-encoding-table
-        entry: ruby scripts/generate-instruction-encoding-table.rb --check
-        language: system
-        files: ^(INSTRUCTION_ENCODINGS\.md|scripts/generate-instruction-encoding-table\.rb|src/(instruction-encoding-allocations|instructions)\.adoc)$
-        pass_filenames: false
-        always_run: true
-
-      - id: check-instruction-encoding-html
-        name: check-instruction-encoding-html
-        entry: ruby scripts/generate-instruction-encoding-html.rb --check
-        language: system
-        files: ^(INSTRUCTION_ENCODINGS\.html|scripts/generate-instruction-encoding-html\.rb|src/(instruction-encoding-allocations|instructions)\.adoc)$
-        pass_filenames: false
-        always_run: true
-
-      - id: check-legacy-names
-        name: check-legacy-names
-        entry: ruby scripts/check-legacy-names.rb
-        language: system
-        files: ^(Makefile|.*\.(adoc|md)|scripts/.*)$
-        pass_filenames: false
-        always_run: true
-
-      # NOTE: check-normative-tags moved to GitHub Actions workflow
-      # The workflow comments on PRs and creates issues on merge
-      # instead of blocking commits. See .github/workflows/check-normative-tags.yml
 
   - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
     rev: 0.2.3

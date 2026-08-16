@@ -13,7 +13,6 @@ h| <<ame:doc:param:AME_NELEM,AME_NELEM>> | Number of elements in an AME square
 h| <<ame:doc:param:AME_NUM_ACC_REGS,AME_NUM_ACC_REGS>> | Number of implemented AME accumulator registers
 h| <<ame:doc:param:AME_NUM_M_REGS,AME_NUM_M_REGS>> | Number of AME M and Md registers
 h| <<ame:doc:param:AME_MAX_INT_DTYPE,AME_MAX_INT_DTYPE>> | Datatype used to interpret fixed-type scalar exponents
-h| <<ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR,AME_UNIMPL_ACC_BEHAVIOR>> | Behavior of instructions that reference unimplemented accumulator registers
 h| <<ame:doc:param:AME_UNIT_DATATYPE_SIZE,AME_UNIT_DATATYPE_SIZE>> | The datatype size, in bits, at which exactly one square fits in an M register
 |===
 
@@ -73,16 +72,21 @@ When `AME_NUM_ACC_REGS` is 2, registers `acc0-acc1` and `ad0-ad1` are available.
 
 When `AME_NUM_ACC_REGS` is 4, registers `acc0-acc3` and `ad0-ad3` are available.
 
+When `AME_NUM_ACC_REGS` is 8, registers `acc0-acc7` and `ad0-ad7` are available.
+
+When `AME_NUM_ACC_REGS` is 16, registers `acc0-acc15` and `ad0-ad15` are
+available.
+
 Instructions encode `Acc` and `Ad` specifiers in the standard 5-bit destination
-or source register slots.  An index greater than or equal to
-`AME_NUM_ACC_REGS` names an unimplemented accumulator register.  The behavior
-of such an instruction is determined by `AME_UNIMPL_ACC_BEHAVIOR`; this also
-applies to indices 4–31, which are reserved by this version of AME.
+or source register slots, so indices 0–31 are encodable regardless of
+`AME_NUM_ACC_REGS`.  Any instruction that specifies an `Acc` or `Ad` register
+whose index is greater than or equal to `AME_NUM_ACC_REGS` raises an
+`Illegal Instruction` exception.
 
 --
 
 Type::
-one of: [1, 2, 4]
+one of: [1, 2, 4, 8, 16]
 
 
 
@@ -155,30 +159,6 @@ optional; when present, one supported integer datatype having the greatest suppo
 
 <<<
 
-[#ame:doc:param:AME_UNIMPL_ACC_BEHAVIOR]
-=== AME_UNIMPL_ACC_BEHAVIOR
-
-Behavior of instructions that reference unimplemented accumulator registers
-
-Description::
-+
---
-The behavior of instructions that specify an unimplemented accumulator register. Options are:
-
-|===
-| Value | Meaning
-
-h| exception | Instruction raises a precise `Illegal Instruction` exception
-h| undefined | The behavior is undefined
-|===
-
---
-
-Type::
-one of: [exception, undefined]
-
-<<<
-
 [#ame:doc:param:AME_UNIT_DATATYPE_SIZE]
 === AME_UNIT_DATATYPE_SIZE
 
@@ -196,9 +176,8 @@ When the datatype size of an M register is:
 
 [IMPORTANT]
 Implementations with different AME_UNIT_DATATYPE_SIZE values are not binary compatible.
-Thus, ecosystems requiring portable binaries (e.g., profiles),
+Thus, for ecosystems requiring portable binaries (e.g., profiles),
 AME_UNIT_DATATYPE_SIZE must be the same across implementations.
-This parameter enables AME as a standard to scale a wide range of markets.
 
 --
 
