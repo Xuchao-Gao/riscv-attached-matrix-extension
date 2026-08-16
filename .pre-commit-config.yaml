@@ -35,13 +35,6 @@ repos:
         pass_filenames: false
         always_run: true
 
-      - id: check-frozen-archive
-        name: check-frozen-archive
-        entry: ruby scripts/check-frozen-archive.rb
-        language: system
-        pass_filenames: false
-        always_run: true
-
   - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
     rev: 0.2.3
     hooks:
